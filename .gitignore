@@ -1,0 +1,205 @@
+# ==================================================
+# HYR CONSTRUCTORA & SOLDADURA - GITIGNORE COMPLETO
+# Backend (Express/PostgreSQL) + Frontend (Next.js)
+# ==================================================
+
+# ==================== DEPENDENCIES ====================
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==================== ENVIRONMENT & CONFIG ====================
+# Environment variables (CRITICAL FOR SECURITY)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+
+# Database configuration files
+config/database.json
+config/config.json
+database.json
+
+# ==================== BACKEND EXPRESS/POSTGRESQL ====================
+# Server logs and processes
+*.log
+logs/
+*.pid
+*.seed
+
+# Backend build and temporary files
+dist/
+build/
+.tmp/
+temp/
+exports/
+backend/exports/
+
+# Testing and coverage
+coverage/
+.coverage/
+.nyc_output/
+*.lcov
+
+# Backend specific scripts with potential sensitive data
+test-*.js
+*-test.js
+backend/test-*.js
+backend/setup-db.js
+backend/load-seeds.js
+!backend/server.js
+!backend/routes/
+
+# ==================== FRONTEND NEXT.JS ====================
+# Next.js build output
+.next/
+out/
+build/
+
+# Next.js cache
+.next/cache/
+.cache/
+.swc/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# React/Next.js development
+.eslintcache
+.stylelintcache
+
+# Frontend build artifacts
+construction-admin/.next/
+construction-admin/out/
+construction-admin/build/
+construction-admin/*.tsbuildinfo
+
+# ==================== DATABASE & STORAGE ====================
+# SQLite databases (if any)
+*.sqlite
+*.sqlite3
+*.db
+
+# PostgreSQL dumps
+*.sql
+*.dump
+backup/
+backups/
+
+# ==================== SYSTEM & IDE ====================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+
+# Linux
+.directory
+
+# IDE and editors
+.vscode/
+.idea/
+.sublime-workspace
+.sublime-project
+*.swp
+*.swo
+*~
+
+# ==================== SECURITY & SENSITIVE DATA ====================
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Secrets and keys
+secrets/
+keys/
+*.secret
+auth.json
+credentials.json
+
+# API keys and tokens
+.api-keys
+tokens.json
+
+# ==================== TEMPORARY & CACHE ====================
+# General temporary files
+*.tmp
+*.temp
+.cache/
+cache/
+
+# Application specific
+nul
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ==================== DOCUMENTATION & DEVELOPMENT ====================
+# Ignore development documentation with sensitive info
+TODO-INTERNAL.md
+NOTES-DEV.md
+CREDENTIALS.md
+
+# But keep essential docs
+!README.md
+!README-*.md
+!CLAUDE.md
+!TODO.md
+
+# ==================== VERCEL & DEPLOYMENT ====================
+.vercel
+.now
+
+# ==================== TESTING & CI/CD ====================
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Jest
+.jest/
+
+# ==================== RUNTIME & PROCESSES ====================
+# Runtime directories
+.runtime/
+.pids/
+
+# ==================== PROJECT SPECIFIC ====================
+# HYR specific temporary files
+startup-*.log
+quick-start.bat.log
+audit/
+
+# Exports and generated reports
+exports/
+reports/
+
+# =======================================================
+# END HYR CONSTRUCTORA & SOLDADURA GITIGNORE
+# Mantiene seguridad y funcionalidad para deployment
+# =======================================================

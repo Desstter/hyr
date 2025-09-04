@@ -1,0 +1,139 @@
+{
+  "year": 2026,
+  "uvt": 50000,
+  "updated": "2026-01-01",
+  "description": "Tablas tributarias Colombia 2026 - Proyección",
+  
+  "vat": {
+    "rates": {
+      "19": {
+        "rate": 0.19,
+        "description": "Tarifa general",
+        "applies_to": ["servicios_construccion", "materiales_construccion", "soldadura_especializada"]
+      },
+      "5": {
+        "rate": 0.05,
+        "description": "Tarifa reducida",
+        "applies_to": ["productos_basicos", "algunos_servicios"]
+      },
+      "0": {
+        "rate": 0.00,
+        "description": "Exento/Excluido",
+        "applies_to": ["servicios_salud", "educacion", "intangibles_desarrollados"]
+      }
+    },
+    "retention": {
+      "general": 0.15,
+      "goods": 0.15,
+      "services": 0.15
+    }
+  },
+  
+  "ica": {
+    "Bogota": {
+      "CONSTRUCCION": {
+        "rate": 0.00966,
+        "code": "4100",
+        "description": "Construcción de edificios residenciales y no residenciales",
+        "retention_rate": 0.00966
+      },
+      "SOLDADURA": {
+        "rate": 0.00966,
+        "code": "2592",
+        "description": "Fabricación de productos metálicos para uso estructural",
+        "retention_rate": 0.00966
+      }
+    },
+    "Medellin": {
+      "CONSTRUCCION": {
+        "rate": 0.007,
+        "code": "4100",
+        "description": "Construcción de edificios",
+        "retention_rate": 0.007
+      }
+    },
+    "Cali": {
+      "CONSTRUCCION": {
+        "rate": 0.01104,
+        "code": "4100",
+        "description": "Construcción de edificios",
+        "retention_rate": 0.01104
+      }
+    }
+  },
+  
+  "withholding_tax": {
+    "employment": {
+      "ranges_uvt": [
+        {"min": 0, "max": 95, "rate": 0.00, "fixed_fee_uvt": 0},
+        {"min": 95, "max": 150, "rate": 0.19, "fixed_fee_uvt": 0},
+        {"min": 150, "max": 360, "rate": 0.28, "fixed_fee_uvt": 10.45},
+        {"min": 360, "max": 640, "rate": 0.33, "fixed_fee_uvt": 69.29},
+        {"min": 640, "max": 945, "rate": 0.35, "fixed_fee_uvt": 162.75},
+        {"min": 945, "max": 2300, "rate": 0.37, "fixed_fee_uvt": 269.50},
+        {"min": 2300, "max": null, "rate": 0.39, "fixed_fee_uvt": 770.85}
+      ]
+    },
+    "services": {
+      "general": {
+        "rate": 0.11,
+        "description": "Servicios generales",
+        "min_amount_uvt": 4
+      },
+      "construction": {
+        "rate": 0.02,
+        "description": "Contratos de construcción y urbanización",
+        "min_amount_uvt": 4
+      },
+      "professional": {
+        "rate": 0.11,
+        "description": "Servicios profesionales",
+        "min_amount_uvt": 4
+      }
+    }
+  },
+  
+  "social_security": {
+    "health": {
+      "employee": 0.04,
+      "employer": 0.085,
+      "total": 0.125
+    },
+    "pension": {
+      "employee": 0.04,
+      "employer": 0.12,
+      "total": 0.16
+    },
+    "arl": {
+      "class_I": 0.00522,
+      "class_II": 0.01044,
+      "class_III": 0.02436,
+      "class_IV": 0.04350,
+      "class_V": 0.06960
+    },
+    "parafiscales": {
+      "sena": 0.02,
+      "icbf": 0.03,
+      "cajas": 0.04
+    }
+  },
+  
+  "payroll": {
+    "minimum_wage": 1500000,
+    "transport_allowance": 220000,
+    "solidarity_fund": {
+      "rate": 0.01,
+      "applies_above_smmlv": 4
+    },
+    "sunday_surcharge": 0.90,
+    "night_hours_start": "19:00"
+  },
+  
+  "legal_references": {
+    "uvt_decree": "Decreto pendiente 2026",
+    "vat_statute": "Estatuto Tributario Art. 468",
+    "ica_law": "Ley 14 de 1983, Ley 56 de 1981",
+    "withholding_decree": "Decreto proyectado 2026",
+    "labor_reform": "Ley 114-1 de 2025"
+  }
+}
