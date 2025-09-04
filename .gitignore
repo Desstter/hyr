@@ -78,11 +78,21 @@ next-env.d.ts
 .eslintcache
 .stylelintcache
 
-# Frontend build artifacts
+# Frontend build artifacts (specific paths to avoid blocking source code)
 construction-admin/.next/
 construction-admin/out/
 construction-admin/build/
 construction-admin/*.tsbuildinfo
+construction-admin/node_modules/
+
+# But keep all source code and configs
+!construction-admin/src/
+!construction-admin/components/
+!construction-admin/lib/
+!construction-admin/public/
+!construction-admin/package.json
+!construction-admin/*.config.*
+!construction-admin/*.json
 
 # ==================== DATABASE & STORAGE ====================
 # SQLite databases (if any)
