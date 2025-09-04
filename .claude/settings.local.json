@@ -48,7 +48,13 @@
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\backend\\routes/**)",
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src\\app\\contractors/**)",
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\backend\\routes/**)",
-      "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src\\lib\\api/**)"
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src\\lib\\api/**)",
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\.git/**)",
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)",
+      "Bash(git submodule:*)",
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin/**)",
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src/**)",
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)"
     ],
     "deny": [],
     "ask": []
