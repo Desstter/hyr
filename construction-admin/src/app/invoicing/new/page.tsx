@@ -17,34 +17,13 @@ import {
   Calculator, 
   Eye,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Download
 } from 'lucide-react';
 
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  unit_price: number;
-}
-
-interface InvoiceCalculations {
-  subtotal: number;
-  vat_amount: number;
-  reteica_amount: number;
-  total_amount: number;
-}
-
-interface CreatedInvoice {
-  id: string;
-  invoice_number: string;
-  client_name: string;
-  client_nit: string;
-  city: string;
-  cufe: string;
-  dian_validation_status: string;
-  xml_ubl_content: string;
-  calculations: InvoiceCalculations;
-  created_at: string;
-}
+// Importar servicio API real
+import { invoicingService } from '@/lib/api';
+import type { InvoiceItem, InvoiceCalculations, ElectronicInvoice } from '@/lib/api/types';
 
 export default function NewInvoicePage() {
   const [formData, setFormData] = useState({
@@ -65,27 +44,14 @@ export default function NewInvoicePage() {
     total_amount: 0
   });
 
-  const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(null);
+  const [createdInvoice, setCreatedInvoice] = useState<ElectronicInvoice | null>(null);
   const [showXmlDialog, setShowXmlDialog] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // Recalcular totales cuando cambien los items
+  // Recalcular totales cuando cambien los items usando el servicio real
   React.useEffect(() => {
-    const subtotal = items.reduce((sum, item) => {
-      return sum + (item.quantity * item.unit_price);
-    }, 0);
-
-    // Cálculos simplificados (19% IVA, 0.966% ReteICA Bogotá)
-    const vatAmount = subtotal * 0.19;
-    const reteicaAmount = formData.city === 'Bogota' ? subtotal * 0.00966 : 0;
-    const totalAmount = subtotal + vatAmount - reteicaAmount;
-
-    setCalculations({
-      subtotal,
-      vat_amount: vatAmount,
-      reteica_amount: reteicaAmount,
-      total_amount: totalAmount
-    });
+    const newCalculations = invoicingService.calculateTotals(items, formData.city);
+    setCalculations(newCalculations);
   }, [items, formData.city]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -114,21 +80,25 @@ export default function NewInvoicePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validaciones
-    if (!formData.client_name) {
-      toast({
-        title: "Error",
-        description: "El nombre del cliente es requerido",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Filtrar items válidos
     const validItems = items.filter(item => item.description && item.quantity > 0 && item.unit_price > 0);
-    if (validItems.length === 0) {
+    
+    // Crear request object
+    const invoiceRequest = {
+      client_name: formData.client_name,
+      client_nit: formData.client_nit,
+      city: formData.city,
+      items: validItems,
+      notes: formData.notes,
+      year: new Date().getFullYear()
+    };
+
+    // Validar usando el servicio
+    const validationErrors = invoicingService.validateInvoiceData(invoiceRequest);
+    if (validationErrors.length > 0) {
       toast({
-        title: "Error",
-        description: "Debe agregar al menos un ítem válido",
+        title: "Error de Validación",
+        description: validationErrors[0],
         variant: "destructive",
       });
       return;
@@ -137,93 +107,35 @@ export default function NewInvoicePage() {
     setCreating(true);
 
     try {
-      // Simular creación de factura
-      // En implementación real:
-      // const response = await fetch('/api/invoicing/invoices', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ ...formData, items: validItems })
-      // });
-
-      // Mock response
-      const mockInvoice = {
-        id: 'inv-' + Date.now(),
-        invoice_number: 'SETT000012',
-        client_name: formData.client_name,
-        client_nit: formData.client_nit,
-        city: formData.city,
-        cufe: 'ABC12345-DEF6-7890-GHIJ-KLMNOPQRSTUV',
-        dian_validation_status: 'ACEPTADO_SIMULADO',
-        xml_ubl_content: generateMockXML(),
-        calculations,
-        created_at: new Date().toISOString()
-      };
-
-      setTimeout(() => {
-        setCreatedInvoice(mockInvoice);
-        setCreating(false);
-        
-        toast({
-          title: "✅ Factura creada exitosamente",
-          description: `Factura ${mockInvoice.invoice_number} generada con CUFE`,
-        });
-      }, 2000);
+      console.log('🚀 Creando factura electrónica con API real...');
+      
+      // Crear factura usando API real
+      const newInvoice = await invoicingService.createInvoice(invoiceRequest);
+      
+      setCreatedInvoice(newInvoice);
+      
+      toast({
+        title: "✅ Factura creada exitosamente",
+        description: `Factura ${newInvoice.invoice_number} generada con CUFE real`,
+      });
 
     } catch (error) {
-      console.error('Error creando factura:', error);
+      console.error('❌ Error creando factura:', error);
       toast({
         title: "Error",
-        description: "No se pudo crear la factura",
+        description: error instanceof Error ? error.message : "No se pudo crear la factura",
         variant: "destructive",
       });
+    } finally {
       setCreating(false);
     }
   };
 
-  const generateMockXML = () => {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
-    <UBLVersionID>2.1</UBLVersionID>
-    <CustomizationID>DIAN 2.1</CustomizationID>
-    <ID>SETT000012</ID>
-    <UUID>ABC12345-DEF6-7890-GHIJ-KLMNOPQRSTUV</UUID>
-    <IssueDate>${new Date().toISOString().split('T')[0]}</IssueDate>
-    <InvoiceTypeCode>1</InvoiceTypeCode>
-    <DocumentCurrencyCode>COP</DocumentCurrencyCode>
-    
-    <!-- Proveedor -->
-    <AccountingSupplierParty>
-        <Party>
-            <PartyName>
-                <Name>HYR CONSTRUCTORA & SOLDADURA S.A.S.</Name>
-            </PartyName>
-            <PartyTaxScheme>
-                <CompanyID>900123456</CompanyID>
-                <TaxScheme>
-                    <ID>01</ID>
-                    <Name>IVA</Name>
-                </TaxScheme>
-            </PartyTaxScheme>
-        </Party>
-    </AccountingSupplierParty>
-    
-    <!-- Cliente -->
-    <AccountingCustomerParty>
-        <Party>
-            <PartyName>
-                <Name>${formData.client_name}</Name>
-            </PartyName>
-        </Party>
-    </AccountingCustomerParty>
-    
-    <!-- Totales -->
-    <LegalMonetaryTotal>
-        <LineExtensionAmount currencyID="COP">${calculations.subtotal.toFixed(2)}</LineExtensionAmount>
-        <TaxInclusiveAmount currencyID="COP">${calculations.total_amount.toFixed(2)}</TaxInclusiveAmount>
-        <PayableAmount currencyID="COP">${calculations.total_amount.toFixed(2)}</PayableAmount>
-    </LegalMonetaryTotal>
-    
-</Invoice>`;
+  // Función para descargar XML UBL usando el servicio
+  const downloadXML = () => {
+    if (createdInvoice) {
+      invoicingService.downloadXML(createdInvoice);
+    }
   };
 
   if (createdInvoice) {
@@ -249,7 +161,7 @@ export default function NewInvoicePage() {
               <div>
                 <Label className="text-sm font-medium">Total</Label>
                 <p className="text-lg font-bold">
-                  ${createdInvoice.calculations.total_amount.toLocaleString('es-CO')}
+                  ${createdInvoice.total_amount.toLocaleString('es-CO')}
                 </p>
               </div>
               <div>
@@ -263,7 +175,7 @@ export default function NewInvoicePage() {
             <div className="space-y-2">
               <Label className="text-sm font-medium">CUFE (Código Único)</Label>
               <p className="font-mono text-sm bg-white p-2 rounded border">
-                {createdInvoice.cufe}
+                {invoicingService.formatCUFE(createdInvoice.cufe)}
               </p>
             </div>
 
@@ -282,6 +194,12 @@ export default function NewInvoicePage() {
                   <pre className="text-xs bg-gray-100 p-4 rounded overflow-auto">
                     {createdInvoice.xml_ubl_content}
                   </pre>
+                  <div className="flex justify-end mt-4">
+                    <Button onClick={downloadXML} variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar XML
+                    </Button>
+                  </div>
                 </DialogContent>
               </Dialog>
 

@@ -6,7 +6,6 @@
 export type Currency = 'COP' | 'USD' | 'EUR';
 export type ProjectStatus = 'planned' | 'in_progress' | 'on_hold' | 'completed';
 export type ExpenseCategory = 'materials' | 'labor' | 'equipment' | 'overhead';
-export type PaymentCategory = 'tax' | 'insurance' | 'permit' | 'equipment' | 'other';
 export type PersonnelStatus = 'active' | 'inactive' | 'terminated';
 export type PersonnelDepartment = 'construccion' | 'soldadura' | 'administracion' | 'mantenimiento';
 export type PersonnelPosition = 'soldador' | 'operario' | 'supervisor' | 'capataz' | 'ayudante' | 'administrador' | 'gerente';
@@ -196,6 +195,99 @@ export interface PayrollDetail {
   // Relaciones
   personnel?: Personnel;
   payroll_period?: PayrollPeriod;
+}
+
+// =====================================================
+// FACTURACIÓN ELECTRÓNICA DIAN
+// =====================================================
+
+export type DIANValidationStatus = 'PENDIENTE' | 'ACEPTADO_SIMULADO' | 'RECHAZADO_SIMULADO' | 'ACEPTADO' | 'RECHAZADO';
+
+export interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface InvoiceCalculations {
+  subtotal: number;
+  vat_amount: number;
+  reteica_amount: number;
+  total_amount: number;
+}
+
+export interface ElectronicInvoice {
+  id: string;
+  invoice_number: string;
+  client_name: string;
+  client_nit?: string;
+  city: string;
+  
+  // Montos calculados
+  subtotal: number;
+  vat_amount: number;
+  reteica_amount: number;
+  total_amount: number;
+  
+  // DIAN
+  cufe: string;
+  xml_ubl_content?: string;
+  dian_validation_status: DIANValidationStatus;
+  
+  // Items de la factura
+  line_items: InvoiceItem[];
+  
+  // Cálculos detallados (incluidos en respuesta del backend)
+  calculations?: InvoiceCalculations & {
+    vat_rate: number;
+  };
+  
+  // Metadatos
+  created_at: string;
+  
+  // Respuesta DIAN (incluida en creación)
+  dian_response?: DIANResponse;
+}
+
+export interface DIANResponse {
+  status: DIANValidationStatus;
+  code: string;
+  message: string;
+  timestamp: string;
+  trackingId?: string;
+  errors?: string[];
+}
+
+export interface CreateInvoiceRequest {
+  client_name: string;
+  client_nit?: string;
+  city: string;
+  items: InvoiceItem[];
+  year?: number;
+  notes?: string;
+  due_days?: number;
+}
+
+export interface InvoiceListFilters {
+  client_name?: string;
+  city?: string;
+  status?: DIANValidationStatus;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface InvoiceStats {
+  total_count: number;
+  total_amount: number;
+  avg_amount: number;
+  by_status: {
+    ACEPTADO: number;
+    RECHAZADO: number;
+    PENDIENTE: number;
+  };
+  by_city: Record<string, number>;
 }
 
 // =====================================================

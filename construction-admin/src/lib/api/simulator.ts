@@ -320,12 +320,112 @@ import * as React from 'react';
 // SERVICE OBJECT EXPORT
 // =====================================================
 
+// =====================================================
+// GESTIÓN DE ESTIMACIONES GUARDADAS
+// =====================================================
+
+export async function getSavedEstimations(): Promise<SavedEstimation[]> {
+  const response = await fetch(`${API_BASE}/saved-estimations`);
+  if (!response.ok) {
+    throw new Error('Error al cargar estimaciones guardadas');
+  }
+  return response.json();
+}
+
+export async function duplicateEstimation(estimationId: string): Promise<SavedEstimation> {
+  const response = await fetch(`${API_BASE}/duplicate-estimation/${estimationId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error('Error al duplicar estimación');
+  }
+  
+  return response.json();
+}
+
+export async function deleteEstimation(estimationId: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/estimations/${estimationId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Error al eliminar estimación');
+  }
+  
+  return response.json();
+}
+
+export async function convertEstimationToProject(data: {
+  estimation_id: string;
+  project_name: string;
+  client_id: string;
+  description: string;
+  start_date: string;
+  estimated_end_date: string;
+}): Promise<any> {
+  const response = await fetch(`${API_BASE}/convert-to-project`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Error al convertir estimación a proyecto');
+  }
+  
+  return response.json();
+}
+
+// =====================================================
+// HOOK PARA ESTIMACIONES GUARDADAS
+// =====================================================
+
+export function useSavedEstimations() {
+  const [estimations, setEstimations] = React.useState<SavedEstimation[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchEstimations = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getSavedEstimations();
+      setEstimations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchEstimations();
+  }, [fetchEstimations]);
+
+  return { 
+    estimations, 
+    loading, 
+    error, 
+    refetch: fetchEstimations 
+  };
+}
+
 export const simulatorService = {
   getTemplates,
   getPresets,
   calculateEstimation,
   saveEstimation,
   createProjectFromEstimation,
+  getSavedEstimations,
+  duplicateEstimation,
+  deleteEstimation,
+  convertEstimationToProject,
   formatCurrency,
   formatPercentage,
   calculateTotalByCategory,

@@ -369,4 +369,119 @@ router.get('/:id/time-entries', async (req, res) => {
     }
 });
 
+// =====================================================
+// ASIGNACIONES A PROYECTOS
+// =====================================================
+
+// Obtener asignaciones de un empleado
+router.get('/:id/assignments', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await db.query(`
+            SELECT 
+                pa.id as assignment_id,
+                pa.project_id,
+                pr.name as project_name,
+                pr.status as project_status,
+                c.name as client_name,
+                pa.role,
+                pa.expected_hours_per_day,
+                pa.is_primary_project,
+                pa.priority,
+                pa.status as assignment_status,
+                pa.start_date,
+                pa.end_date,
+                pa.notes
+            FROM project_assignments pa
+            JOIN projects pr ON pa.project_id = pr.id
+            LEFT JOIN clients c ON pr.client_id = c.id
+            WHERE pa.personnel_id = $1
+            AND pa.status IN ('active', 'paused')
+            ORDER BY pa.is_primary_project DESC, pa.priority ASC, pr.name
+        `, [id]);
+        
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Asignar empleado a proyecto
+router.post('/:id/assign', async (req, res) => {
+    try {
+        const { id: personnel_id } = req.params;
+        const { project_id, role, hours_per_day = 8, is_primary = false } = req.body;
+        
+        if (!project_id) {
+            return res.status(400).json({ error: 'project_id es requerido' });
+        }
+        
+        // Verificar que el empleado existe
+        const personnelCheck = await db.query('SELECT id, name FROM personnel WHERE id = $1', [personnel_id]);
+        if (personnelCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Empleado no encontrado' });
+        }
+        
+        // Verificar que el proyecto existe
+        const projectCheck = await db.query('SELECT id, name FROM projects WHERE id = $1', [project_id]);
+        if (projectCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Proyecto no encontrado' });
+        }
+        
+        const result = await db.query(`
+            INSERT INTO project_assignments (
+                personnel_id, project_id, start_date, role,
+                expected_hours_per_day, is_primary_project, status, notes, created_by
+            ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, 'active', $6, 'api_personnel')
+            ON CONFLICT (personnel_id, project_id, start_date) DO UPDATE SET
+                expected_hours_per_day = EXCLUDED.expected_hours_per_day,
+                role = EXCLUDED.role,
+                is_primary_project = EXCLUDED.is_primary_project,
+                status = 'active',
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `, [
+            personnel_id, 
+            project_id, 
+            role || 'trabajador',
+            hours_per_day,
+            is_primary,
+            `Asignado via API personnel - ${role || 'trabajador'}`
+        ]);
+        
+        res.status(201).json({
+            message: `Empleado ${personnelCheck.rows[0].name} asignado a ${projectCheck.rows[0].name}`,
+            assignment: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Desasignar empleado de proyecto
+router.delete('/:id/unassign/:projectId', async (req, res) => {
+    try {
+        const { id: personnel_id, projectId: project_id } = req.params;
+        
+        const result = await db.query(`
+            UPDATE project_assignments 
+            SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE personnel_id = $1 AND project_id = $2 AND status = 'active'
+            RETURNING *
+        `, [personnel_id, project_id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontró asignación activa para desasignar' });
+        }
+        
+        res.json({
+            message: 'Empleado desasignado exitosamente',
+            assignment: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

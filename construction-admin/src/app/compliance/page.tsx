@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,92 +14,35 @@ import {
   Clock,
   Plus,
   Download,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react';
+import { 
+  useComplianceDashboard, 
+  useUpcomingObligations, 
+  getDianStatusBadge, 
+  getPriorityBadge, 
+  formatCurrency, 
+  formatPercentage 
+} from '@/lib/api/compliance';
 
-interface ComplianceStats {
-  invoices: {
-    total: number;
-    today: number;
-    accepted_percentage: number;
-  };
-  payroll: {
-    current_period: string;
-    total_employees: number;
-    last_generated: string;
-  };
-  pila: {
-    last_period: string;
-    status: string;
-    total_contributions: number;
-  };
-  contractors: {
-    total: number;
-    document_support_count: number;
-  };
-}
 
 export default function CompliancePage() {
   const router = useRouter();
-  const [stats, setStats] = useState<ComplianceStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { stats, loading, error, refetch } = useComplianceDashboard(30000); // Refresh every 30 seconds
+  const { obligations, loading: obligationsLoading } = useUpcomingObligations();
 
-  useEffect(() => {
-    // Simular carga de estadísticas de compliance
-    const loadStats = async () => {
-      try {
-        // En implementación real, cargar desde APIs
-        const mockStats: ComplianceStats = {
-          invoices: {
-            total: 12,
-            today: 3,
-            accepted_percentage: 91.7
-          },
-          payroll: {
-            current_period: "2025-09",
-            total_employees: 7,
-            last_generated: "2025-09-01"
-          },
-          pila: {
-            last_period: "2025-08",
-            status: "GENERADO",
-            total_contributions: 2845623
-          },
-          contractors: {
-            total: 8,
-            document_support_count: 15
-          }
-        };
-        
-        setTimeout(() => {
-          setStats(mockStats);
-          setLoading(false);
-        }, 1000);
-        
-      } catch (error) {
-        console.error('Error cargando estadísticas:', error);
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, []);
-
-  const getStatusBadge = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'ACEPTADO_SIMULADO':
-      case 'ACEPTADO':
-        return <Badge className="bg-green-100 text-green-800">Aceptado</Badge>;
-      case 'GENERADO':
-        return <Badge className="bg-blue-100 text-blue-800">Generado</Badge>;
-      case 'ENVIADO':
-        return <Badge className="bg-yellow-100 text-yellow-800">Enviado</Badge>;
-      case 'RECHAZADO_SIMULADO':
-      case 'RECHAZADO':
-        return <Badge className="bg-red-100 text-red-800">Rechazado</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">Pendiente</Badge>;
-    }
+  const getStatusBadgeComponent = (status: string) => {
+    const badge = getDianStatusBadge(status);
+    const colorClass = {
+      'green': 'bg-green-100 text-green-800',
+      'red': 'bg-red-100 text-red-800',
+      'yellow': 'bg-yellow-100 text-yellow-800',
+      'blue': 'bg-blue-100 text-blue-800',
+      'gray': 'bg-gray-100 text-gray-600'
+    }[badge.color] || 'bg-gray-100 text-gray-800';
+    
+    return <Badge className={colorClass}>{badge.text}</Badge>;
   };
 
   if (loading) {
@@ -119,12 +61,40 @@ export default function CompliancePage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <h1 className="text-3xl font-bold mb-6">Dashboard de Cumplimiento</h1>
+        <Card className="border-red-200">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-red-800 mb-2">Error al cargar datos</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={refetch} variant="outline" className="border-red-300">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard de Cumplimiento</h1>
-        <div className="text-sm text-gray-500">
-          Actualizado: {new Date().toLocaleDateString('es-CO')}
+        <div className="flex items-center gap-4">
+          <Button onClick={refetch} variant="outline" size="sm" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+          <div className="text-sm text-gray-500">
+            Actualizado: {stats?.summary.last_updated ? 
+              new Date(stats.summary.last_updated).toLocaleString('es-CO') : 
+              'Cargando...'
+            }
+          </div>
         </div>
       </div>
 
@@ -145,7 +115,7 @@ export default function CompliancePage() {
             <div className="flex items-center mt-2">
               <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
               <span className="text-xs text-green-600">
-                {stats?.invoices.accepted_percentage || 0}% aceptadas
+                {formatPercentage(stats?.invoices.accepted_percentage || 0)} aceptadas
               </span>
             </div>
           </CardContent>
@@ -160,12 +130,15 @@ export default function CompliancePage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.payroll.total_employees || 0}</div>
             <p className="text-xs text-gray-600">
-              Período: {stats?.payroll.current_period}
+              Período: {stats?.payroll.current_period || 'N/A'}
             </p>
             <div className="flex items-center mt-2">
               <Clock className="h-3 w-3 text-blue-500 mr-1" />
               <span className="text-xs text-blue-600">
-                Generada: {stats?.payroll.last_generated}
+                {stats?.payroll.last_generated ? 
+                  `Generada: ${new Date(stats.payroll.last_generated).toLocaleDateString('es-CO')}` :
+                  'No generada'
+                }
               </span>
             </div>
           </CardContent>
@@ -179,13 +152,16 @@ export default function CompliancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(stats?.pila.total_contributions || 0).toLocaleString()}
+              {stats?.pila.total_contributions ? 
+                formatCurrency(stats.pila.total_contributions) : 
+                formatCurrency(0)
+              }
             </div>
             <p className="text-xs text-gray-600">
-              Período: {stats?.pila.last_period}
+              Período: {stats?.pila.last_period || 'Ninguno'}
             </p>
             <div className="mt-2">
-              {getStatusBadge(stats?.pila.status || 'PENDIENTE')}
+              {getStatusBadgeComponent(stats?.pila.status || 'SIN_DATOS')}
             </div>
           </CardContent>
         </Card>
@@ -202,9 +178,16 @@ export default function CompliancePage() {
               {stats?.contractors.document_support_count || 0} doc. soporte
             </p>
             <div className="flex items-center mt-2">
-              <AlertCircle className="h-3 w-3 text-orange-500 mr-1" />
-              <span className="text-xs text-orange-600">
-                3 no obligados
+              {stats?.contractors.total > 0 ? (
+                <AlertCircle className="h-3 w-3 text-orange-500 mr-1" />
+              ) : (
+                <AlertCircle className="h-3 w-3 text-gray-400 mr-1" />
+              )}
+              <span className={`text-xs ${stats?.contractors.total > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
+                {stats?.contractors.total > 0 ? 
+                  `${stats.contractors.not_obligated || 0} no obligados` :
+                  'Sin contratistas registrados'
+                }
               </span>
             </div>
           </CardContent>
@@ -285,21 +268,30 @@ export default function CompliancePage() {
               <span className="text-sm">Aceptadas</span>
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                <span className="font-medium">11</span>
+                <span className="font-medium">
+                  {(stats?.invoices.status_breakdown?.ACEPTADO || 0) + 
+                   (stats?.invoices.status_breakdown?.ACEPTADO_SIMULADO || 0)}
+                </span>
               </div>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">Pendientes</span>
               <div className="flex items-center">
                 <Clock className="h-4 w-4 text-yellow-500 mr-1" />
-                <span className="font-medium">1</span>
+                <span className="font-medium">
+                  {(stats?.invoices.status_breakdown?.ENVIADO || 0) + 
+                   (stats?.invoices.status_breakdown?.PENDIENTE || 0)}
+                </span>
               </div>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">Rechazadas</span>
               <div className="flex items-center">
                 <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                <span className="font-medium">0</span>
+                <span className="font-medium">
+                  {(stats?.invoices.status_breakdown?.RECHAZADO || 0) + 
+                   (stats?.invoices.status_breakdown?.RECHAZADO_SIMULADO || 0)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -313,18 +305,34 @@ export default function CompliancePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Nómina Octubre</span>
-              <Badge variant="outline">5 días</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">PILA Septiembre</span>
-              <Badge variant="outline">12 días</Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Declaración IVA</span>
-              <Badge variant="outline">18 días</Badge>
-            </div>
+            {obligationsLoading ? (
+              <div className="text-center py-4">
+                <Clock className="h-6 w-6 mx-auto mb-2 animate-spin text-gray-400" />
+                <p className="text-sm text-gray-500">Cargando obligaciones...</p>
+              </div>
+            ) : obligations && obligations.length > 0 ? (
+              obligations.slice(0, 3).map((obligation, index) => {
+                const priorityBadge = getPriorityBadge(obligation.priority);
+                return (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-sm">{obligation.description}</span>
+                    <Badge variant="outline" className={`text-xs ${
+                      obligation.priority === 'high' ? 'border-red-300 text-red-700' :
+                      obligation.priority === 'medium' ? 'border-yellow-300 text-yellow-700' :
+                      'border-green-300 text-green-700'
+                    }`}>
+                      {obligation.days_left} días
+                    </Badge>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm">No hay obligaciones programadas</p>
+                <p className="text-xs text-gray-400">Configure empleados y proyectos para ver fechas importantes</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
