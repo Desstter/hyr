@@ -74,7 +74,7 @@ export class PayrollService {
     totalCost: number;
     compliance2025: boolean;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/periods/${periodId}/process-2025`);
+    return apiClient.post<{ message: string; processed: number; totalCost: number; compliance2025: boolean; }>(`${this.endpoint}/periods/${periodId}/process-2025`);
   }
 
   /**
@@ -128,7 +128,7 @@ export class PayrollService {
       totalCompensationFund: number;
     };
   }> {
-    return apiClient.get<any>(`${this.endpoint}/periods/${periodId}/summary`);
+    return apiClient.get<{ totalEmployees: number; totalPayrollCost: number; totalDeductions: number; totalBenefits: number; netPayroll: number; payrollTax: { totalHealthEmployee: number; totalPensionEmployee: number; totalHealthEmployer: number; totalPensionEmployer: number; totalArl: number; totalSena: number; totalIcbf: number; totalCompensationFund: number; }; }>(`${this.endpoint}/periods/${periodId}/summary`);
   }
 
   /**
@@ -152,7 +152,7 @@ export class PayrollService {
       aportes: number;
     };
   }> {
-    return apiClient.get<any>(`${this.endpoint}/periods/${periodId}/pila`);
+    return apiClient.get<{ periodo: string; empleados: Array<{ documento: string; nombre: string; salario: number; diasTrabajados: number; salud: number; pension: number; arl: number; parafiscales: number; }>; totales: { empleados: number; salarios: number; aportes: number; }; }>(`${this.endpoint}/periods/${periodId}/pila`);
   }
 
   /**
@@ -190,7 +190,7 @@ export class PayrollService {
       ahorroLaw114_1: number;
     };
   }> {
-    return apiClient.get<any>(`${this.endpoint}/periods/${periodId}/pila-2025`);
+    return apiClient.get<{ periodo: string; version: string; empleados: Array<{ documento: string; nombre: string; tipoDocumento: string; salario: number; diasTrabajados: number; salud: number; pension: number; arl: number; arlClass: string; parafiscales: number; law_114_1_exempt?: boolean; centroTrabajo: string; }>; totales: { empleados: number; salarios: number; aportes: number; fspTotal: number; ahorroLaw114_1: number; }; }>(`${this.endpoint}/periods/${periodId}/pila-2025`);
   }
 
   /**
@@ -215,7 +215,7 @@ export class PayrollService {
       neto: number;
     }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/certificates/${personnelId}/${year}`);
+    return apiClient.get<{ empleado: { nombre: string; documento: string; cargo: string; fechaIngreso: string; }; ingresos: { salarioTotal: number; prestaciones: number; deducciones: number; }; periodos: Array<{ mes: string; salario: number; deducciones: number; neto: number; }>; }>(`${this.endpoint}/certificates/${personnelId}/${year}`);
   }
 
   // =====================================================
@@ -242,7 +242,7 @@ export class PayrollService {
     indemnizacion?: number;
     totalLiquidacion: number;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/settlement/${personnelId}`, { endDate });
+    return apiClient.post<{ empleado: { nombre: string; documento: string; fechaIngreso: string; fechaSalida: string; }; prestaciones: { cesantias: number; prima: number; vacaciones: number; total: number; }; indemnizacion?: number; totalLiquidacion: number; }>(`${this.endpoint}/settlement/${personnelId}`, { endDate });
   }
 
   // =====================================================
@@ -275,7 +275,7 @@ export class PayrollService {
     };
     riesgosARL: Record<string, number>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/config/colombia`);
+    return apiClient.get<{ salarioMinimo: number; auxilioTransporte: number; deducciones: { salud: number; pension: number; solidaridad: number; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; }; parafiscales: { sena: number; icbf: number; cajas: number; }; riesgosARL: Record<string, number>; }>(`${this.endpoint}/config/colombia`);
   }
 
   /**
@@ -326,7 +326,7 @@ export class PayrollService {
       workTypes: string[];
     }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/config/2025`);
+    return apiClient.get<{ year: number; version: string; salarioMinimo: number; auxilioTransporte: number; uvt: number; deducciones: { salud: number; pension: number; solidaridad: number; retencionFuente: { exempt_min: number; rate_brackets: Array<{ min: number; max: number; rate: number; }>; }; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; interesesCesantias: number; }; parafiscales: { sena: { rate: number; min_employees: number; }; icbf: { rate: number; min_employees: number; }; cajas: { rate: number; min_employees: number; }; }; arlClasses: Record<string, { rate: number; description: string; workTypes: string[]; }>; }>(`${this.endpoint}/config/2025`);
   }
 
   /**
@@ -364,7 +364,7 @@ export class PayrollService {
     netoAPagar: number;
     costoTotalEmpleador: number;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/simulate`, data);
+    return apiClient.post<{ salarioBase: number; salarioRegular: number; salarioExtra: number; auxilioTransporte: number; deducciones: { salud: number; pension: number; solidaridad: number; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; }; parafiscales: { sena: number; icbf: number; cajas: number; }; netoAPagar: number; costoTotalEmpleador: number; }>(`${this.endpoint}/simulate`, data);
   }
 
   // =====================================================
@@ -396,7 +396,7 @@ export class PayrollService {
       percentage: number;
     }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/stats`, filters);
+    return apiClient.get<{ totalEmployees: number; totalPayrollCost: number; avgSalary: number; payrollHistory: Array<{ month: string; cost: number; employees: number; avgSalary: number; }>; departmentCosts: Array<{ department: string; totalCost: number; employees: number; percentage: number; }>; }>(`${this.endpoint}/stats`, filters);
   }
 }
 

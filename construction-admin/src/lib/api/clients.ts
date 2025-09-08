@@ -4,7 +4,7 @@
 // =====================================================
 
 import { apiClient } from './client';
-import type { Client } from './types';
+import type { Client, Project } from './types';
 
 export class ClientsService {
   private endpoint = '/clients';
@@ -88,8 +88,8 @@ export class ClientsService {
   /**
    * Obtener proyectos de un cliente
    */
-  async getProjects(clientId: string): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.endpoint}/${clientId}/projects`);
+  async getProjects(clientId: string): Promise<Project[]> {
+    return apiClient.get<Project[]>(`${this.endpoint}/${clientId}/projects`);
   }
 
   /**
@@ -104,7 +104,16 @@ export class ClientsService {
     projectsOnTime: number;
     projectsDelayed: number;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/${clientId}/stats`);
+    type ClientStats = {
+      totalProjects: number;
+      activeProjects: number;
+      completedProjects: number;
+      totalRevenue: number;
+      averageProjectValue: number;
+      projectsOnTime: number;
+      projectsDelayed: number;
+    };
+    return apiClient.get<ClientStats>(`${this.endpoint}/${clientId}/stats`);
   }
 }
 

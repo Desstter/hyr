@@ -1,6 +1,17 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+interface ExpenseData {
+  date: string;
+  amount: number;
+}
+
+interface ProjectData {
+  status: string;
+  endDate?: string;
+  budget: number;
+}
+
 export function formatCurrency(amount: number, currency: string = 'COP'): string {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -97,7 +108,7 @@ export function getCategoryLabel(category: string, locale: string = 'es'): strin
   return labels[locale as keyof typeof labels]?.[category as keyof typeof labels.es] || category;
 }
 
-export function calculateMonthlyData(expenses: any[], projects: any[]) {
+export function calculateMonthlyData(expenses: ExpenseData[], projects: ProjectData[]) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   

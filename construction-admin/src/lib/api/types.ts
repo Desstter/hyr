@@ -458,11 +458,11 @@ export interface ProcessPayrollRequest {
   period_id: string;
 }
 
-// Update requests
-export interface UpdatePersonnelRequest extends Partial<CreatePersonnelRequest> {}
-export interface UpdateProjectRequest extends Partial<CreateProjectRequest> {}
-export interface UpdateTimeEntryRequest extends Partial<CreateTimeEntryRequest> {}
-export interface UpdateExpenseRequest extends Partial<CreateExpenseRequest> {}
+// Update requests - Partial types for update operations
+export type UpdatePersonnelRequest = Partial<CreatePersonnelRequest>;
+export type UpdateProjectRequest = Partial<CreateProjectRequest>;
+export type UpdateTimeEntryRequest = Partial<CreateTimeEntryRequest>;
+export type UpdateExpenseRequest = Partial<CreateExpenseRequest>;
 
 // List responses
 export interface ApiListResponse<T> {
@@ -635,4 +635,4 @@ export interface CreateBudgetItemRequest {
   currency?: Currency;
 }
 
-export interface UpdateBudgetItemRequest extends Partial<CreateBudgetItemRequest> {}
+export type UpdateBudgetItemRequest = Partial<CreateBudgetItemRequest>;

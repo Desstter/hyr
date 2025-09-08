@@ -18,7 +18,8 @@ import {
   DollarSign,
   FileText
 } from 'lucide-react';
-import { personnelService } from '@/lib/api';
+import { personnelService, pilaService, useGeneratePILA, usePILASubmissions } from '@/lib/api';
+import type { PILAEmployee, PILASubmission } from '@/lib/api/pila';
 
 interface Employee {
   id: string;
@@ -31,19 +32,6 @@ interface Employee {
   status: string;
 }
 
-interface PILASubmission {
-  id: string;
-  period: string;
-  employee_count: number;
-  total_salary: number;
-  total_health: number;
-  total_pension: number;
-  total_arl: number;
-  total_contributions: number;
-  file_path: string;
-  status: string;
-  created_at: string;
-}
 
 export default function PILAPage() {
   const [period, setPeriod] = useState(() => {
@@ -59,14 +47,16 @@ export default function PILAPage() {
   
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [submission, setSubmission] = useState<PILASubmission | null>(null);
-  const [loading, setLoading] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
-  const [recentSubmissions, setRecentSubmissions] = useState<PILASubmission[]>([]);
+  
+  // Usar hooks personalizados
+  const { generatePILA, generating } = useGeneratePILA();
+  const { submissions: recentSubmissions, loading: loadingSubmissions, loadSubmissions } = usePILASubmissions();
 
   useEffect(() => {
     loadEmployees();
-    loadRecentSubmissions();
-  }, []);
+    loadSubmissions({ limit: 5 });
+  }, [loadSubmissions]);
 
   const loadEmployees = async () => {
     try {
@@ -100,36 +90,8 @@ export default function PILAPage() {
     }
   };
 
-  const loadRecentSubmissions = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/pila?limit=5');
-      const data = await response.json();
-      
-      if (data.success) {
-        setRecentSubmissions(data.data.submissions || []);
-      }
-    } catch (error) {
-      console.error('Error loading recent submissions:', error);
-      // Mock data for demo
-      setRecentSubmissions([
-        {
-          id: 'pila-2025-08',
-          period: '2025-08',
-          employee_count: 7,
-          total_salary: 17500000,
-          total_health: 1487500,
-          total_pension: 2800000,
-          total_arl: 434625,
-          total_contributions: 4722125,
-          file_path: '/exports/pila/PILA_HYR_2025-08.csv',
-          status: 'GENERADO',
-          created_at: '2025-09-01T10:30:00Z'
-        }
-      ]);
-    }
-  };
 
-  const generatePILA = async () => {
+  const handleGeneratePILA = async () => {
     if (!period) {
       toast({
         title: "Error",
@@ -148,80 +110,33 @@ export default function PILAPage() {
       return;
     }
 
-    setLoading(true);
-
     try {
-      const response = await fetch(`http://localhost:3001/api/pila/${period}/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          employees: employees.map(emp => ({
-            id: emp.id,
-            document_number: emp.document_number,
-            name: emp.name,
-            salary: getEmployeeSalary(emp),
-            position: emp.position
-          }))
-        })
-      });
+      const pilaEmployees: PILAEmployee[] = employees.map(emp => ({
+        id: emp.id,
+        document_number: emp.document_number,
+        name: emp.name,
+        salary: getEmployeeSalary(emp),
+        position: emp.position
+      }));
 
-      const data = await response.json();
-
-      if (data.success) {
-        setSubmission(data.data);
-        toast({
-          title: "✅ PILA generado exitosamente",
-          description: `Archivo CSV creado para período ${period}`,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Error generando PILA",
-          variant: "destructive",
-        });
-      }
-
-    } catch (error) {
-      console.error('Error generating PILA:', error);
+      const result = await generatePILA(period, pilaEmployees);
+      setSubmission(result);
       
-      // Mock response for demo
-      const totalSalary = employees.reduce((sum, emp) => sum + getEmployeeSalary(emp), 0);
-      const mockSubmission: PILASubmission = {
-        id: 'pila-' + period,
-        period,
-        employee_count: employees.length,
-        total_salary: totalSalary,
-        total_health: Math.round(totalSalary * 0.085), // 8.5% salud patronal
-        total_pension: Math.round(totalSalary * 0.12), // 12% pensión patronal
-        total_arl: Math.round(totalSalary * 0.0696), // 6.96% ARL Clase V
-        total_contributions: Math.round(totalSalary * (0.085 + 0.12 + 0.0696)),
-        file_path: `/exports/pila/PILA_HYR_${period}.csv`,
-        status: 'GENERADO',
-        created_at: new Date().toISOString()
-      };
-
-      setTimeout(() => {
-        setSubmission(mockSubmission);
-        toast({
-          title: "✅ PILA generado exitosamente (Demo)",
-          description: `Archivo CSV creado para período ${period}`,
-        });
-        setLoading(false);
-      }, 2000);
-      return;
+      // Refrescar la lista de submissions
+      loadSubmissions({ limit: 5 });
+    } catch (error) {
+      // El hook useGeneratePILA ya maneja los errores
+      console.error('Error in handleGeneratePILA:', error);
     }
-
-    setLoading(false);
   };
 
-  const downloadCSV = (filePath: string) => {
-    // En implementación real, descargar desde el backend
-    toast({
-      title: "Descarga iniciada",
-      description: "El archivo PILA se está descargando",
-    });
+  const handleDownloadCSV = async (period: string) => {
+    try {
+      await pilaService.downloadPILA(period);
+    } catch (error) {
+      // El servicio ya maneja los errores y muestra toasts
+      console.error('Error in handleDownloadCSV:', error);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -237,11 +152,11 @@ export default function PILAPage() {
     }
   };
 
-  if (loadingEmployees) {
+  if (loadingEmployees || loadingSubmissions) {
     return (
       <div className="p-6 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Cargando empleados...</span>
+        <span className="ml-2">Cargando datos...</span>
       </div>
     );
   }
@@ -285,11 +200,11 @@ export default function PILAPage() {
             </div>
 
             <Button 
-              onClick={generatePILA} 
-              disabled={loading || !period}
+              onClick={handleGeneratePILA} 
+              disabled={generating || !period}
               className="w-full"
             >
-              {loading ? (
+              {generating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Generando PILA...
@@ -362,7 +277,7 @@ export default function PILAPage() {
               </div>
 
               <div className="flex space-x-2">
-                <Button onClick={() => downloadCSV(submission.file_path)}>
+                <Button onClick={() => handleDownloadCSV(submission.period)}>
                   <Download className="h-4 w-4 mr-2" />
                   Descargar CSV
                 </Button>
@@ -449,7 +364,7 @@ export default function PILAPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => downloadCSV(submission.file_path)}
+                      onClick={() => handleDownloadCSV(submission.period)}
                     >
                       <Download className="h-4 w-4" />
                     </Button>

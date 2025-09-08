@@ -259,13 +259,13 @@ export function generateLaborCertificateData(employee: PILAEmployeeData, periodo
 /**
  * Validar estructura de datos PILA
  */
-export function validatePILAData(data: any): data is PILAReportData {
+export function validatePILAData(data: unknown): data is PILAReportData {
   return (
     data &&
     typeof data.periodo === 'string' &&
     Array.isArray(data.empleados) &&
     data.empleados.length > 0 &&
-    data.empleados.every((emp: any) => 
+    data.empleados.every((emp: unknown) => 
       emp.documento && emp.nombre && typeof emp.salario === 'number'
     )
   );

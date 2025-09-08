@@ -19,6 +19,13 @@ export interface CostTemplate {
   items: CostTemplateItem[];
 }
 
+interface HistoricalProject {
+  category: string;
+  description?: string;
+  spent_total: number;
+  budget_total: number;
+}
+
 export type Currency = 'COP' | 'USD' | 'EUR';
 
 export interface CostCalculationResult {
@@ -266,7 +273,7 @@ export function formatEstimateForDisplay(
  */
 export function estimateProjectCostFromHistory(
   projectType: string,
-  historicalProjects: any[],
+  historicalProjects: HistoricalProject[],
   projectSize: number
 ): number {
   // Filter similar projects

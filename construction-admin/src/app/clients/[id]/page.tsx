@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ClientStatsCard } from '@/components/clients/client-stats-card';
 import { ClientProjectsList } from '@/components/clients/client-projects-list';
 import { ClientDialog } from '@/components/clients/client-dialog';
@@ -18,8 +17,7 @@ import {
   Phone, 
   Mail, 
   MapPin,
-  User,
-  Loader2
+  User
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,11 +33,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  useEffect(() => {
-    loadClient();
-  }, [params.id]);
-
-  const loadClient = async () => {
+  const loadClient = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -54,7 +48,11 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    loadClient();
+  }, [loadClient]);
 
   const handleClientUpdated = () => {
     setShowEditDialog(false);

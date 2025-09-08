@@ -1,14 +1,14 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { useState, use, useEffect } from 'react';
+import { useState, use, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api, handleApiError } from '@/lib/api';
-import type { Project, Client, Expense, TimeEntry } from '@/lib/api';
+import type { Project, Client, Expense, TimeEntry, Personnel } from '@/lib/api';
 import { formatCurrency, formatDate, getProjectStatusColor, getProjectStatusLabel } from '@/lib/finance';
 import { useTranslations } from '@/lib/i18n';
 import { ArrowLeft, Edit, Users, DollarSign, Clock } from 'lucide-react';
@@ -27,17 +27,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [assignedPersonnel, setAssignedPersonnel] = useState<any[]>([]);
+  const [assignedPersonnel, setAssignedPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Load project data
-  useEffect(() => {
-    loadProjectData();
-  }, [id]);
-
-  const loadProjectData = async () => {
+  const loadProjectData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -86,7 +80,12 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // Load project data
+  useEffect(() => {
+    loadProjectData();
+  }, [loadProjectData]);
   
   // Loading state
   if (loading) {

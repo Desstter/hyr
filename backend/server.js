@@ -1,3 +1,6 @@
+// Cargar variables de entorno
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { db } = require('./database/connection');
@@ -26,6 +29,7 @@ app.use('/api/invoicing', require('./routes/invoicing'));
 app.use('/api/dian', require('./routes/dian-payroll'));
 app.use('/api/pila', require('./routes/pila-csv'));
 app.use('/api/contractors', require('./routes/contractors'));
+app.use('/api/files', require('./routes/files'));
 
 // Ruta de salud del servidor
 app.get('/health', (req, res) => {

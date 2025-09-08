@@ -7,13 +7,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { personnelService } from '@/lib/api/personnel';
 import type { Personnel } from '@/lib/api/types';
 
+interface PersonnelAssignment {
+  id: string;
+  personnel_id: string;
+  project_id: string;
+  expected_hours_per_day?: number;
+  project_name: string;
+}
+
 export interface PersonnelAssignmentSummary {
   personnel_id: string;
   total_projects: number;
   total_hours_per_day: number;
   availability_status: string;
   can_take_more_work: boolean;
-  assignments: any[];
+  assignments: PersonnelAssignment[];
 }
 
 export function usePersonnelAssignments(personnel: Personnel[]) {
@@ -61,9 +69,10 @@ export function usePersonnelAssignments(personnel: Personnel[]) {
       );
       
       setAssignmentsSummary(summaryMap);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching personnel assignments:', error);
-      setError(error.message || 'Error desconocido');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setError(errorMessage || 'Error desconocido');
     } finally {
       setLoading(false);
     }
@@ -114,8 +123,9 @@ export function usePersonnelAssignmentActions() {
     try {
       const result = await personnelService.assignToProject(personnelId, data);
       return result;
-    } catch (error: any) {
-      setError(error.message || 'Error al asignar empleado');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setError(errorMessage || 'Error al asignar empleado');
       throw error;
     } finally {
       setLoading(false);
@@ -129,8 +139,9 @@ export function usePersonnelAssignmentActions() {
     try {
       const result = await personnelService.unassignFromProject(personnelId, projectId);
       return result;
-    } catch (error: any) {
-      setError(error.message || 'Error al desasignar empleado');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setError(errorMessage || 'Error al desasignar empleado');
       throw error;
     } finally {
       setLoading(false);

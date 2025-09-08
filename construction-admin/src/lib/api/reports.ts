@@ -155,7 +155,31 @@ export class ReportsService {
       proyectosEnRiesgo: number;
     };
   }> {
-    return apiClient.get<any>(`${this.endpoint}/monthly-financial`, { month, year });
+    type MonthlyFinancialReport = {
+      resumen: {
+        ingresosTotales: number;
+        gastosTotales: number;
+        utilidadNeta: number;
+        margenUtilidad: number;
+        nominaMensual: number;
+        proyectosActivos: number;
+        empleadosActivos: number;
+      };
+      gastosPorCategoria: Record<string, number>;
+      proyectosMasRentables: Array<{
+        id: string;
+        nombre: string;
+        margenUtilidad: number;
+        ingresoGenerado: number;
+      }>;
+      indicadores: {
+        costoPorHora: number;
+        horasProducidas: number;
+        eficienciaPresupuestaria: number;
+        proyectosEnRiesgo: number;
+      };
+    };
+    return apiClient.get<MonthlyFinancialReport>(`${this.endpoint}/monthly-financial`, { month, year });
   }
 
   /**
@@ -169,7 +193,15 @@ export class ReportsService {
     proyectosCompletados: Array<{ mes: string; cantidad: number }>;
     empleadosActivos: Array<{ mes: string; cantidad: number }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/financial-trends`);
+    type FinancialTrends = {
+      ingresos: Array<{ mes: string; monto: number }>;
+      gastos: Array<{ mes: string; monto: number }>;
+      nomina: Array<{ mes: string; monto: number }>;
+      utilidad: Array<{ mes: string; monto: number }>;
+      proyectosCompletados: Array<{ mes: string; cantidad: number }>;
+      empleadosActivos: Array<{ mes: string; cantidad: number }>;
+    };
+    return apiClient.get<FinancialTrends>(`${this.endpoint}/financial-trends`);
   }
 
   // =====================================================
@@ -199,7 +231,23 @@ export class ReportsService {
       indirectos: number;
     }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/expenses-by-category`, filters);
+    type ExpensesByCategory = {
+      total: number;
+      categorias: Array<{
+        categoria: string;
+        monto: number;
+        porcentaje: number;
+        transacciones: number;
+      }>;
+      tendenciaMensual: Array<{
+        mes: string;
+        materiales: number;
+        manoObra: number;
+        equipos: number;
+        indirectos: number;
+      }>;
+    };
+    return apiClient.get<ExpensesByCategory>(`${this.endpoint}/expenses-by-category`, filters);
   }
 
   /**
@@ -217,7 +265,16 @@ export class ReportsService {
     monto: number;
     proveedor: string;
   }>> {
-    return apiClient.get<any>(`${this.endpoint}/top-expenses`, { limit, ...filters });
+    type TopExpense = {
+      id: string;
+      fecha: string;
+      proyecto: string;
+      categoria: string;
+      descripcion: string;
+      monto: number;
+      proveedor: string;
+    };
+    return apiClient.get<TopExpense[]>(`${this.endpoint}/top-expenses`, { limit, ...filters });
   }
 
   // =====================================================
@@ -231,11 +288,24 @@ export class ReportsService {
     tipo: 'financiero' | 'proyectos' | 'nomina' | 'productividad';
     fechaInicio: string;
     fechaFin: string;
-    filtros?: Record<string, any>;
+    filtros?: Record<string, unknown>;
     incluirGraficos?: boolean;
     formato?: 'json' | 'excel' | 'pdf';
-  }): Promise<any> {
-    return apiClient.post<any>(`${this.endpoint}/custom`, config);
+  }): Promise<{
+    id: string;
+    tipo: string;
+    datos: unknown;
+    generadoEn: string;
+    parametros: Record<string, unknown>;
+  }> {
+    type CustomReportResponse = {
+      id: string;
+      tipo: string;
+      datos: unknown;
+      generadoEn: string;
+      parametros: Record<string, unknown>;
+    };
+    return apiClient.post<CustomReportResponse>(`${this.endpoint}/custom`, config);
   }
 
   /**
@@ -245,11 +315,19 @@ export class ReportsService {
     id: string;
     tipo: string;
     fechaGeneracion: string;
-    parametros: Record<string, any>;
+    parametros: Record<string, unknown>;
     tamano: string;
     url?: string;
   }>> {
-    return apiClient.get<any>(`${this.endpoint}/history`);
+    type ReportHistory = {
+      id: string;
+      tipo: string;
+      fechaGeneracion: string;
+      parametros: Record<string, unknown>;
+      tamano: string;
+      url?: string;
+    };
+    return apiClient.get<ReportHistory[]>(`${this.endpoint}/history`);
   }
 
   // =====================================================
@@ -273,7 +351,17 @@ export class ReportsService {
       comentario: string;
     }>;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/comparative`, config);
+    type ComparativeAnalysis = {
+      periodo1: Record<string, number>;
+      periodo2: Record<string, number>;
+      diferencias: Record<string, { absoluta: number; porcentual: number }>;
+      analisis: Array<{
+        metrica: string;
+        tendencia: 'mejora' | 'declive' | 'estable';
+        comentario: string;
+      }>;
+    };
+    return apiClient.post<ComparativeAnalysis>(`${this.endpoint}/comparative`, config);
   }
 
   /**
@@ -287,7 +375,15 @@ export class ReportsService {
     diasPromedio: number;
     rentabilidadTotal: number;
   }>> {
-    return apiClient.get<any>(`${this.endpoint}/project-type-analysis`);
+    type ProjectTypeAnalysis = {
+      tipo: string;
+      proyectos: number;
+      presupuestoPromedio: number;
+      margenPromedio: number;
+      diasPromedio: number;
+      rentabilidadTotal: number;
+    };
+    return apiClient.get<ProjectTypeAnalysis[]>(`${this.endpoint}/project-type-analysis`);
   }
 
   // =====================================================
@@ -297,7 +393,7 @@ export class ReportsService {
   /**
    * Exportar reporte a Excel
    */
-  async exportToExcel(reportType: string, filters?: Record<string, any>): Promise<Blob> {
+  async exportToExcel(reportType: string, filters?: Record<string, unknown>): Promise<Blob> {
     const response = await fetch(`${apiClient['baseUrl']}${this.endpoint}/export/excel`, {
       method: 'POST',
       headers: {
@@ -316,7 +412,7 @@ export class ReportsService {
   /**
    * Exportar reporte a PDF
    */
-  async exportToPDF(reportType: string, filters?: Record<string, any>): Promise<Blob> {
+  async exportToPDF(reportType: string, filters?: Record<string, unknown>): Promise<Blob> {
     const response = await fetch(`${apiClient['baseUrl']}${this.endpoint}/export/pdf`, {
       method: 'POST',
       headers: {

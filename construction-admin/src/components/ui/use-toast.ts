@@ -21,7 +21,7 @@ export const toast = (props: ToastProps) => {
   }
 
   // Configure toast options
-  const options: any = {
+  const options: { duration: number; action?: { label: string; onClick: () => void; } } = {
     duration: duration || 4000,
   };
 

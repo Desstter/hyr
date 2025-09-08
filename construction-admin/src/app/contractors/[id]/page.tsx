@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/components/ui/use-toast';
 import { 
   ArrowLeft,
   User,
@@ -18,7 +17,6 @@ import {
   Edit,
   Plus,
   Loader2,
-  CheckCircle,
   AlertCircle,
   Download
 } from 'lucide-react';

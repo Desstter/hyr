@@ -8,6 +8,7 @@ import type {
   Project,
   CreateProjectRequest,
   Expense,
+  Personnel,
   CreateExpenseRequest,
   TimeEntry,
   ProjectProfitabilityReport,
@@ -126,8 +127,8 @@ export class ProjectsService {
   /**
    * Obtener personal asignado al proyecto
    */
-  async getAssignedPersonnel(projectId: string): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.endpoint}/${projectId}/personnel`);
+  async getAssignedPersonnel(projectId: string): Promise<Personnel[]> {
+    return apiClient.get<Personnel[]>(`${this.endpoint}/${projectId}/personnel`);
   }
 
   // =====================================================
@@ -163,7 +164,33 @@ export class ProjectsService {
     profitMarginPercent: number;
     status: 'NORMAL' | 'ALERTA' | 'SOBREPRESUPUESTO';
   }> {
-    return apiClient.get<any>(`${this.endpoint}/${projectId}/profitability`);
+    type Profitability = {
+      budget: {
+        materials: number;
+        labor: number;
+        equipment: number;
+        overhead: number;
+        total: number;
+      };
+      spent: {
+        materials: number;
+        labor: number;
+        equipment: number;
+        overhead: number;
+        total: number;
+      };
+      remaining: {
+        materials: number;
+        labor: number;
+        equipment: number;
+        overhead: number;
+        total: number;
+      };
+      profitMargin: number;
+      profitMarginPercent: number;
+      status: 'NORMAL' | 'ALERTA' | 'SOBREPRESUPUESTO';
+    };
+    return apiClient.get<Profitability>(`${this.endpoint}/${projectId}/profitability`);
   }
 
   /**
@@ -236,7 +263,17 @@ export class ProjectsService {
     averageMargin: number;
     projectsOverBudget: number;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/stats`);
+    type ProjectStats = {
+      total: number;
+      active: number;
+      completed: number;
+      onHold: number;
+      totalBudget: number;
+      totalSpent: number;
+      averageMargin: number;
+      projectsOverBudget: number;
+    };
+    return apiClient.get<ProjectStats>(`${this.endpoint}/stats`);
   }
 
   /**
@@ -250,7 +287,15 @@ export class ProjectsService {
     topExpenseCategories: Array<{ category: string; amount: number; percentage: number }>;
     monthlyTrend: Array<{ month: string; spent: number; budget: number }>;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/${projectId}/financial-summary`);
+    type FinancialSummary = {
+      budget: Record<string, number>;
+      spent: Record<string, number>;
+      remaining: Record<string, number>;
+      recentExpenses: Expense[];
+      topExpenseCategories: Array<{ category: string; amount: number; percentage: number }>;
+      monthlyTrend: Array<{ month: string; spent: number; budget: number }>;
+    };
+    return apiClient.get<FinancialSummary>(`${this.endpoint}/${projectId}/financial-summary`);
   }
 }
 

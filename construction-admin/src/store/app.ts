@@ -4,6 +4,15 @@ import { subMonths, format } from 'date-fns';
 
 export type DateFilter = 'last_1m' | 'last_3m' | 'last_6m' | 'last_1y' | 'all';
 
+// TYPE FIX: Define proper interface for deleted items
+export interface DeletedItem {
+  type: 'project' | 'employee' | 'client' | 'expense' | 'other';
+  id: string;
+  name: string;
+  data: Record<string, unknown>;
+  timestamp: string;
+}
+
 interface AppState {
   // UI Preferences
   dateFilter: DateFilter;
@@ -13,9 +22,9 @@ interface AppState {
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   
-  // Undo functionality
-  lastDeletedItem: any;
-  setLastDeletedItem: (item: any) => void;
+  // Undo functionality - TYPE FIX: Replace any with proper interface
+  lastDeletedItem: DeletedItem | null;
+  setLastDeletedItem: (item: DeletedItem | null) => void;
   clearLastDeletedItem: () => void;
   
   // Date range helpers
@@ -36,7 +45,7 @@ export const useAppStore = create<AppState>()(
       setLanguage: (lang: 'es-CO' | 'en-US') => set({ language: lang }),
       setTheme: (theme: 'light' | 'dark' | 'system') => set({ theme }),
       
-      setLastDeletedItem: (item: any) => set({ lastDeletedItem: item }),
+      setLastDeletedItem: (item: DeletedItem | null) => set({ lastDeletedItem: item }),
       clearLastDeletedItem: () => set({ lastDeletedItem: null }),
 
       // Computed date range based on current filter

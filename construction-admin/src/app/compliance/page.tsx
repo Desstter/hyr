@@ -312,7 +312,6 @@ export default function CompliancePage() {
               </div>
             ) : obligations && obligations.length > 0 ? (
               obligations.slice(0, 3).map((obligation, index) => {
-                const priorityBadge = getPriorityBadge(obligation.priority);
                 return (
                   <div key={index} className="flex justify-between items-center">
                     <span className="text-sm">{obligation.description}</span>
