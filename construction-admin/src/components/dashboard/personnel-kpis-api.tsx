@@ -8,7 +8,7 @@ import type { EmployeeProductivity } from '@/lib/api';
 import { Users, Clock, DollarSign, TrendingUp } from 'lucide-react';
 
 // Utility function to safely convert to number for .toFixed() operations
-const safeNumber = (value: any): number => {
+const safeNumber = (value: unknown): number => {
   const num = Number(value);
   return isNaN(num) ? 0 : num;
 };

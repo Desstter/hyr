@@ -29,6 +29,8 @@ import { budgetItemsApi } from './budget-items';
 import { settingsService, SettingsService } from './settings';
 import { complianceService, ComplianceService } from './compliance';
 import { invoicingService, InvoicingService } from './invoicing';
+import { pilaService, useGeneratePILA, usePILASubmissions } from './pila';
+import { filesService } from './files';
 
 // Re-exportar servicios
 export { clientsService, ClientsService } from './clients';
@@ -44,6 +46,8 @@ export { budgetItemsApi } from './budget-items';
 export { settingsService, SettingsService } from './settings';
 export { complianceService, ComplianceService } from './compliance';
 export { invoicingService, InvoicingService } from './invoicing';
+export { pilaService, useGeneratePILA, usePILASubmissions } from './pila';
+export { filesService } from './files';
 
 // =====================================================
 // CONFIGURACIÓN Y UTILIDADES
@@ -52,8 +56,9 @@ export { invoicingService, InvoicingService } from './invoicing';
 /**
  * Configurar la URL base del API
  */
-export const configureApi = (baseUrl: string) => {
-  apiClient.setBaseUrl(baseUrl);
+// DEPRECATED: Use runtime configuration via appConfig.ts instead
+export const configureApi = async () => {
+  await apiClient.initialize();
 };
 
 /**
@@ -89,6 +94,8 @@ export const api = {
   settings: settingsService,
   compliance: complianceService,
   invoicing: invoicingService,
+  pila: pilaService,
+  files: filesService,
 } as const;
 
 // =====================================================
@@ -126,8 +133,9 @@ export const useApiState = () => {
 // CONSTANTES DE CONFIGURACIÓN
 // =====================================================
 
+// SECURITY FIX: Removed hardcoded URL, use runtime configuration
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:3001/api',
+  // BASE_URL removed - use appConfig.ts for runtime configuration
   TIMEOUT: 30000, // 30 segundos
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1 segundo
@@ -152,6 +160,6 @@ export interface ApiSuccessResponse {
 
 export interface ApiErrorResponse {
   error: string;
-  details?: any;
+  details?: unknown;
   code?: string;
 }

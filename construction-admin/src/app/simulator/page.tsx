@@ -57,7 +57,7 @@ export default function CostSimulatorPage() {
         ]);
         setTemplates(templatesData);
         setClients(clientsData);
-      } catch (err) {
+      } catch {
         setError('Error al cargar templates de costos');
       } finally {
         setTemplatesLoading(false);
@@ -98,7 +98,7 @@ export default function CostSimulatorPage() {
   };
 
   // Actualizar item
-  const updateItem = (index: number, field: keyof EstimationItem, value: any) => {
+  const updateItem = (index: number, field: keyof EstimationItem, value: string | number) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -128,7 +128,7 @@ export default function CostSimulatorPage() {
       });
       
       setEstimation(result);
-    } catch (err) {
+    } catch {
       setError('Error al calcular estimación');
     } finally {
       setLoading(false);
@@ -392,7 +392,7 @@ export default function CostSimulatorPage() {
                   <div className="text-center py-8 text-gray-500">
                     <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No hay items agregados</p>
-                    <p className="text-sm">Haga clic en "Agregar Item" para comenzar</p>
+                    <p className="text-sm">Haga clic en &quot;Agregar Item&quot; para comenzar</p>
                   </div>
                 )}
               </div>
@@ -554,7 +554,7 @@ export default function CostSimulatorPage() {
               <CardContent className="text-center py-12">
                 <Calculator className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                 <p className="text-gray-500">
-                  Configure su proyecto y haga clic en "Calcular Estimación"
+                  Configure su proyecto y haga clic en &quot;Calcular Estimación&quot;
                 </p>
               </CardContent>
             </Card>

@@ -19,6 +19,13 @@ export interface CostItem {
   cost_per_unit: number;
 }
 
+interface ProjectCreationResponse {
+  success: boolean;
+  project_id: string;
+  project_name: string;
+  budget_total: number;
+}
+
 export interface EstimationItem {
   category: 'materials' | 'labor' | 'equipment';
   subcategory: string;
@@ -80,14 +87,16 @@ export interface SavedEstimation {
   status: string;
 }
 
-const API_BASE = 'http://localhost:3001/api/simulator';
+// SECURITY FIX: Use runtime configuration instead of hardcoded URL
+import { apiUrl } from '../appConfig';
 
 // =====================================================
 // TEMPLATES Y CONFIGURACIONES
 // =====================================================
 
 export async function getTemplates(): Promise<CostTemplate[]> {
-  const response = await fetch(`${API_BASE}/templates`);
+  const url = await apiUrl('/simulator/templates');
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Error al cargar templates de costos');
   }
@@ -95,7 +104,8 @@ export async function getTemplates(): Promise<CostTemplate[]> {
 }
 
 export async function getPresets(templateType: string): Promise<ProjectPreset[]> {
-  const response = await fetch(`${API_BASE}/presets/${templateType}`);
+  const url = await apiUrl(`/simulator/presets/${templateType}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Error al cargar presets del template');
   }
@@ -112,7 +122,8 @@ export async function calculateEstimation(data: {
   project_duration_days?: number;
   apply_benefits?: boolean;
 }): Promise<CostEstimation> {
-  const response = await fetch(`${API_BASE}/calculate`, {
+  const url = await apiUrl('/simulator/calculate');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -134,7 +145,8 @@ export async function saveEstimation(data: {
   estimation_data: CostEstimation;
   notes?: string;
 }): Promise<SavedEstimation> {
-  const response = await fetch(`${API_BASE}/save-estimation`, {
+  const url = await apiUrl('/simulator/save-estimation');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -156,8 +168,9 @@ export async function createProjectFromEstimation(data: {
   description: string;
   start_date: string;
   estimated_end_date: string;
-}): Promise<any> {
-  const response = await fetch(`${API_BASE}/create-project-from-estimation`, {
+}): Promise<ProjectCreationResponse> {
+  const url = await apiUrl('/simulator/create-project-from-estimation');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -325,7 +338,8 @@ import * as React from 'react';
 // =====================================================
 
 export async function getSavedEstimations(): Promise<SavedEstimation[]> {
-  const response = await fetch(`${API_BASE}/saved-estimations`);
+  const url = await apiUrl('/simulator/saved-estimations');
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Error al cargar estimaciones guardadas');
   }
@@ -333,7 +347,8 @@ export async function getSavedEstimations(): Promise<SavedEstimation[]> {
 }
 
 export async function duplicateEstimation(estimationId: string): Promise<SavedEstimation> {
-  const response = await fetch(`${API_BASE}/duplicate-estimation/${estimationId}`, {
+  const url = await apiUrl(`/simulator/duplicate-estimation/${estimationId}`);
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -348,7 +363,8 @@ export async function duplicateEstimation(estimationId: string): Promise<SavedEs
 }
 
 export async function deleteEstimation(estimationId: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/estimations/${estimationId}`, {
+  const url = await apiUrl(`/simulator/estimations/${estimationId}`);
+  const response = await fetch(url, {
     method: 'DELETE',
   });
   
@@ -366,8 +382,9 @@ export async function convertEstimationToProject(data: {
   description: string;
   start_date: string;
   estimated_end_date: string;
-}): Promise<any> {
-  const response = await fetch(`${API_BASE}/convert-to-project`, {
+}): Promise<ProjectCreationResponse> {
+  const url = await apiUrl('/simulator/convert-to-project');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

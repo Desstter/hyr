@@ -172,7 +172,7 @@ export class CalendarService {
     upcoming_deadlines: ProjectEvent[];
     pending_payments: CalendarEvent[];
   }> {
-    return apiClient.get<any>(`${this.endpoint}/summary`);
+    return apiClient.get<{ total_events: number; events_this_week: number; events_this_month: number; overdue_events: number; upcoming_payroll: PayrollEvent[]; upcoming_deadlines: ProjectEvent[]; pending_payments: CalendarEvent[]; }>(`${this.endpoint}/summary`);
   }
 
   /**
@@ -184,7 +184,7 @@ export class CalendarService {
     overdue: CalendarEvent[];
     nextPayroll?: PayrollEvent;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/dashboard`);
+    return apiClient.get<{ today: CalendarEvent[]; thisWeek: CalendarEvent[]; overdue: CalendarEvent[]; nextPayroll?: PayrollEvent; }>(`${this.endpoint}/dashboard`);
   }
 
   // =====================================================
@@ -248,7 +248,7 @@ export class CalendarService {
     completion_rate: number;
     downloadUrl?: string;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/reports/events`, period);
+    return apiClient.get<{ total_events: number; events_by_type: Record<string, number>; events_by_status: Record<string, number>; overdue_count: number; completion_rate: number; downloadUrl?: string; }>(`${this.endpoint}/reports/events`, period);
   }
 }
 

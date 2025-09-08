@@ -54,7 +54,7 @@ export interface PayrollSettings {
   arlTarifa: number;
 }
 
-export interface Setting<T = any> {
+export interface Setting<T = unknown> {
   key: string;
   value: T;
   category: string;
@@ -88,8 +88,8 @@ export class SettingsService {
   /**
    * Obtener configuraciones por categoría
    */
-  async getByCategory(category: string): Promise<Record<string, any>> {
-    return apiClient.get<Record<string, any>>(`${this.endpoint}/category/${category}`);
+  async getByCategory(category: string): Promise<Record<string, unknown>> {
+    return apiClient.get<Record<string, unknown>>(`${this.endpoint}/category/${category}`);
   }
 
   /**
@@ -107,7 +107,7 @@ export class SettingsService {
     message: string;
     data: Setting<T>;
   }> {
-    return apiClient.put<any>(`${this.endpoint}/${key}`, { value, description });
+    return apiClient.put<Setting>(`${this.endpoint}/${key}`, { value, description });
   }
 
   /**
@@ -123,25 +123,29 @@ export class SettingsService {
     message: string;
     data: Setting<T>;
   }> {
-    return apiClient.post<any>(`${this.endpoint}`, { key, value, category, description });
+    return apiClient.post<Setting>(`${this.endpoint}`, { key, value, category, description });
   }
 
   /**
    * Eliminar configuración
    */
   async delete(key: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete<any>(`${this.endpoint}/${key}`);
+    return apiClient.delete<{success: boolean}>(`${this.endpoint}/${key}`);
   }
 
   /**
    * Actualización masiva de configuraciones
    */
-  async bulkUpdate(settings: Record<string, any>): Promise<{
+  async bulkUpdate(settings: Record<string, unknown>): Promise<{
     success: boolean;
     message: string;
-    data: Array<{ key: string; value: any; updated_at: string }>;
+    data: Array<{ key: string; value: unknown; updated_at: string }>;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/bulk-update`, { settings });
+    return apiClient.post<{
+      success: boolean;
+      message: string;
+      data: Array<{ key: string; value: unknown; updated_at: string }>;
+    }>(`${this.endpoint}/bulk-update`, { settings });
   }
 
   /**
@@ -152,7 +156,7 @@ export class SettingsService {
     message: string;
     data: Setting;
   }> {
-    return apiClient.post<any>(`${this.endpoint}/reset/${key}`);
+    return apiClient.post<{success: boolean}>(`${this.endpoint}/reset/${key}`);
   }
 
   // =====================================================

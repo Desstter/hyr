@@ -1,33 +1,70 @@
 // =====================================================
 // CLIENTE API BASE - SISTEMA HYR CONSTRUCTORA & SOLDADURA
 // Cliente HTTP para conectar con backend Express PostgreSQL
+// SECURITY FIX: URLs hardcodeadas reemplazadas por configuración runtime
 // =====================================================
 
-const API_BASE_URL = 'http://localhost:3001/api';
+import { getAppConfig, apiUrlSync, type AppConfig } from '../appConfig';
+
+// TYPE FIX: Replace any with proper type for error data
+export interface ApiErrorData {
+  error?: string;
+  message?: string;
+  details?: Record<string, unknown>;
+  code?: string;
+}
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: any) {
+  constructor(public status: number, message: string, public data?: ApiErrorData) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
 export class ApiClient {
-  private baseUrl: string;
+  private config: AppConfig | null = null;
   private defaultHeaders: HeadersInit;
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor() {
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+  }
+
+  /**
+   * Inicializa la configuración del cliente API
+   * Debe ser llamado antes de usar el cliente
+   */
+  async initialize(): Promise<void> {
+    if (!this.config) {
+      this.config = await getAppConfig();
+    }
+  }
+
+  /**
+   * Obtiene la URL base configurada dinámicamente
+   */
+  private getBaseUrl(): string {
+    if (!this.config) {
+      throw new Error('ApiClient no inicializado. Llama a initialize() primero.');
+    }
+    
+    return process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3001/api'
+      : this.config.api.baseUrl;
   }
 
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    // Auto-inicializar si no está inicializado
+    if (!this.config) {
+      await this.initialize();
+    }
+    
+    const baseUrl = this.getBaseUrl();
+    const url = `${baseUrl}${endpoint}`;
     
     const config: RequestInit = {
       ...options,
@@ -107,7 +144,7 @@ export class ApiClient {
   // MÉTODOS HTTP BÁSICOS
   // =====================================================
 
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+  async get<T>(endpoint: string, params?: Record<string, string | number | boolean | null | undefined>): Promise<T> {
     let url = endpoint;
     
     if (params) {
@@ -129,21 +166,21 @@ export class ApiClient {
     });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
@@ -168,12 +205,21 @@ export class ApiClient {
   }
 
   removeAuthToken() {
-    const { Authorization, ...headers } = this.defaultHeaders as any;
+    const headers: HeadersInit = {};
+    Object.entries(this.defaultHeaders).forEach(([key, value]) => {
+      if (key !== 'Authorization') {
+        (headers as Record<string, string>)[key] = value as string;
+      }
+    });
     this.defaultHeaders = headers;
   }
 
-  setBaseUrl(url: string) {
-    this.baseUrl = url;
+  /**
+   * Actualiza la configuración del cliente (útil para testing)
+   */
+  async updateConfig(): Promise<void> {
+    this.config = null;
+    await this.initialize();
   }
 }
 

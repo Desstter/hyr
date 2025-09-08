@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { expenses, projects } from '@/data/fixtures';
 import { formatCurrency, formatDate, getCategoryLabel } from '@/lib/finance';
 import { useTranslations } from '@/lib/i18n';
-import { Search, Filter, Plus, Edit } from 'lucide-react';
+import { Search, Edit } from 'lucide-react';
 
 export function ExpensesTable() {
   const t = useTranslations('es');

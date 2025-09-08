@@ -100,11 +100,11 @@ export function ThemeSettings() {
     }
   };
 
-  const handleThemeChange = (field: keyof ThemeSettingsType, value: any) => {
+  const handleThemeChange = (field: keyof ThemeSettingsType, value: unknown) => {
     setThemeSettings(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePreferencesChange = (field: keyof AppPreferences, value: any) => {
+  const handlePreferencesChange = (field: keyof AppPreferences, value: unknown) => {
     setAppPreferences(prev => ({ ...prev, [field]: value }));
   };
 

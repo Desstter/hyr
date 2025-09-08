@@ -178,9 +178,10 @@ export function PersonnelTable({
               await personnelService.updateStatus(person.id!, person.status);
               onRefresh?.();
               toast.success(`Estado restaurado para ${person.name}`);
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('Error restoring status:', error);
-              toast.error('Error al restaurar estado: ' + (error?.message || 'Error desconocido'));
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              toast.error('Error al restaurar estado: ' + (errorMessage || 'Error desconocido'));
             }
           },
         },
@@ -188,9 +189,10 @@ export function PersonnelTable({
       });
       
       onRefresh?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error changing status:', error);
-      toast.error('Error al cambiar estado: ' + (error?.message || 'Error desconocido'));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error('Error al cambiar estado: ' + (errorMessage || 'Error desconocido'));
     } finally {
       setActionLoading(null);
     }
@@ -225,9 +227,9 @@ export function PersonnelTable({
       
       toast.success(`Empleado ${person.name} eliminado permanentemente de la base de datos`);
       onRefresh?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting personnel permanently:', error);
-      const errorMessage = error?.message || 'Error desconocido';
+      const errorMessage = (error instanceof Error ? error.message : String(error)) || 'Error desconocido';
       
       // Mostrar mensaje específico para empleados con registros
       if (errorMessage.includes('registros de horas') || errorMessage.includes('registros de nómina')) {

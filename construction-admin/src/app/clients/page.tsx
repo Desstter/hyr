@@ -6,7 +6,7 @@ import { ClientsTable } from '@/components/clients/clients-table';
 import type { Client } from '@/lib/api';
 import { ClientDialog } from '@/components/clients/client-dialog';
 import { useTranslations } from '@/lib/i18n';
-import { Plus, Building2, TrendingUp } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 
 export default function ClientsPage() {
   const t = useTranslations('es');

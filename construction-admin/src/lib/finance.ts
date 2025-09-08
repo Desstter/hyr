@@ -1,8 +1,19 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+interface ExpenseData {
+  date: string;
+  amount: number;
+}
+
+interface ProjectData {
+  status: string;
+  endDate?: string;
+  budget: number;
+}
+
 // Utility function to safely convert to number for calculations
-export const safeNumber = (value: any): number => {
+export const safeNumber = (value: unknown): number => {
   const num = Number(value);
   return isNaN(num) ? 0 : num;
 };
@@ -106,7 +117,7 @@ export function getCategoryLabel(category: string, locale: string = 'es'): strin
   return labels[locale as keyof typeof labels]?.[category as keyof typeof labels.es] || category;
 }
 
-export function calculateMonthlyData(expenses: any[], projects: any[]) {
+export function calculateMonthlyData(expenses: ExpenseData[], projects: ProjectData[]) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   

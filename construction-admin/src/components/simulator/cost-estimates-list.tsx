@@ -33,7 +33,7 @@ import {
   deleteEstimation, 
   convertEstimationToProject 
 } from '@/lib/api/simulator';
-import { downloadEstimatePDF } from '@/lib/pdf-generator';
+import { downloadAdvancedPDF } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
 
 interface CostEstimatesListProps {
@@ -114,16 +114,17 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
         address: 'Bogotá, Colombia'
       };
 
-      // Usar los datos de la estimación guardada
-      downloadEstimatePDF({
+      // Usar los datos de la estimación guardada con PDF profesional
+      await downloadAdvancedPDF({
         estimate: estimate.estimation_data,
         client: { name: estimate.client_name || 'Sin cliente' },
         businessInfo
       });
       
-      toast.success('PDF generado exitosamente');
+      toast.success('PDF profesional generado exitosamente');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al generar PDF';
+      console.error('Error generando PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error al generar PDF profesional';
       toast.error(errorMessage);
     }
   };

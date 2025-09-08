@@ -103,7 +103,10 @@ export default function PayrollGeneratePage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:3001/api/dian/payroll/${period}/generate`, {
+      // Use runtime configuration instead of hardcoded URL
+      const { apiUrl } = await import('@/lib/appConfig');
+      const url = await apiUrl(`/dian/payroll/${period}/generate`);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -139,29 +142,16 @@ export default function PayrollGeneratePage() {
     } catch (error) {
       console.error('Error generating payroll:', error);
       
-      // Mock response for demo
-      const mockPayroll: PayrollDocument = {
-        id: 'payroll-' + Date.now(),
-        cune: 'HYR2025090123456789ABCDEF1234567890ABCDEF12',
-        period,
-        employee_count: employees.length,
-        total_salary: employees.reduce((sum, emp) => sum + (Number(emp.monthly_salary) || (Number(emp.hourly_rate) || 0) * 192), 0),
-        total_deductions: employees.reduce((sum, emp) => sum + ((Number(emp.monthly_salary) || (Number(emp.hourly_rate) || 0) * 192) * 0.08), 0),
-        total_employer_cost: employees.reduce((sum, emp) => sum + ((Number(emp.monthly_salary) || (Number(emp.hourly_rate) || 0) * 192) * 1.58), 0),
-        dian_status: 'ACEPTADO_SIMULADO',
-        xml_content: generateMockXML(employees, period),
-        created_at: new Date().toISOString()
-      };
-
-      setTimeout(() => {
-        setGeneratedPayroll(mockPayroll);
-        toast({
-          title: "✅ Nómina generada exitosamente (Demo)",
-          description: `CUNE: ${mockPayroll.cune}`,
-        });
-        setLoading(false);
-      }, 2000);
-      return;
+      // FUNCTIONALITY FIX: Better error handling instead of fallback to mock
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast({
+        title: "❌ Error generando nómina",
+        description: `No se pudo conectar al servidor DIAN: ${errorMessage}. Verifique la conexión y los datos.`,
+        variant: "destructive",
+      });
+      
+      // Don't generate fake data - show proper error state
+      setGeneratedPayroll(null);
     }
 
     setLoading(false);

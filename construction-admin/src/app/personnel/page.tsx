@@ -35,7 +35,11 @@ export default function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+    active: number;
+    totalMonthlyCost: number;
+  } | null>(null);
 
   // Cargar datos de personal
   const loadPersonnel = async () => {
@@ -43,7 +47,7 @@ export default function PersonnelPage() {
       setLoading(true);
       setError(null);
       
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
       if (departmentFilter !== 'all') filters.department = departmentFilter;
       
@@ -54,9 +58,9 @@ export default function PersonnelPage() {
       
       setPersonnel(personnelData);
       setStats(statsData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading personnel:', err);
-      const errorMessage = err?.message || 'Error al cargar el personal. Por favor intente nuevamente.';
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el personal. Por favor intente nuevamente.';
       setError(errorMessage);
     } finally {
       setLoading(false);

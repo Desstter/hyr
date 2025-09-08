@@ -19,6 +19,16 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface ClientStats {
+  total_projects: string | number;
+  active_projects: string | number;
+  completed_projects: string | number;
+  projects_on_time: string | number;
+  projects_delayed: string | number;
+  total_revenue: string | number;
+  average_project_value: string | number;
+}
+
 interface ClientStatsCardProps {
   client: Client;
   className?: string;
@@ -26,7 +36,7 @@ interface ClientStatsCardProps {
 
 export function ClientStatsCard({ client, className }: ClientStatsCardProps) {
   const t = useTranslations('es');
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<ClientStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

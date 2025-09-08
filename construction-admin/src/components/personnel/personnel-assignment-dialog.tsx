@@ -113,7 +113,7 @@ export function PersonnelAssignmentDialog({
     try {
       const data = await personnelService.getAssignments(personnel.id);
       setAssignments(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading assignments:', error);
       toast.error('Error al cargar asignaciones: ' + (error.message || 'Error desconocido'));
     } finally {
@@ -126,7 +126,7 @@ export function PersonnelAssignmentDialog({
       const response = await projectsService.list({ status: 'in_progress,planned' });
       const projects = Array.isArray(response.data) ? response.data : response;
       setAvailableProjects(projects);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading projects:', error);
     }
   };
@@ -156,7 +156,7 @@ export function PersonnelAssignmentDialog({
       
       loadAssignments();
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al asignar empleado: ' + (error.message || 'Error desconocido'));
     }
   };
@@ -175,7 +175,7 @@ export function PersonnelAssignmentDialog({
       toast.success('Empleado desasignado exitosamente');
       loadAssignments();
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al desasignar empleado: ' + (error.message || 'Error desconocido'));
     }
   };

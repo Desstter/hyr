@@ -12,6 +12,14 @@ import type {
   EmployeeProductivity,
 } from './types';
 
+interface PersonnelAssignment {
+  id: string;
+  personnel_id: string;
+  project_id: string;
+  expected_hours_per_day?: number;
+  project_name: string;
+}
+
 export class PersonnelService {
   private endpoint = '/personnel';
 
@@ -142,7 +150,14 @@ export class PersonnelService {
     totalPay: number;
     averageHoursPerDay: number;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/${personnelId}/hours-summary`, filters);
+    type HoursSummary = {
+      totalHours: number;
+      overtimeHours: number;
+      regularHours: number;
+      totalPay: number;
+      averageHoursPerDay: number;
+    };
+    return apiClient.get<HoursSummary>(`${this.endpoint}/${personnelId}/hours-summary`, filters);
   }
 
   /**
@@ -173,8 +188,23 @@ export class PersonnelService {
   /**
    * Obtener asignaciones de un empleado
    */
-  async getAssignments(personnelId: string): Promise<any[]> {
-    return apiClient.get<any[]>(`${this.endpoint}/${personnelId}/assignments`);
+  async getAssignments(personnelId: string): Promise<{
+    id: string;
+    project_id: string;
+    project_name: string;
+    role?: string;
+    hours_per_day?: number;
+    is_primary?: boolean;
+  }[]> {
+    type Assignment = {
+      id: string;
+      project_id: string;
+      project_name: string;
+      role?: string;
+      hours_per_day?: number;
+      is_primary?: boolean;
+    };
+    return apiClient.get<Assignment[]>(`${this.endpoint}/${personnelId}/assignments`);
   }
 
   /**
@@ -185,22 +215,37 @@ export class PersonnelService {
     role?: string;
     hours_per_day?: number;
     is_primary?: boolean;
-  }): Promise<any> {
-    return apiClient.post<any>(`${this.endpoint}/${personnelId}/assign`, data);
+  }): Promise<{ success: boolean; assignment_id: string }> {
+    type AssignmentResponse = { success: boolean; assignment_id: string };
+    return apiClient.post<AssignmentResponse>(`${this.endpoint}/${personnelId}/assign`, data);
   }
 
   /**
    * Desasignar empleado de proyecto
    */
-  async unassignFromProject(personnelId: string, projectId: string): Promise<any> {
-    return apiClient.delete<any>(`${this.endpoint}/${personnelId}/unassign/${projectId}`);
+  async unassignFromProject(personnelId: string, projectId: string): Promise<{ success: boolean; message: string }> {
+    type UnassignResponse = { success: boolean; message: string };
+    return apiClient.delete<UnassignResponse>(`${this.endpoint}/${personnelId}/unassign/${projectId}`);
   }
 
   /**
    * Obtener disponibilidad de personal
    */
-  async getAvailability(): Promise<any[]> {
-    return apiClient.get<any[]>('/assignments/availability');
+  async getAvailability(): Promise<{
+    personnel_id: string;
+    personnel_name: string;
+    availability_status: 'available' | 'busy' | 'overloaded';
+    current_projects: number;
+    total_hours_week: number;
+  }[]> {
+    type Availability = {
+      personnel_id: string;
+      personnel_name: string;
+      availability_status: 'available' | 'busy' | 'overloaded';
+      current_projects: number;
+      total_hours_week: number;
+    };
+    return apiClient.get<Availability[]>('/assignments/availability');
   }
 
   /**
@@ -211,7 +256,7 @@ export class PersonnelService {
     total_hours_per_day: number;
     availability_status: string;
     can_take_more_work: boolean;
-    assignments: any[];
+    assignments: PersonnelAssignment[];
   }> {
     const assignments = await this.getAssignments(personnelId);
     const total_hours_per_day = assignments.reduce((sum, a) => sum + (a.expected_hours_per_day || 0), 0);
@@ -253,7 +298,15 @@ export class PersonnelService {
     averageHourlyRate: number;
     totalMonthlyCost: number;
   }> {
-    return apiClient.get<any>(`${this.endpoint}/stats`);
+    type PersonnelStats = {
+      total: number;
+      active: number;
+      byDepartment: Record<string, number>;
+      byPosition: Record<string, number>;
+      averageHourlyRate: number;
+      totalMonthlyCost: number;
+    };
+    return apiClient.get<PersonnelStats>(`${this.endpoint}/stats`);
   }
 
   // =====================================================
@@ -264,14 +317,14 @@ export class PersonnelService {
    * Crear empleado con retry automático
    */
   async createWithRetry(data: CreatePersonnelRequest, maxRetries: number = 2): Promise<Personnel> {
-    let lastError: any;
+    let lastError: Error;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await this.create(data);
-      } catch (error: any) {
-        lastError = error;
-        console.warn(`Create personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, error.message);
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`Create personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message);
         
         if (attempt < maxRetries) {
           // Esperar antes de reintentar (exponential backoff)
@@ -287,14 +340,14 @@ export class PersonnelService {
    * Actualizar empleado con retry automático
    */
   async updateWithRetry(id: string, data: Partial<CreatePersonnelRequest>, maxRetries: number = 2): Promise<Personnel> {
-    let lastError: any;
+    let lastError: Error;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await this.update(id, data);
-      } catch (error: any) {
-        lastError = error;
-        console.warn(`Update personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, error.message);
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`Update personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message);
         
         if (attempt < maxRetries) {
           // Esperar antes de reintentar (exponential backoff)
@@ -327,8 +380,9 @@ export class PersonnelService {
       }
       
       return personnel;
-    } catch (error: any) {
-      console.error('Error loading personnel, attempting fallback:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error loading personnel, attempting fallback:', errorMessage);
       
       // Intentar cargar desde cache si es reciente (menos de 5 minutos)
       if (typeof window !== 'undefined') {

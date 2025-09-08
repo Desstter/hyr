@@ -214,9 +214,9 @@ export function PersonnelDialog({
       
       onSuccess?.();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving personnel:', error);
-      const errorMessage = error?.message || 'Error desconocido al guardar empleado';
+      const errorMessage = (error instanceof Error ? error.message : String(error)) || 'Error desconocido al guardar empleado';
       toast.error(`Error al ${personnel?.id ? 'actualizar' : 'crear'} empleado: ${errorMessage}`);
     } finally {
       // Timeout para asegurar que loading se limpia incluso si hay errores inesperados

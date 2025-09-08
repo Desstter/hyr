@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, 
   FolderOpen, 
@@ -24,36 +25,43 @@ interface MobileFABProps {
   actions?: FABAction[];
 }
 
-const defaultActions: FABAction[] = [
-  {
-    icon: FolderOpen,
-    label: 'Nuevo Proyecto',
-    onClick: () => console.log('Nuevo proyecto'),
-    color: 'primary'
-  },
-  {
-    icon: Users,
-    label: 'Añadir Empleado',
-    onClick: () => console.log('Nuevo empleado'),
-    color: 'secondary'
-  },
-  {
-    icon: Receipt,
-    label: 'Registrar Gasto',
-    onClick: () => console.log('Nuevo gasto'),
-    color: 'warning'
-  },
-  {
-    icon: Calculator,
-    label: 'Simulador Costos',
-    onClick: () => console.log('Simulador'),
-    color: 'success'
-  }
-];
+// FUNCTIONALITY FIX: Replace console.log with actual navigation
+function createDefaultActions(router: ReturnType<typeof useRouter>): FABAction[] {
+  return [
+    {
+      icon: FolderOpen,
+      label: 'Nuevo Proyecto',
+      onClick: () => router.push('/projects?action=new'),
+      color: 'primary'
+    },
+    {
+      icon: Users,
+      label: 'Añadir Empleado',
+      onClick: () => router.push('/personnel?action=new'),
+      color: 'secondary'
+    },
+    {
+      icon: Receipt,
+      label: 'Registrar Gasto',
+      onClick: () => router.push('/expenses?action=new'),
+      color: 'warning'
+    },
+    {
+      icon: Calculator,
+      label: 'Simulador Costos',
+      onClick: () => router.push('/simulator'),
+      color: 'success'
+    }
+  ];
+}
 
-export function MobileFAB({ actions = defaultActions }: MobileFABProps) {
+export function MobileFAB({ actions }: MobileFABProps) {
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  
+  // Use default actions with router if none provided
+  const finalActions = actions || createDefaultActions(router);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,7 +99,7 @@ export function MobileFAB({ actions = defaultActions }: MobileFABProps) {
 
       {/* Action Buttons */}
       <div className="flex flex-col items-end space-y-3 mb-4">
-        {actions.map((action, index) => {
+        {finalActions.map((action, index) => {
           const Icon = action.icon;
           return (
             <div
@@ -103,7 +111,7 @@ export function MobileFAB({ actions = defaultActions }: MobileFABProps) {
                   : "opacity-0 translate-y-4 scale-75 pointer-events-none"
               )}
               style={{ 
-                transitionDelay: isOpen ? `${index * 50}ms` : `${(actions.length - index - 1) * 50}ms` 
+                transitionDelay: isOpen ? `${index * 50}ms` : `${(finalActions.length - index - 1) * 50}ms` 
               }}
             >
               {/* Label */}
@@ -151,19 +159,20 @@ export function MobileFAB({ actions = defaultActions }: MobileFABProps) {
   );
 }
 
-// Quick Action Variants for different pages
+// Quick Action Variants for different pages - FUNCTIONALITY FIXED
 export function ProjectsFAB() {
+  const router = useRouter();
   const projectActions: FABAction[] = [
     {
       icon: FolderOpen,
       label: 'Nuevo Proyecto',
-      onClick: () => console.log('Nuevo proyecto'),
+      onClick: () => router.push('/projects?action=new'),
       color: 'primary'
     },
     {
       icon: Calculator,
       label: 'Simular Costos',
-      onClick: () => console.log('Simular costos'),
+      onClick: () => router.push('/simulator'),
       color: 'success'
     }
   ];
@@ -172,17 +181,18 @@ export function ProjectsFAB() {
 }
 
 export function PersonnelFAB() {
+  const router = useRouter();
   const personnelActions: FABAction[] = [
     {
       icon: Users,
       label: 'Nuevo Empleado',
-      onClick: () => console.log('Nuevo empleado'),
+      onClick: () => router.push('/personnel?action=new'),
       color: 'primary'
     },
     {
       icon: Calculator,
       label: 'Calcular Nómina',
-      onClick: () => console.log('Calcular nómina'),
+      onClick: () => router.push('/payroll/generate'),
       color: 'secondary'
     }
   ];
@@ -191,17 +201,18 @@ export function PersonnelFAB() {
 }
 
 export function ExpensesFAB() {
+  const router = useRouter();
   const expenseActions: FABAction[] = [
     {
       icon: Receipt,
       label: 'Nuevo Gasto',
-      onClick: () => console.log('Nuevo gasto'),
+      onClick: () => router.push('/expenses?action=new'),
       color: 'primary'
     },
     {
       icon: FolderOpen,
       label: 'Por Proyecto',
-      onClick: () => console.log('Gasto por proyecto'),
+      onClick: () => router.push('/expenses?filter=by-project'),
       color: 'secondary'
     }
   ];
