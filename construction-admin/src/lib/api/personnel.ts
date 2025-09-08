@@ -167,6 +167,71 @@ export class PersonnelService {
   }
 
   // =====================================================
+  // ASIGNACIONES DE PROYECTOS
+  // =====================================================
+
+  /**
+   * Obtener asignaciones de un empleado
+   */
+  async getAssignments(personnelId: string): Promise<any[]> {
+    return apiClient.get<any[]>(`${this.endpoint}/${personnelId}/assignments`);
+  }
+
+  /**
+   * Asignar empleado a proyecto
+   */
+  async assignToProject(personnelId: string, data: {
+    project_id: string;
+    role?: string;
+    hours_per_day?: number;
+    is_primary?: boolean;
+  }): Promise<any> {
+    return apiClient.post<any>(`${this.endpoint}/${personnelId}/assign`, data);
+  }
+
+  /**
+   * Desasignar empleado de proyecto
+   */
+  async unassignFromProject(personnelId: string, projectId: string): Promise<any> {
+    return apiClient.delete<any>(`${this.endpoint}/${personnelId}/unassign/${projectId}`);
+  }
+
+  /**
+   * Obtener disponibilidad de personal
+   */
+  async getAvailability(): Promise<any[]> {
+    return apiClient.get<any[]>('/assignments/availability');
+  }
+
+  /**
+   * Obtener resumen de asignaciones por empleado
+   */
+  async getAssignmentsSummary(personnelId: string): Promise<{
+    total_projects: number;
+    total_hours_per_day: number;
+    availability_status: string;
+    can_take_more_work: boolean;
+    assignments: any[];
+  }> {
+    const assignments = await this.getAssignments(personnelId);
+    const total_hours_per_day = assignments.reduce((sum, a) => sum + (a.expected_hours_per_day || 0), 0);
+    const total_projects = assignments.length;
+    
+    let availability_status = 'disponible';
+    if (total_hours_per_day > 8) availability_status = 'sobrecargado';
+    else if (total_hours_per_day >= 8) availability_status = 'ocupado';
+    else if (total_hours_per_day > 6) availability_status = 'parcialmente_ocupado';
+    
+    return {
+      total_projects,
+      total_hours_per_day,
+      availability_status,
+      can_take_more_work: total_hours_per_day < 8,
+      assignments
+    };
+  }
+
+  // =====================================================
   // BÚSQUEDA Y FILTROS
   // =====================================================
 

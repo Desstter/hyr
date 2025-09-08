@@ -203,21 +203,22 @@ router.post('/save-estimation', async (req, res) => {
       notes
     } = req.body;
 
-    // Insertar en tabla de estimaciones (si existe)
-    // Para simplicidad, devolvemos la estimación guardada
-    const saved_estimation = {
-      id: Date.now().toString(), // ID temporal
-      project_name,
-      client_name,
-      template_type,
-      estimation_data,
-      notes,
-      created_at: new Date().toISOString(),
-      status: 'draft'
-    };
+    // Insertar en tabla de estimaciones
+    const result = await db.query(`
+      INSERT INTO cost_estimations (
+        project_name,
+        client_name,
+        template_type,
+        estimation_data,
+        notes,
+        status
+      ) VALUES ($1, $2, $3, $4, $5, 'draft')
+      RETURNING *
+    `, [project_name, client_name, template_type, estimation_data, notes]);
 
-    res.json(saved_estimation);
+    res.json(result.rows[0]);
   } catch (error) {
+    console.error('Error saving estimation:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -325,6 +326,198 @@ router.post('/create-project-from-estimation', async (req, res) => {
       project: project_preview 
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// GET /api/simulator/saved-estimations
+// Obtener todas las estimaciones guardadas
+// =====================================================
+router.get('/saved-estimations', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        id,
+        project_name,
+        client_name,
+        template_type,
+        estimation_data,
+        notes,
+        status,
+        created_at,
+        updated_at
+      FROM cost_estimations 
+      ORDER BY created_at DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error loading saved estimations:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// POST /api/simulator/duplicate-estimation/:id
+// Duplicar una estimación existente
+// =====================================================
+router.post('/duplicate-estimation/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Obtener la estimación original
+    const originalResult = await db.query(`
+      SELECT * FROM cost_estimations WHERE id = $1
+    `, [id]);
+
+    if (originalResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Estimación no encontrada' });
+    }
+
+    const original = originalResult.rows[0];
+    
+    // Crear duplicado con nuevo nombre
+    const duplicateResult = await db.query(`
+      INSERT INTO cost_estimations (
+        project_name,
+        client_name,
+        template_type,
+        estimation_data,
+        notes,
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `, [
+      `${original.project_name} - Copia`,
+      original.client_name,
+      original.template_type,
+      original.estimation_data,
+      original.notes,
+      'draft'
+    ]);
+
+    res.json(duplicateResult.rows[0]);
+  } catch (error) {
+    console.error('Error duplicating estimation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// DELETE /api/simulator/estimations/:id
+// Eliminar una estimación
+// =====================================================
+router.delete('/estimations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.query(`
+      DELETE FROM cost_estimations 
+      WHERE id = $1 
+      RETURNING id, project_name
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Estimación no encontrada' });
+    }
+
+    res.json({ 
+      message: 'Estimación eliminada exitosamente',
+      deleted_estimation: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error deleting estimation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// POST /api/simulator/convert-to-project
+// Convertir estimación a proyecto real
+// =====================================================
+router.post('/convert-to-project', async (req, res) => {
+  try {
+    const {
+      estimation_id,
+      project_name,
+      client_id,
+      description,
+      start_date,
+      estimated_end_date
+    } = req.body;
+
+    // Obtener la estimación
+    const estimationResult = await db.query(`
+      SELECT * FROM cost_estimations WHERE id = $1
+    `, [estimation_id]);
+
+    if (estimationResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Estimación no encontrada' });
+    }
+
+    const estimation = estimationResult.rows[0];
+    const costData = estimation.estimation_data;
+
+    // Crear el proyecto
+    const projectResult = await db.query(`
+      INSERT INTO projects (
+        name,
+        client_id,
+        description,
+        budget_materials,
+        budget_labor,
+        budget_equipment,
+        budget_overhead,
+        start_date,
+        estimated_end_date,
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'planned')
+      RETURNING *
+    `, [
+      project_name,
+      client_id,
+      description,
+      costData.cost_breakdown.materials,
+      costData.cost_breakdown.labor,
+      costData.cost_breakdown.equipment,
+      costData.cost_breakdown.overhead,
+      start_date,
+      estimated_end_date
+    ]);
+
+    const project = projectResult.rows[0];
+
+    // Crear items detallados del presupuesto
+    const budgetItems = costData.items_detail.map(item => ({
+      project_id: project.id,
+      category: item.category,
+      description: item.name || item.subcategory,
+      quantity: item.quantity,
+      unit_cost: item.cost_per_unit
+    }));
+
+    for (const item of budgetItems) {
+      await db.query(`
+        INSERT INTO budget_items (project_id, category, description, quantity, unit_cost)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [item.project_id, item.category, item.description, item.quantity, item.unit_cost]);
+    }
+
+    // Marcar la estimación como convertida
+    await db.query(`
+      UPDATE cost_estimations 
+      SET status = 'converted', updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `, [estimation_id]);
+
+    res.json({
+      message: 'Proyecto creado exitosamente desde estimación',
+      project: project,
+      estimation_updated: true
+    });
+  } catch (error) {
+    console.error('Error converting estimation to project:', error);
     res.status(500).json({ error: error.message });
   }
 });

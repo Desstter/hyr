@@ -26,8 +26,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTranslations } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/finance';
-import { SavedEstimation } from '@/lib/api/simulator';
-import { api } from '@/lib/api';
+import { 
+  SavedEstimation, 
+  useSavedEstimations, 
+  duplicateEstimation, 
+  deleteEstimation, 
+  convertEstimationToProject 
+} from '@/lib/api/simulator';
 import { downloadEstimatePDF } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
 
@@ -39,36 +44,12 @@ interface CostEstimatesListProps {
 export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimatesListProps) {
   const t = useTranslations('es');
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [estimates, setEstimates] = useState<SavedEstimation[]>([]);
   
-  // Cargar estimaciones desde la API (como no existe getSavedEstimations, usaremos clients como fallback)
-  useEffect(() => {
-    const loadEstimates = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Por ahora, como no hay API específica para obtener estimaciones guardadas,
-        // mostraremos un array vacío o podrías implementar esta funcionalidad
-        setEstimates([]); // TODO: Implementar API getSavedEstimations
-        
-      } catch (err) {
-        console.error('Error loading estimates:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Error al cargar estimaciones';
-        setError(errorMessage);
-        toast.error('Error cargando estimaciones: ' + errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEstimates();
-  }, []);
+  // Usar el hook personalizado para cargar estimaciones
+  const { estimations, loading, error, refetch } = useSavedEstimations();
 
   // Filter estimates based on search
-  const filteredEstimates = estimates.filter(estimate =>
+  const filteredEstimates = estimations.filter(estimate =>
     estimate.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     estimate.notes?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -79,36 +60,52 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
 
   const handleDuplicate = async (estimate: SavedEstimation) => {
     try {
-      // TODO: Implementar API para duplicar estimaciones
-      toast.success('Funcionalidad de duplicación pendiente de implementación');
+      await duplicateEstimation(estimate.id);
+      toast.success('Cotización duplicada exitosamente');
+      refetch(); // Recargar la lista
     } catch (error) {
-      toast.error('Error al duplicar cotización');
+      const errorMessage = error instanceof Error ? error.message : 'Error al duplicar cotización';
+      toast.error(errorMessage);
     }
   };
 
   const handleDelete = async (estimate: SavedEstimation) => {
     if (window.confirm('¿Estás seguro de eliminar esta cotización?')) {
       try {
-        // TODO: Implementar API para eliminar estimaciones
-        toast.success('Funcionalidad de eliminación pendiente de implementación');
+        await deleteEstimation(estimate.id);
+        toast.success('Cotización eliminada exitosamente');
+        refetch(); // Recargar la lista
       } catch (error) {
-        toast.error('Error al eliminar cotización');
+        const errorMessage = error instanceof Error ? error.message : 'Error al eliminar cotización';
+        toast.error(errorMessage);
       }
     }
   };
 
   const handleConvertToProject = async (estimate: SavedEstimation) => {
     try {
-      // TODO: Implementar conversión de estimación a proyecto usando API projects
-      toast.success('Funcionalidad de conversión pendiente de implementación');
+      // Por simplicidad, usar datos básicos para la conversión
+      // En una implementación real, se podría abrir un modal para completar más detalles
+      const projectData = {
+        estimation_id: estimate.id,
+        project_name: estimate.project_name,
+        client_id: 'default-client-id', // TODO: Integrar con selección de cliente real
+        description: `Proyecto creado desde estimación: ${estimate.project_name}`,
+        start_date: new Date().toISOString().split('T')[0],
+        estimated_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+      
+      await convertEstimationToProject(projectData);
+      toast.success('Proyecto creado exitosamente desde estimación');
+      refetch(); // Recargar la lista para mostrar el estado actualizado
     } catch (error) {
-      toast.error('Error al convertir a proyecto');
+      const errorMessage = error instanceof Error ? error.message : 'Error al convertir a proyecto';
+      toast.error(errorMessage);
     }
   };
 
   const handleExportToPDF = async (estimate: SavedEstimation) => {
     try {
-      
       const businessInfo = {
         name: 'Constructora & Soldadura HYR',
         contact: 'Santiago Hurtado',
@@ -117,16 +114,17 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
         address: 'Bogotá, Colombia'
       };
 
-      // TODO: Actualizar downloadEstimatePDF para usar SavedEstimation
+      // Usar los datos de la estimación guardada
       downloadEstimatePDF({
         estimate: estimate.estimation_data,
-        client: { name: estimate.client_name },
+        client: { name: estimate.client_name || 'Sin cliente' },
         businessInfo
       });
       
       toast.success('PDF generado exitosamente');
     } catch (error) {
-      toast.error('Error al generar PDF');
+      const errorMessage = error instanceof Error ? error.message : 'Error al generar PDF';
+      toast.error(errorMessage);
     }
   };
 

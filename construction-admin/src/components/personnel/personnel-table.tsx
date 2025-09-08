@@ -45,7 +45,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PersonnelDialog } from './personnel-dialog';
+import { PersonnelAssignmentDialog } from './personnel-assignment-dialog';
 import { toast } from 'sonner';
+import { usePersonnelAssignments } from '@/lib/hooks/usePersonnelAssignments';
 import type { Personnel, PersonnelStatus, PersonnelDepartment } from '@/lib/api/types';
 
 interface PersonnelTableProps {
@@ -71,7 +73,17 @@ export function PersonnelTable({
   const [internalDepartmentFilter, setInternalDepartmentFilter] = useState<string>('all');
   const [editingPersonnel, setEditingPersonnel] = useState<Personnel | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
+  const [selectedPersonnelForAssignment, setSelectedPersonnelForAssignment] = useState<Personnel | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // Hook para asignaciones de empleados
+  const { 
+    assignmentsSummary, 
+    stats: assignmentStats, 
+    loading: assignmentsLoading,
+    error: assignmentsError 
+  } = usePersonnelAssignments(personnel);
 
   // Limpiar actionLoading después de 30 segundos en caso de error
   useEffect(() => {
@@ -127,16 +139,21 @@ export function PersonnelTable({
     return {
       total: personnel.length,
       active: activePersonnel.length,
-      assigned: 0, // TODO: Implement project assignment logic
-      available: activePersonnel.length,
+      assigned: assignmentStats.totalAssigned, // ✅ FIXED: Usar lógica real de asignaciones
+      available: assignmentStats.totalAvailable,
       averageHourlyRate,
       totalMonthlyCost,
     };
-  }, [personnel]);
+  }, [personnel, assignmentStats]);
 
   const handleEdit = (person: Personnel) => {
     setEditingPersonnel(person);
     setShowEditDialog(true);
+  };
+
+  const handleManageAssignments = (person: Personnel) => {
+    setSelectedPersonnelForAssignment(person);
+    setShowAssignmentDialog(true);
   };
 
   const handleStatusChange = async (person: Personnel, newStatus: 'active' | 'inactive' | 'terminated') => {
@@ -410,6 +427,7 @@ export function PersonnelTable({
                 <TableHead>Cargo</TableHead>
                 <TableHead>Departamento</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Asignaciones</TableHead>
                 <TableHead>Tarifa</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -418,7 +436,7 @@ export function PersonnelTable({
             <TableBody>
               {loading && personnel.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Cargando empleados...
@@ -427,7 +445,7 @@ export function PersonnelTable({
                 </TableRow>
               ) : filteredPersonnel.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     {searchTerm || statusFilter !== 'all' || departmentFilter !== 'all' 
                       ? 'No se encontraron empleados con los filtros aplicados.'
                       : 'No hay empleados registrados.'
@@ -464,6 +482,43 @@ export function PersonnelTable({
                       <Badge className={getStatusColor(person.status || '')}>
                         {formatStatus(person.status || '')}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {person.id && assignmentsSummary[person.id] ? (
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={assignmentsSummary[person.id].can_take_more_work ? "default" : "secondary"}
+                              className={
+                                assignmentsSummary[person.id].availability_status === 'sobrecargado' 
+                                  ? 'bg-red-100 text-red-800'
+                                  : assignmentsSummary[person.id].availability_status === 'ocupado'
+                                  ? 'bg-yellow-100 text-yellow-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }
+                            >
+                              {assignmentsSummary[person.id].total_projects} proyecto{assignmentsSummary[person.id].total_projects !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {assignmentsSummary[person.id].total_hours_per_day}h/día • {
+                              assignmentsSummary[person.id].availability_status === 'sobrecargado' ? 'Sobrecargado' :
+                              assignmentsSummary[person.id].availability_status === 'ocupado' ? 'Ocupado' :
+                              assignmentsSummary[person.id].availability_status === 'parcialmente_ocupado' ? 'Parcial' :
+                              'Disponible'
+                            }
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col">
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                            Sin asignar
+                          </Badge>
+                          <div className="text-xs text-gray-500">
+                            Disponible
+                          </div>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
@@ -525,6 +580,14 @@ export function PersonnelTable({
                             <Edit className="mr-2 h-4 w-4" />
                             Editar Información
                           </DropdownMenuItem>
+                          
+                          <DropdownMenuItem onClick={() => handleManageAssignments(person)}>
+                            <Users className="mr-2 h-4 w-4" />
+                            Gestionar Asignaciones
+                          </DropdownMenuItem>
+                          
+                          {/* Separador */}
+                          <div className="border-t border-gray-100 my-1" />
                           
                           {/* Opciones de cambio de estado */}
                           {person.status !== 'active' && (
@@ -591,6 +654,18 @@ export function PersonnelTable({
         onSuccess={() => {
           setEditingPersonnel(null);
           setShowEditDialog(false);
+          onRefresh?.();
+        }}
+      />
+
+      {/* Assignment Dialog */}
+      <PersonnelAssignmentDialog
+        open={showAssignmentDialog}
+        onOpenChange={setShowAssignmentDialog}
+        personnel={selectedPersonnelForAssignment}
+        onSuccess={() => {
+          setSelectedPersonnelForAssignment(null);
+          setShowAssignmentDialog(false);
           onRefresh?.();
         }}
       />

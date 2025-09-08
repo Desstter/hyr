@@ -27,6 +27,8 @@ import { calendarService, CalendarService } from './calendar';
 import { simulatorService } from './simulator';
 import { budgetItemsApi } from './budget-items';
 import { settingsService, SettingsService } from './settings';
+import { complianceService, ComplianceService } from './compliance';
+import { invoicingService, InvoicingService } from './invoicing';
 
 // Re-exportar servicios
 export { clientsService, ClientsService } from './clients';
@@ -40,6 +42,8 @@ export { calendarService, CalendarService } from './calendar';
 export { simulatorService } from './simulator';
 export { budgetItemsApi } from './budget-items';
 export { settingsService, SettingsService } from './settings';
+export { complianceService, ComplianceService } from './compliance';
+export { invoicingService, InvoicingService } from './invoicing';
 
 // =====================================================
 // CONFIGURACIÓN Y UTILIDADES
@@ -83,6 +87,8 @@ export const api = {
   calendar: calendarService,
   simulator: simulatorService,
   settings: settingsService,
+  compliance: complianceService,
+  invoicing: invoicingService,
 } as const;
 
 // =====================================================

@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
             SELECT 
                 p.*,
                 c.name as client_name,
-                COUNT(DISTINCT te.personnel_id) as employees_assigned,
+                COUNT(DISTINCT pa.personnel_id) as employees_assigned,
                 COALESCE(SUM(te.hours_worked), 0) as total_hours,
                 COALESCE(SUM(te.total_pay), 0) as total_labor_direct,
                 CASE 
@@ -22,6 +22,7 @@ router.get('/', async (req, res) => {
                 ROUND(((p.budget_total - p.spent_total) / p.budget_total * 100), 2) as profit_margin_percent
             FROM projects p
             LEFT JOIN clients c ON p.client_id = c.id
+            LEFT JOIN project_assignments pa ON p.id = pa.project_id AND pa.status = 'active'
             LEFT JOIN time_entries te ON p.id = te.project_id
             WHERE 1=1
         `;
@@ -323,6 +324,104 @@ router.get('/:id/financial-summary', async (req, res) => {
         }
         
         res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// =====================================================
+// ASIGNACIONES DE PERSONAL
+// =====================================================
+
+// Obtener empleados asignados a un proyecto
+router.get('/:id/personnel', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await db.query(`
+            SELECT 
+                pa.id as assignment_id,
+                pa.personnel_id,
+                p.name as personnel_name,
+                p.position,
+                p.department,
+                p.hourly_rate,
+                p.monthly_salary,
+                pa.role,
+                pa.expected_hours_per_day,
+                pa.is_primary_project,
+                pa.priority,
+                pa.status as assignment_status,
+                pa.start_date,
+                pa.end_date,
+                pa.notes,
+                -- Estadísticas de tiempo trabajado
+                COALESCE(SUM(te.hours_worked), 0) as total_hours_worked,
+                COALESCE(SUM(te.total_pay), 0) as total_earnings
+            FROM project_assignments pa
+            JOIN personnel p ON pa.personnel_id = p.id
+            LEFT JOIN time_entries te ON pa.personnel_id = te.personnel_id AND pa.project_id = te.project_id
+            WHERE pa.project_id = $1
+            AND pa.status = 'active'
+            GROUP BY pa.id, p.id, p.name, p.position, p.department, p.hourly_rate, p.monthly_salary,
+                     pa.role, pa.expected_hours_per_day, pa.is_primary_project, pa.priority,
+                     pa.status, pa.start_date, pa.end_date, pa.notes
+            ORDER BY pa.is_primary_project DESC, pa.priority ASC, p.name
+        `, [id]);
+        
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Asignar empleado a proyecto (endpoint específico del proyecto)
+router.post('/:id/assign-personnel', async (req, res) => {
+    try {
+        const { id: project_id } = req.params;
+        const { personnel_id, role, hours_per_day = 8, is_primary = false } = req.body;
+        
+        if (!personnel_id) {
+            return res.status(400).json({ error: 'personnel_id es requerido' });
+        }
+        
+        // Verificar que el proyecto existe
+        const projectCheck = await db.query('SELECT id, name FROM projects WHERE id = $1', [project_id]);
+        if (projectCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Proyecto no encontrado' });
+        }
+        
+        // Verificar que el empleado existe
+        const personnelCheck = await db.query('SELECT id, name FROM personnel WHERE id = $1', [personnel_id]);
+        if (personnelCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Empleado no encontrado' });
+        }
+        
+        const result = await db.query(`
+            INSERT INTO project_assignments (
+                personnel_id, project_id, start_date, role,
+                expected_hours_per_day, is_primary_project, status, notes, created_by
+            ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, 'active', $6, 'api_projects')
+            ON CONFLICT (personnel_id, project_id, start_date) DO UPDATE SET
+                expected_hours_per_day = EXCLUDED.expected_hours_per_day,
+                role = EXCLUDED.role,
+                is_primary_project = EXCLUDED.is_primary_project,
+                status = 'active',
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `, [
+            personnel_id, 
+            project_id, 
+            role || 'trabajador',
+            hours_per_day,
+            is_primary,
+            `Asignado via API projects - ${role || 'trabajador'}`
+        ]);
+        
+        res.status(201).json({
+            message: `${personnelCheck.rows[0].name} asignado al proyecto ${projectCheck.rows[0].name}`,
+            assignment: result.rows[0]
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -16,7 +16,9 @@ app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/calendar', require('./routes/calendar'));
 app.use('/api/simulator', require('./routes/simulator'));
+app.use('/api/assignments', require('./routes/assignments'));
 // Rutas MVP Cumplimiento Normativo (más específicas primero)
+app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/settings', require('./routes/compliance-settings'));
 app.use('/api/settings-legacy', require('./routes/settings'));
 app.use('/api/tax', require('./routes/compliance-settings'));
