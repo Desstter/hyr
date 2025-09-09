@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
         const { category } = req.query;
         
         let query = 'SELECT * FROM settings';
-        let params = [];
+        const params = [];
         
         if (category) {
             query += ' WHERE category = $1';
@@ -110,7 +110,7 @@ router.put('/:key', async (req, res) => {
         
         // Actualizar configuración
         let query = 'UPDATE settings SET value = $1, updated_at = CURRENT_TIMESTAMP';
-        let params = [value];
+        const params = [value];
         
         if (description) {
             query += ', description = $2';

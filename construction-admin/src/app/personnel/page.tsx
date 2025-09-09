@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,7 +49,7 @@ export default function PersonnelPage() {
   } | null>(null);
 
   // Cargar datos de personal
-  const loadPersonnel = async () => {
+  const loadPersonnel = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,12 +75,12 @@ export default function PersonnelPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, departmentFilter]);
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
     loadPersonnel();
-  }, [statusFilter, departmentFilter]);
+  }, [loadPersonnel]);
 
   // Filtrar personal por búsqueda
   const filteredPersonnel = personnel.filter(person => {

@@ -48,7 +48,7 @@ export function CashflowChart() {
       if (!trends || !trends.ingresos || !trends.gastos || !trends.nomina) {
         console.warn("Financial trends data is incomplete:", trends);
         // Generar datos de ejemplo para evitar errores
-        const emptyTrends = {
+        const _emptyTrends = {
           ingresos: [],
           gastos: [],
           nomina: [],

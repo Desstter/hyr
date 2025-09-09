@@ -61,12 +61,6 @@ export default function ContractorDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (contractorId) {
-      loadContractorDetail();
-    }
-  }, [contractorId, loadContractorDetail]);
-
   const loadContractorDetail = useCallback(async () => {
     try {
       const response = await fetch(
@@ -95,6 +89,12 @@ export default function ContractorDetailPage() {
       setLoading(false);
     }
   }, [contractorId]);
+
+  useEffect(() => {
+    if (contractorId) {
+      loadContractorDetail();
+    }
+  }, [contractorId, loadContractorDetail]);
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {

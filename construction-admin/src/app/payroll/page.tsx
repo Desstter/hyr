@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { api, handleApiError } from "@/lib/api";
+import type { PayrollPeriod } from "@/lib/api/types";
 import { toast } from "sonner";
 import {
   Calculator,
@@ -29,17 +30,6 @@ import {
   downloadPILAUGPP,
   validatePILAData,
 } from "@/lib/utils/pila-export";
-
-interface PayrollPeriod {
-  id: string;
-  year: number;
-  month: number;
-  status: string;
-  employees_processed: string;
-  total_net_pay: string;
-  total_employer_cost: string;
-  processed_at: string;
-}
 
 export default function PayrollPage() {
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);

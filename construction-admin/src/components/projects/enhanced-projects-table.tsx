@@ -55,8 +55,8 @@ export function EnhancedProjectsTable({
   onEditProject,
   onViewProject,
 }: EnhancedProjectsTableProps) {
-  const t = useTranslations("es");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const _t = useTranslations("es");
+  const [_viewMode, _setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<
@@ -90,16 +90,8 @@ export function EnhancedProjectsTable({
         api.clients.list(),
       ]);
 
-      const projectsData = Array.isArray(projectsResult)
-        ? projectsResult
-        : Array.isArray(projectsResult.data)
-          ? projectsResult.data
-          : [];
-      const clientsData = Array.isArray(clientsResult)
-        ? clientsResult
-        : Array.isArray(clientsResult.data)
-          ? clientsResult.data
-          : [];
+      const projectsData = projectsResult;
+      const clientsData = clientsResult.data || clientsResult;
 
       setProjects(projectsData);
       setClients(clientsData);
@@ -300,7 +292,7 @@ export function EnhancedProjectsTable({
             <div className="text-center">
               <p className="text-sm font-medium text-muted-foreground">
                 {project.estimated_end_date
-                  ? formatDate(new Date(project.estimated_end_date))
+                  ? formatDate(project.estimated_end_date)
                   : "N/A"}
               </p>
               <p className="text-xs text-muted-foreground">Fin estimado</p>

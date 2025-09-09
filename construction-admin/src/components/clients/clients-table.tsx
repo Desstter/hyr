@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -37,17 +37,20 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
 
   // State for API data
   const [clients, setClients] = useState<Client[]>([]);
-  const [clientStats, setClientStats] = useState<Record<string, { projects: number; totalValue: number }>>({});
+  const [clientStats, setClientStats] = useState<Record<string, {
+    totalProjects: number;
+    activeProjects: number;
+    completedProjects: number;
+    totalRevenue: number;
+    averageProjectValue: number;
+    projectsOnTime: number;
+    projectsDelayed: number;
+  } | null>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  // Load data from API
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -74,7 +77,15 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
       const statsResults = await Promise.all(statsPromises);
       const statsMap = statsResults.reduce(
         (acc, stat) => ({ ...acc, ...stat }),
-        {}
+        {} as Record<string, {
+          totalProjects: number;
+          activeProjects: number;
+          completedProjects: number;
+          totalRevenue: number;
+          averageProjectValue: number;
+          projectsOnTime: number;
+          projectsDelayed: number;
+        } | null>
       );
       setClientStats(statsMap);
     } catch (err) {
@@ -85,7 +96,12 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  // Load data from API
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleDeleteClient = async (client: Client) => {
     // Confirmación del usuario
@@ -131,10 +147,10 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
   const totalClients = clients.length;
   const clientsWithProjects = Object.values(clientStats).filter(
     stats =>
-      stats && (stats.active_projects > 0 || stats.completed_projects > 0)
+      stats && (stats.activeProjects > 0 || stats.completedProjects > 0)
   ).length;
   const totalRevenue = Object.values(clientStats).reduce(
-    (sum, stats) => sum + (stats?.total_revenue || 0),
+    (sum, stats) => sum + (stats?.totalRevenue || 0),
     0
   );
 
@@ -275,9 +291,9 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
             {filteredClients.map(client => {
               const stats = clientStats[client.id];
               const totalProjects =
-                (stats?.active_projects || 0) +
-                (stats?.completed_projects || 0);
-              const revenue = stats?.total_revenue || 0;
+                (stats?.activeProjects || 0) +
+                (stats?.completedProjects || 0);
+              const revenue = stats?.totalRevenue || 0;
 
               return (
                 <TableRow key={client.id}>
@@ -299,7 +315,7 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                       <span className="font-medium">{totalProjects}</span>
                       {stats && (
                         <div className="text-xs text-muted-foreground">
-                          ({stats.active_projects} activos)
+                          ({stats.activeProjects} activos)
                         </div>
                       )}
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,19 +46,12 @@ import { usePersonnelAssignmentActions } from "@/lib/hooks/usePersonnelAssignmen
 import type { Personnel } from "@/lib/api/types";
 
 interface Assignment {
-  assignment_id: string;
+  id: string;
   project_id: string;
   project_name: string;
-  project_status: string;
-  client_name?: string;
-  role: string;
-  expected_hours_per_day: number;
-  is_primary_project: boolean;
-  priority: number;
-  assignment_status: string;
-  start_date: string;
-  end_date?: string;
-  notes?: string;
+  role?: string;
+  hours_per_day?: number;
+  is_primary?: boolean;
 }
 
 interface Project {
@@ -102,15 +95,7 @@ export function PersonnelAssignmentDialog({
     loading: actionLoading,
   } = usePersonnelAssignmentActions();
 
-  // Load assignments when dialog opens
-  useEffect(() => {
-    if (open && personnel?.id) {
-      loadAssignments();
-      loadAvailableProjects();
-    }
-  }, [open, personnel?.id]);
-
-  const loadAssignments = async () => {
+  const loadAssignments = useCallback(async () => {
     if (!personnel?.id) return;
 
     setAssignmentsLoading(true);
@@ -121,24 +106,31 @@ export function PersonnelAssignmentDialog({
       console.error("Error loading assignments:", error);
       toast.error(
         "Error al cargar asignaciones: " +
-          (error.message || "Error desconocido")
+          ((error as Error)?.message || "Error desconocido")
       );
     } finally {
       setAssignmentsLoading(false);
     }
-  };
+  }, [personnel?.id]);
 
-  const loadAvailableProjects = async () => {
+  const loadAvailableProjects = useCallback(async () => {
     try {
       const response = await projectsService.list({
         status: "in_progress,planned",
       });
-      const projects = Array.isArray(response.data) ? response.data : response;
-      setAvailableProjects(projects);
+      setAvailableProjects(response);
     } catch (error: unknown) {
       console.error("Error loading projects:", error);
     }
-  };
+  }, []);
+
+  // Load assignments when dialog opens
+  useEffect(() => {
+    if (open && personnel?.id) {
+      loadAssignments();
+      loadAvailableProjects();
+    }
+  }, [open, personnel?.id, loadAssignments, loadAvailableProjects]);
 
   const handleAssignToProject = async () => {
     if (!personnel?.id || !newAssignment.project_id) {
@@ -167,7 +159,7 @@ export function PersonnelAssignmentDialog({
       onSuccess?.();
     } catch (error: unknown) {
       toast.error(
-        "Error al asignar empleado: " + (error.message || "Error desconocido")
+        "Error al asignar empleado: " + ((error as Error)?.message || "Error desconocido")
       );
     }
   };
@@ -189,7 +181,7 @@ export function PersonnelAssignmentDialog({
     } catch (error: unknown) {
       toast.error(
         "Error al desasignar empleado: " +
-          (error.message || "Error desconocido")
+          ((error as Error)?.message || "Error desconocido")
       );
     }
   };
@@ -197,12 +189,12 @@ export function PersonnelAssignmentDialog({
   // Calculate totals
   const totals = useMemo(() => {
     const totalHours = assignments.reduce(
-      (sum, a) => sum + a.expected_hours_per_day,
+      (sum, a) => sum + (a.hours_per_day || 0),
       0
     );
     const totalProjects = assignments.length;
     const primaryProjects = assignments.filter(
-      a => a.is_primary_project
+      a => a.is_primary
     ).length;
 
     let status = "disponible";
@@ -366,30 +358,30 @@ export function PersonnelAssignmentDialog({
                     </TableHeader>
                     <TableBody>
                       {assignments.map(assignment => (
-                        <TableRow key={assignment.assignment_id}>
+                        <TableRow key={assignment.id}>
                           <TableCell>
                             <div>
                               <div className="font-medium">
                                 {assignment.project_name}
                               </div>
                               <Badge variant="outline" className="text-xs mt-1">
-                                {assignment.project_status}
+                                Activo
                               </Badge>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {assignment.client_name || "Sin cliente"}
+                            Sin cliente
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{assignment.role}</Badge>
                           </TableCell>
                           <TableCell>
                             <span className="font-medium">
-                              {assignment.expected_hours_per_day}h
+                              {assignment.hours_per_day || 0}h
                             </span>
                           </TableCell>
                           <TableCell>
-                            {assignment.is_primary_project ? (
+                            {assignment.is_primary ? (
                               <Badge className="bg-blue-100 text-blue-800">
                                 Principal
                               </Badge>
@@ -401,7 +393,7 @@ export function PersonnelAssignmentDialog({
                             <div className="flex items-center text-sm text-gray-500">
                               <Calendar className="h-3 w-3 mr-1" />
                               {new Date(
-                                assignment.start_date
+                                "N/A"
                               ).toLocaleDateString("es-ES")}
                             </div>
                           </TableCell>

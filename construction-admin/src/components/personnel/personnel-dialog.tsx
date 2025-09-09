@@ -43,7 +43,7 @@ const personnelSchema = z
   .object({
     // Basic Information
     name: z.string().min(1, "El nombre es requerido"),
-    document_type: z.enum(["CC", "CE", "TI", "PP"]).default("CC"),
+    document_type: z.enum(["CC", "CE", "TI", "PP"]),
     document_number: z.string().min(1, "El número de documento es requerido"),
     phone: z.string().optional(),
     email: z.string().email("Email inválido").or(z.literal("")).optional(),
@@ -52,18 +52,16 @@ const personnelSchema = z
     emergency_phone: z.string().optional(),
 
     // Employment Information
-    position: z.string().min(1, "El cargo es requerido"),
-    department: z.string().min(1, "El departamento es requerido"),
+    position: z.enum(["soldador", "operario", "supervisor", "capataz", "ayudante", "administrador", "gerente"]),
+    department: z.enum(["construccion", "soldadura", "administracion", "mantenimiento"]),
     hire_date: z.string().min(1, "La fecha de contratación es requerida"),
-    status: z
-      .enum(["active", "inactive", "on_leave", "terminated"])
-      .default("active"),
+    status: z.enum(["active", "inactive", "on_leave", "terminated"]),
 
     // Financial Information
-    salary_type: z.enum(["hourly", "monthly"]).default("hourly"),
+    salary_type: z.enum(["hourly", "monthly"]),
     hourly_rate: z.number().optional(),
     monthly_salary: z.number().optional(),
-    arl_risk_class: z.enum(["I", "II", "III", "IV", "V"]).default("V"),
+    arl_risk_class: z.enum(["I", "II", "III", "IV", "V"]),
 
     // Additional Information
     bank_account: z.string().optional(),
@@ -134,11 +132,11 @@ export function PersonnelDialog({
   personnel,
   onSuccess,
 }: PersonnelDialogProps) {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basicInfo");
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [_projects, _setProjects] = useState<Project[]>([]);
+  const [_loadingProjects, _setLoadingProjects] = useState(false);
 
   const form = useForm<PersonnelFormData>({
     resolver: zodResolver(personnelSchema),
@@ -151,7 +149,7 @@ export function PersonnelDialog({
       address: "",
       emergency_contact: "",
       emergency_phone: "",
-      position: "",
+      position: "operario",
       department: "construccion",
       hire_date: new Date().toISOString().split("T")[0],
       status: "active",
@@ -166,23 +164,17 @@ export function PersonnelDialog({
   // Load active projects for assignment
   const loadProjects = async () => {
     try {
-      setLoadingProjects(true);
-      const projectData = await projectsService.getAll();
-      // Handle both direct array response and {data: array} response
-      const projects = Array.isArray(projectData)
-        ? projectData
-        : Array.isArray(projectData?.data)
-          ? projectData.data
-          : [];
+      _setLoadingProjects(true);
+      const projects = await projectsService.getAll();
       const activeProjects = projects.filter(
         p => p.status === "in_progress" || p.status === "planned"
       );
-      setProjects(activeProjects);
+      _setProjects(activeProjects);
     } catch (error) {
       console.error("Error loading projects:", error);
-      setProjects([]); // Ensure projects is always an array even on error
+      _setProjects([]); // Ensure projects is always an array even on error
     } finally {
-      setLoadingProjects(false);
+      _setLoadingProjects(false);
     }
   };
 
@@ -198,22 +190,22 @@ export function PersonnelDialog({
     if (personnel) {
       form.reset({
         name: personnel.name || "",
-        document_type: personnel.document_type || "CC",
+        document_type: (personnel.document_type as "CC" | "CE" | "TI" | "PP") || "CC",
         document_number: personnel.document_number || "",
         phone: personnel.phone || "",
         email: personnel.email || "",
         address: personnel.address || "",
         emergency_contact: personnel.emergency_contact || "",
         emergency_phone: personnel.emergency_phone || "",
-        position: personnel.position || "",
-        department: personnel.department || "construccion",
+        position: (personnel.position as "soldador" | "operario" | "supervisor" | "capataz" | "ayudante" | "administrador" | "gerente") || "operario",
+        department: (personnel.department as "construccion" | "soldadura" | "administracion" | "mantenimiento") || "construccion",
         hire_date:
           personnel.hire_date || new Date().toISOString().split("T")[0],
-        status: personnel.status || "active",
-        salary_type: personnel.salary_type || "hourly",
+        status: (personnel.status as "active" | "inactive" | "on_leave" | "terminated") || "active",
+        salary_type: (personnel.salary_type as "hourly" | "monthly") || "hourly",
         hourly_rate: personnel.hourly_rate,
         monthly_salary: personnel.monthly_salary,
-        arl_risk_class: personnel.arl_risk_class || "V",
+        arl_risk_class: (personnel.arl_risk_class as "I" | "II" | "III" | "IV" | "V") || "V",
         bank_account: personnel.bank_account || "",
       });
     } else {
@@ -226,7 +218,7 @@ export function PersonnelDialog({
         address: "",
         emergency_contact: "",
         emergency_phone: "",
-        position: "",
+        position: "operario",
         department: "construccion",
         hire_date: new Date().toISOString().split("T")[0],
         status: "active",
@@ -280,7 +272,6 @@ export function PersonnelDialog({
         position: cleanedData.position,
         department: cleanedData.department,
         hire_date: cleanedData.hire_date,
-        status: cleanedData.status,
         salary_type: cleanedData.salary_type,
         hourly_rate: cleanedData.hourly_rate,
         monthly_salary: cleanedData.monthly_salary,

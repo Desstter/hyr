@@ -269,7 +269,7 @@ function calcularRetencionFuente2025(salarioMensual, config) {
 function generarResumenNomina2025(empleados, periodo, empresa = {}) {
     const config = COLOMBIA_PAYROLL_2025;
     
-    let resumen = {
+    const resumen = {
         periodo,
         year: 2025,
         totalEmpleados: empleados.length,

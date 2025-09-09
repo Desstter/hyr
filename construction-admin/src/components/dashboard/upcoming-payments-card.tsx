@@ -41,8 +41,8 @@ export function UpcomingPaymentsCard() {
 
         if (Array.isArray(response)) {
           upcomingEvents = response;
-        } else if (response && Array.isArray(response.data)) {
-          upcomingEvents = response.data;
+        } else if (response && Array.isArray((response as {data?: CalendarEvent[]}).data)) {
+          upcomingEvents = (response as {data: CalendarEvent[]}).data;
         } else {
           console.log("API response:", response);
           // Si no hay datos válidos, usar array vacío (sin error)

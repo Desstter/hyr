@@ -248,7 +248,7 @@ export const enhancedToast = {
       },
     };
 
-    const { icon: Icon, title, description, color } = config[options.type];
+    const { icon: _Icon, title, description, color } = config[options.type];
 
     return enhancedToast[color]({
       title,
@@ -289,7 +289,7 @@ export const enhancedToast = {
 export const loadingToast = {
   show: (message: string = "Procesando...") => {
     return toast.custom(
-      t => (
+      _t => (
         <div className="hyr-card p-4 max-w-md w-full bg-card shadow-lg">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">

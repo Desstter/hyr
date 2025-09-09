@@ -67,7 +67,7 @@ export default function PILAPage() {
   useEffect(() => {
     loadEmployees();
     loadSubmissions({ limit: 5 });
-  }, []); // Empty dependency array since we only want this to run on mount
+  }, [loadSubmissions]); // Added loadSubmissions dependency
 
   const loadEmployees = async () => {
     try {
@@ -80,8 +80,8 @@ export default function PILAPage() {
         document_number: person.document_number,
         position: person.position,
         department: person.department,
-        monthly_salary: person.monthly_salary,
-        hourly_rate: person.hourly_rate,
+        monthly_salary: person.monthly_salary ?? null,
+        hourly_rate: person.hourly_rate ?? null,
         status: person.status,
       }));
 

@@ -85,12 +85,12 @@ export function CostSimulatorDialog({
   estimate,
   template,
 }: CostSimulatorDialogProps) {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
 
   // Load data from API
   const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
-  const { templates, loading: loadingTemplates } = useTemplates();
+  const [_loadingClients, _setLoadingClients] = useState(true);
+  const { templates, loading: _loadingTemplates } = useTemplates();
 
   const [formData, setFormData] = useState<EstimateFormData>({
     name: "",
@@ -99,7 +99,7 @@ export function CostSimulatorDialog({
     items: [],
   });
 
-  const [selectedTemplate, setSelectedTemplate] = useState<
+  const [_selectedTemplate, _setSelectedTemplate] = useState<
     CostTemplate | undefined
   >();
   const [isEditing, setIsEditing] = useState(false);
@@ -108,20 +108,16 @@ export function CostSimulatorDialog({
   useEffect(() => {
     const loadClients = async () => {
       try {
-        setLoadingClients(true);
+        _setLoadingClients(true);
         const clientsData = await clientsService.getAll();
-        // Handle both direct array response and {data: array} response
-        const clientsList = Array.isArray(clientsData)
-          ? clientsData
-          : Array.isArray(clientsData?.data)
-            ? clientsData.data
-            : [];
+        // clientsService.getAll() already returns Client[] directly
+        const clientsList = Array.isArray(clientsData) ? clientsData : [];
         setClients(clientsList);
       } catch (error) {
         console.error("Error loading clients:", error);
         setClients([]); // Ensure clients is always an array even on error
       } finally {
-        setLoadingClients(false);
+        _setLoadingClients(false);
       }
     };
 
@@ -178,13 +174,13 @@ export function CostSimulatorDialog({
     } else if (template) {
       const generatedEstimate = generateEstimateFromTemplate(template, 15);
       setFormData({
-        name: generatedEstimate.name,
+        name: generatedEstimate.name!,
         templateId: template.id,
-        profitMargin: generatedEstimate.profitMargin,
-        currency: generatedEstimate.currency,
-        items: [...generatedEstimate.items],
+        profitMargin: generatedEstimate.profitMargin || 15,
+        currency: generatedEstimate.currency || "COP",
+        items: generatedEstimate.items ? [...generatedEstimate.items] : [],
       });
-      setSelectedTemplate(template);
+      _setSelectedTemplate(template);
     } else {
       // Reset form for new estimate
       setFormData({
@@ -193,7 +189,7 @@ export function CostSimulatorDialog({
         currency: "COP",
         items: [],
       });
-      setSelectedTemplate(undefined);
+      _setSelectedTemplate(undefined);
       setIsEditing(false);
     }
   }, [estimate, template, open]);
@@ -210,7 +206,7 @@ export function CostSimulatorDialog({
         ...prev,
         templateId: undefined,
       }));
-      setSelectedTemplate(null);
+      _setSelectedTemplate(undefined);
       return;
     }
 
@@ -223,11 +219,11 @@ export function CostSimulatorDialog({
       setFormData(prev => ({
         ...prev,
         templateId: template.id,
-        name: prev.name || generatedEstimate.name,
-        items: [...generatedEstimate.items],
-        currency: template.currency,
+        name: prev.name || generatedEstimate.name || "Nueva estimación",
+        items: generatedEstimate.items ? [...generatedEstimate.items] : [],
+        currency: generatedEstimate.currency || "COP",
       }));
-      setSelectedTemplate(template);
+      _setSelectedTemplate(template);
     }
   };
 
@@ -337,6 +333,7 @@ export function CostSimulatorDialog({
       localStorage.setItem(storageKey, JSON.stringify(existingEstimates));
       onSuccess();
     } catch (error) {
+      console.error("Error saving quote:", error);
       toast.error("Error al guardar la cotización");
     }
   };
@@ -460,7 +457,6 @@ export function CostSimulatorDialog({
                             handleUpdateItem(index, { name: e.target.value })
                           }
                           placeholder="Nombre del elemento"
-                          size="sm"
                         />
                       </div>
                       <div className="col-span-2">
@@ -498,7 +494,6 @@ export function CostSimulatorDialog({
                           }
                           min="0"
                           step="0.01"
-                          size="sm"
                         />
                       </div>
                       <div className="col-span-1">
@@ -508,7 +503,6 @@ export function CostSimulatorDialog({
                             handleUpdateItem(index, { unit: e.target.value })
                           }
                           placeholder="m²"
-                          size="sm"
                         />
                       </div>
                       <div className="col-span-2">
@@ -522,7 +516,6 @@ export function CostSimulatorDialog({
                           }
                           min="0"
                           step="0.01"
-                          size="sm"
                         />
                       </div>
                       <div className="col-span-2 flex items-center justify-between">

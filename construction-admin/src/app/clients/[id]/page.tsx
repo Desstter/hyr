@@ -26,7 +26,7 @@ interface ClientDetailPageProps {
 }
 
 export default function ClientDetailPage({ params }: ClientDetailPageProps) {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
   const router = useRouter();
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +136,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
               <h1 className="text-3xl font-bold tracking-tight text-foreground truncate">
                 {client.name}
               </h1>
-              <p className="text-muted-foreground">{t.clients.clientDetails}</p>
+              <p className="text-muted-foreground">Detalles del cliente</p>
             </div>
           </div>
         </div>

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "setup": "node setup-db.js"
+    "setup": "node setup-db.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -17,6 +18,8 @@
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "eslint": "^9.35.0",
+    "eslint-plugin-unused-imports": "^4.2.0",
     "nodemon": "^3.0.1"
   },
   "engines": {

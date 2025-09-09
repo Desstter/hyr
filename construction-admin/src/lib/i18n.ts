@@ -376,6 +376,34 @@ export const translations = {
       },
     },
 
+    // Clients
+    clients: {
+      title: "Client Management",
+      newClient: "New Client",
+      editClient: "Edit Client",
+      clientDetails: "Client Details",
+      name: "Company Name",
+      contactName: "Contact Name",
+      phone: "Phone",
+      email: "Email",
+      address: "Address",
+      actions: "Actions",
+      totalClients: "Total Clients",
+      activeClients: "Active Clients",
+      totalProjects: "Total Projects",
+      activeProjects: "Active Projects",
+      completedProjects: "Completed Projects",
+      totalRevenue: "Total Revenue",
+      averageProjectValue: "Average Project Value",
+      projects: "Projects",
+      statistics: "Statistics",
+      noProjects: "No assigned projects",
+      deleteConfirmation: "Are you sure you want to delete this client?",
+      deleteError:
+        "Cannot delete client because it has associated projects",
+      searchPlaceholder: "Search clients...",
+    },
+
     // Personnel
     personnel: {
       title: "Personnel Management",

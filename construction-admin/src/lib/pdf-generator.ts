@@ -516,7 +516,7 @@ export async function generateAdvancedPDF(
     yPosition += 15;
 
     // Items table header
-    const tableStartY = yPosition;
+    const _tableStartY = yPosition;
     const colWidths = [80, 25, 25, 30]; // Description, Qty, Unit Cost, Total
     const headerHeight = 8;
 

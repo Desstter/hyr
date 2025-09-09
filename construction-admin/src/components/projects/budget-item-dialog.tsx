@@ -34,12 +34,12 @@ import { toast } from "sonner";
 
 const budgetItemSchema = z.object({
   category: z.enum(["materials", "labor", "equipment", "overhead"] as const, {
-    required_error: "La categoría es requerida",
+    message: "La categoría es requerida",
   }),
   description: z.string().min(1, "La descripción es requerida"),
   quantity: z.number().min(0, "La cantidad debe ser mayor o igual a 0"),
   unit_cost: z.number().min(0, "El costo unitario debe ser mayor or igual a 0"),
-  currency: z.enum(["COP", "USD", "EUR"] as const).default("COP"),
+  currency: z.enum(["COP", "USD", "EUR"] as const),
 });
 
 type BudgetItemFormData = z.infer<typeof budgetItemSchema>;

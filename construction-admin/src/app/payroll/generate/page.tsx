@@ -72,7 +72,13 @@ export default function PayrollGeneratePage() {
 
   const loadEmployees = async () => {
     try {
-      const employees = await personnelService.getAll({ status: "active" });
+      const personnel = await personnelService.getAll({ status: "active" });
+      // Map Personnel to Employee interface
+      const employees = personnel.map(person => ({
+        ...person,
+        email: person.email || "", // Ensure email is always a string
+        monthly_salary: person.monthly_salary || 0, // Ensure monthly_salary is always a number
+      }));
       setEmployees(employees);
     } catch (error) {
       console.error("Error loading employees:", error);

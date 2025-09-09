@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +43,7 @@ export function ClientProjectsList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadProjects();
-  }, [client.id]);
-
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -57,8 +53,8 @@ export function ClientProjectsList({
       // Handle response format
       const projectsData = Array.isArray(clientProjects)
         ? clientProjects
-        : Array.isArray(clientProjects.data)
-          ? clientProjects.data
+        : Array.isArray((clientProjects as {data?: Project[]}).data)
+          ? (clientProjects as {data: Project[]}).data
           : [];
 
       // Limit results if specified
@@ -72,7 +68,11 @@ export function ClientProjectsList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [client.id, limit]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   if (loading) {
     return (

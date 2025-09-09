@@ -192,22 +192,22 @@ export default function CompliancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats?.contractors.total || 0}
+              {stats?.contractors?.total || 0}
             </div>
             <p className="text-xs text-gray-600">
-              {stats?.contractors.document_support_count || 0} doc. soporte
+              {stats?.contractors?.document_support_count || 0} doc. soporte
             </p>
             <div className="flex items-center mt-2">
-              {stats?.contractors.total > 0 ? (
+              {(stats?.contractors?.total || 0) > 0 ? (
                 <AlertCircle className="h-3 w-3 text-orange-500 mr-1" />
               ) : (
                 <AlertCircle className="h-3 w-3 text-gray-400 mr-1" />
               )}
               <span
-                className={`text-xs ${stats?.contractors.total > 0 ? "text-orange-600" : "text-gray-500"}`}
+                className={`text-xs ${(stats?.contractors?.total || 0) > 0 ? "text-orange-600" : "text-gray-500"}`}
               >
-                {stats?.contractors.total > 0
-                  ? `${stats.contractors.not_obligated || 0} no obligados`
+                {(stats?.contractors?.total || 0) > 0
+                  ? `${stats?.contractors?.not_obligated || 0} no obligados`
                   : "Sin contratistas registrados"}
               </span>
             </div>

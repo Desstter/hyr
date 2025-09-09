@@ -92,28 +92,28 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
     {} as Record<string, CostTemplate[]>
   );
 
-  const getEstimatedTotal = (template: CostTemplate) => {
+  const _getEstimatedTotal = (_template: CostTemplate) => {
     // Calculate estimated total based on template categories with default quantities
     let total = 0;
 
     // Sumar todos los items de materiales, mano de obra y equipos
-    Object.values(template.categories.materials).forEach(item => {
+    Object.values(_template.categories.materials).forEach(item => {
       total += item.cost_per_unit * 1; // cantidad por defecto = 1
     });
-    Object.values(template.categories.labor).forEach(item => {
+    Object.values(_template.categories.labor).forEach(item => {
       total += item.cost_per_unit * 1;
     });
-    Object.values(template.categories.equipment).forEach(item => {
+    Object.values(_template.categories.equipment).forEach(item => {
       total += item.cost_per_unit * 1;
     });
 
     return total;
   };
 
-  const getItemTypeSummary = (template: CostTemplate) => {
-    const materialsCount = Object.keys(template.categories.materials).length;
-    const laborCount = Object.keys(template.categories.labor).length;
-    const equipmentCount = Object.keys(template.categories.equipment).length;
+  const _getItemTypeSummary = (_template: CostTemplate) => {
+    const materialsCount = Object.keys(_template.categories.materials).length;
+    const laborCount = Object.keys(_template.categories.labor).length;
+    const equipmentCount = Object.keys(_template.categories.equipment).length;
 
     const parts = [];
     if (materialsCount > 0) parts.push(`${materialsCount} Materiales`);
@@ -174,8 +174,8 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
             <p className="text-gray-500 text-center mb-4">
               Las plantillas predefinidas se cargarán automáticamente
             </p>
-            <Button onClick={() => CostTemplateRepository.initializeDefaults()}>
-              Cargar Plantillas
+            <Button onClick={() => window.location.reload()}>
+              Recargar Página
             </Button>
           </CardContent>
         </Card>
@@ -234,20 +234,25 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
 }
 
 interface TemplateCardProps {
-  template: CostTemplate;
+  template: CostTemplate & { 
+    category?: string;
+    items?: Array<{ type: string; unitCost: number; [key: string]: unknown }>;
+    isDefault?: boolean;
+    description?: string;
+  };
   onUse: () => void;
-  t: (key: string) => string;
+  t: ReturnType<typeof useTranslations>;
 }
 
 function TemplateCard({ template, onUse, t }: TemplateCardProps) {
-  const IconComponent = categoryIcons[template.category] || FileText;
-  const estimatedTotal = template.items.reduce(
+  const IconComponent = categoryIcons[template.category as keyof typeof categoryIcons] || FileText;
+  const estimatedTotal = (template.items || []).reduce(
     (total, item) => total + item.unitCost * 1,
     0
   );
 
-  const getItemTypeSummary = (template: CostTemplate) => {
-    const typeCounts = template.items.reduce(
+  const getItemTypeSummary = (template: CostTemplate & { items?: Array<{ type: string; [key: string]: unknown }> }) => {
+    const typeCounts = (template.items || []).reduce(
       (counts, item) => {
         counts[item.type] = (counts[item.type] || 0) + 1;
         return counts;

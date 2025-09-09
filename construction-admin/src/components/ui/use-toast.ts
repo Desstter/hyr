@@ -55,4 +55,5 @@ export const toastInfo = (message: string, options?: Partial<ToastProps>) =>
   sonnerToast(message, { duration: options?.duration || 4000 });
 
 // Default export for compatibility
-export default { toast, toastSuccess, toastError, toastInfo };
+const toastUtils = { toast, toastSuccess, toastError, toastInfo };
+export default toastUtils;

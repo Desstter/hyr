@@ -43,6 +43,123 @@ router.get('/', async (req, res) => {
     }
 });
 
+// =====================================================
+// ESTADÍSTICAS Y ANÁLISIS (antes de /:id para evitar conflictos)
+// =====================================================
+
+// Obtener estadísticas generales de empleados
+router.get('/stats', async (req, res) => {
+    try {
+        // Obtener estadísticas básicas
+        const basicStatsQuery = `
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+                COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive,
+                COUNT(CASE WHEN status = 'terminated' THEN 1 END) as terminated
+            FROM personnel
+        `;
+        
+        // Estadísticas por departamento
+        const departmentStatsQuery = `
+            SELECT 
+                department,
+                COUNT(*) as count
+            FROM personnel
+            WHERE status = 'active'
+            GROUP BY department
+            ORDER BY count DESC
+        `;
+        
+        // Estadísticas por posición
+        const positionStatsQuery = `
+            SELECT 
+                position,
+                COUNT(*) as count
+            FROM personnel
+            WHERE status = 'active'
+            GROUP BY position
+            ORDER BY count DESC
+        `;
+        
+        // Cálculo de costos salariales
+        const salaryStatsQuery = `
+            SELECT 
+                AVG(CASE 
+                    WHEN salary_type = 'hourly' THEN hourly_rate 
+                    ELSE monthly_salary / 192 
+                END) as avg_hourly_rate,
+                SUM(CASE 
+                    WHEN salary_type = 'monthly' THEN monthly_salary
+                    ELSE (hourly_rate * 192)
+                END) as total_monthly_base,
+                COUNT(CASE WHEN salary_type = 'hourly' THEN 1 END) as hourly_employees,
+                COUNT(CASE WHEN salary_type = 'monthly' THEN 1 END) as monthly_employees
+            FROM personnel
+            WHERE status = 'active'
+            AND (
+                (salary_type = 'hourly' AND hourly_rate IS NOT NULL AND hourly_rate > 0)
+                OR 
+                (salary_type = 'monthly' AND monthly_salary IS NOT NULL AND monthly_salary > 0)
+            )
+        `;
+        
+        // Ejecutar todas las consultas en paralelo
+        const [basicStats, departmentStats, positionStats, salaryStats] = await Promise.all([
+            db.query(basicStatsQuery),
+            db.query(departmentStatsQuery),
+            db.query(positionStatsQuery),
+            db.query(salaryStatsQuery)
+        ]);
+        
+        const basic = basicStats.rows[0];
+        const salary = salaryStats.rows[0];
+        
+        // Procesar estadísticas por departamento
+        const byDepartment = {};
+        departmentStats.rows.forEach(row => {
+            byDepartment[row.department || 'Sin Departamento'] = parseInt(row.count);
+        });
+        
+        // Procesar estadísticas por posición
+        const byPosition = {};
+        positionStats.rows.forEach(row => {
+            byPosition[row.position || 'Sin Posición'] = parseInt(row.count);
+        });
+        
+        // Calcular costos mensuales con prestaciones sociales colombianas
+        const totalMonthlyBase = parseFloat(salary.total_monthly_base) || 0;
+        const totalMonthlyCost = Math.round(totalMonthlyBase * 1.58); // Factor prestacional
+        const avgHourlyRate = Math.round(parseFloat(salary.avg_hourly_rate) || 0);
+        
+        const stats = {
+            total: parseInt(basic.total),
+            active: parseInt(basic.active),
+            inactive: parseInt(basic.inactive),
+            terminated: parseInt(basic.terminated),
+            byDepartment,
+            byPosition,
+            averageHourlyRate: avgHourlyRate,
+            totalMonthlyCost,
+            salaryDetails: {
+                totalMonthlyBase: Math.round(totalMonthlyBase),
+                hourlyEmployees: parseInt(salary.hourly_employees),
+                monthlyEmployees: parseInt(salary.monthly_employees),
+                prestationsFactor: 1.58
+            }
+        };
+        
+        res.json(stats);
+        
+    } catch (error) {
+        console.error('Error obteniendo estadísticas de empleados:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 // Obtener empleado por ID
 router.get('/:id', async (req, res) => {
     try {
@@ -94,6 +211,7 @@ router.post('/', async (req, res) => {
             emergency_phone,
             bank_account
         } = req.body;
+        
         
         // Validaciones básicas
         if (!name || !document_number || !position || !department || !hire_date) {
@@ -164,6 +282,31 @@ router.put('/:id', async (req, res) => {
             bank_account
         } = req.body;
         
+        
+        // Validaciones condicionales (igual que en POST)
+        if (salary_type === 'hourly' && !hourly_rate) {
+            return res.status(400).json({ 
+                error: 'hourly_rate es requerido para salary_type = hourly' 
+            });
+        }
+        
+        if (salary_type === 'monthly' && !monthly_salary) {
+            return res.status(400).json({ 
+                error: 'monthly_salary es requerido para salary_type = monthly' 
+            });
+        }
+        
+        // Limpiar campo opuesto según el tipo de salario si se especifica salary_type
+        let finalHourlyRate = hourly_rate;
+        let finalMonthlySalary = monthly_salary;
+        
+        if (salary_type && salary_type === 'hourly') {
+            finalMonthlySalary = null; // Limpiar salario mensual cuando se cambia a hourly
+        } else if (salary_type && salary_type === 'monthly') {
+            finalHourlyRate = null; // Limpiar tarifa por hora cuando se cambia a monthly
+        }
+        
+        
         const result = await db.query(`
             UPDATE personnel SET
                 name = COALESCE($1, name),
@@ -177,8 +320,8 @@ router.put('/:id', async (req, res) => {
                 hire_date = COALESCE($9, hire_date),
                 status = COALESCE($10, status),
                 salary_type = COALESCE($11, salary_type),
-                hourly_rate = COALESCE($12, hourly_rate),
-                monthly_salary = COALESCE($13, monthly_salary),
+                hourly_rate = $12,
+                monthly_salary = $13,
                 arl_risk_class = COALESCE($14, arl_risk_class),
                 emergency_contact = COALESCE($15, emergency_contact),
                 emergency_phone = COALESCE($16, emergency_phone),
@@ -189,7 +332,7 @@ router.put('/:id', async (req, res) => {
         `, [
             name, document_type, document_number, phone, email, address,
             position, department, hire_date, status, salary_type,
-            hourly_rate, monthly_salary, arl_risk_class,
+            finalHourlyRate, finalMonthlySalary, arl_risk_class,
             emergency_contact, emergency_phone, bank_account, id
         ]);
         

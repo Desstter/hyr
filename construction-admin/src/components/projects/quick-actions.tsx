@@ -250,7 +250,7 @@ export function ProjectActionsMenu({
   const handleArchive = async () => {
     setIsLoading(true);
     try {
-      const updatedProject = await api.projects.updateStatus(
+      const _updatedProject = await api.projects.updateStatus(
         project.id,
         "on_hold"
       );

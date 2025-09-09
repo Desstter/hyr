@@ -28,12 +28,14 @@ import { useTranslations } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/finance";
 import {
   SavedEstimation,
+  CostEstimation,
   useSavedEstimations,
   duplicateEstimation,
   deleteEstimation,
   convertEstimationToProject,
 } from "@/lib/api/simulator";
-import { downloadAdvancedPDF } from "@/lib/pdf-generator";
+import { downloadAdvancedPDF, CostEstimate, CostEstimateItem } from "@/lib/pdf-generator";
+
 import { toast } from "sonner";
 
 interface CostEstimatesListProps {
@@ -127,10 +129,39 @@ export function CostEstimatesList({
         address: "Bogotá, Colombia",
       };
 
-      // Usar los datos de la estimación guardada con PDF profesional
+      // Transformar CostEstimation a CostEstimate para el PDF
+      const estimationData: CostEstimation = estimate.estimation_data;
+      const transformedEstimate: CostEstimate = {
+        id: estimate.id,
+        name: estimate.project_name,
+        items: estimationData.items_detail.map((item): CostEstimateItem => ({
+          id: `${item.category}-${item.subcategory}`,
+          name: item.name || item.subcategory,
+          type: item.category === "materials" ? "material" : 
+                item.category === "labor" ? "labor" :
+                item.category === "equipment" ? "equipment" : "overhead",
+          quantity: item.quantity,
+          unit: item.unit || "unidad",
+          unitCost: item.cost_per_unit || 0,
+          total: item.total_cost || 0,
+          description: `${item.category} - ${item.subcategory}`,
+        })),
+        subtotal: estimationData.cost_breakdown.subtotal,
+        profitMargin: estimationData.calculation_factors.profit_margin,
+        total: estimationData.cost_breakdown.total,
+        currency: "COP",
+        createdAt: estimate.created_at,
+        updatedAt: estimate.created_at,
+      };
+
+      // Usar los datos transformados con PDF profesional
       await downloadAdvancedPDF({
-        estimate: estimate.estimation_data,
-        client: { name: estimate.client_name || "Sin cliente" },
+        estimate: transformedEstimate,
+        client: { 
+          id: `temp-client-${estimate.id}`,
+          name: estimate.client_name || "Sin cliente",
+          created_at: estimate.created_at,
+        },
         businessInfo,
       });
 

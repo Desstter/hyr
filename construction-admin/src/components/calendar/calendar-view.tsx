@@ -49,8 +49,8 @@ export function CalendarView({ onReminderClick }: CalendarViewProps) {
         // Handle both direct array response and {data: array} response
         const events = Array.isArray(eventsData)
           ? eventsData
-          : eventsData?.data && Array.isArray(eventsData.data)
-            ? eventsData.data
+          : (eventsData as {data?: CalendarEvent[]})?.data && Array.isArray((eventsData as {data?: CalendarEvent[]}).data)
+            ? (eventsData as {data: CalendarEvent[]}).data
             : [];
 
         setEvents(events);
@@ -123,8 +123,8 @@ export function CalendarView({ onReminderClick }: CalendarViewProps) {
       // Handle both direct array response and {data: array} response
       const events = Array.isArray(eventsData)
         ? eventsData
-        : eventsData?.data && Array.isArray(eventsData.data)
-          ? eventsData.data
+        : (eventsData as {data?: CalendarEvent[]})?.data && Array.isArray((eventsData as {data?: CalendarEvent[]}).data)
+          ? (eventsData as {data: CalendarEvent[]}).data
           : [];
 
       setEvents(events);
@@ -227,7 +227,7 @@ export function CalendarView({ onReminderClick }: CalendarViewProps) {
 
           {/* Calendar days */}
           <div className="grid grid-cols-7">
-            {calendarDays.map((day, index) => {
+            {calendarDays.map((day, _index) => {
               const dayKey = format(day, "yyyy-MM-dd");
               const dayEvents = eventsByDate.get(dayKey) ?? [];
               const isCurrentMonth = isSameMonth(day, currentDate);

@@ -22,7 +22,7 @@ import {
 import { handleApiError } from "@/lib/api";
 
 export function ThemeSettings() {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
   const [themeSettings, setThemeSettings] = useState<ThemeSettingsType>({
     mode: "light",
     language: "es",
