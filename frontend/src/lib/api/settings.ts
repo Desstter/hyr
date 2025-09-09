@@ -113,7 +113,11 @@ export class SettingsService {
     message: string;
     data: Setting<T>;
   }> {
-    return apiClient.put<Setting>(`${this.endpoint}/${key}`, {
+    return apiClient.put<{
+      success: boolean;
+      message: string;
+      data: Setting<T>;
+    }>(`${this.endpoint}/${key}`, {
       value,
       description,
     });
@@ -132,7 +136,11 @@ export class SettingsService {
     message: string;
     data: Setting<T>;
   }> {
-    return apiClient.post<Setting>(`${this.endpoint}`, {
+    return apiClient.post<{
+      success: boolean;
+      message: string;
+      data: Setting<T>;
+    }>(`${this.endpoint}`, {
       key,
       value,
       category,
@@ -144,7 +152,7 @@ export class SettingsService {
    * Eliminar configuración
    */
   async delete(key: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete<{ success: boolean }>(`${this.endpoint}/${key}`);
+    return apiClient.delete<{ success: boolean; message: string }>(`${this.endpoint}/${key}`);
   }
 
   /**
@@ -170,9 +178,11 @@ export class SettingsService {
     message: string;
     data: Setting;
   }> {
-    return apiClient.post<{ success: boolean }>(
-      `${this.endpoint}/reset/${key}`
-    );
+    return apiClient.post<{
+      success: boolean;
+      message: string;
+      data: Setting;
+    }>(`${this.endpoint}/reset/${key}`);
   }
 
   // =====================================================

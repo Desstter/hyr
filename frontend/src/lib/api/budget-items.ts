@@ -13,7 +13,7 @@ export const budgetItemsApi = {
     const response = await apiClient.get<ApiResponse<BudgetItem[]>>(
       `/budget-items/${projectId}`
     );
-    return response.data.data;
+    return response.data || [];
   },
 
   // Crear nuevo item de presupuesto
@@ -22,7 +22,10 @@ export const budgetItemsApi = {
       "/budget-items",
       data
     );
-    return response.data.data;
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    return response.data;
   },
 
   // Actualizar item de presupuesto
@@ -34,7 +37,10 @@ export const budgetItemsApi = {
       `/budget-items/${id}`,
       data
     );
-    return response.data.data;
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    return response.data;
   },
 
   // Eliminar item de presupuesto
@@ -42,7 +48,10 @@ export const budgetItemsApi = {
     const response = await apiClient.delete<ApiResponse<BudgetItem>>(
       `/budget-items/${id}`
     );
-    return response.data.data;
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    return response.data;
   },
 
   // Obtener resumen del presupuesto por proyecto
@@ -50,6 +59,9 @@ export const budgetItemsApi = {
     const response = await apiClient.get<ApiResponse<BudgetSummary>>(
       `/budget-items/project/${projectId}/summary`
     );
-    return response.data.data;
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    return response.data;
   },
 };

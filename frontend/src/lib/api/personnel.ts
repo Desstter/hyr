@@ -303,7 +303,7 @@ export class PersonnelService {
   }> {
     const assignments = await this.getAssignments(personnelId);
     const total_hours_per_day = assignments.reduce(
-      (sum, a) => sum + (a.expected_hours_per_day || 0),
+      (sum, a) => sum + (a.hours_per_day || 0),
       0
     );
     const total_projects = assignments.length;
@@ -319,7 +319,10 @@ export class PersonnelService {
       total_hours_per_day,
       availability_status,
       can_take_more_work: total_hours_per_day < 8,
-      assignments,
+      assignments: assignments.map(assignment => ({
+        ...assignment,
+        personnel_id: personnelId,
+      })),
     };
   }
 
@@ -367,7 +370,7 @@ export class PersonnelService {
     data: CreatePersonnelRequest,
     maxRetries: number = 2
   ): Promise<Personnel> {
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -399,7 +402,7 @@ export class PersonnelService {
     data: Partial<CreatePersonnelRequest>,
     maxRetries: number = 2
   ): Promise<Personnel> {
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {

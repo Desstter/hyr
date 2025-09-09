@@ -175,22 +175,31 @@ export class ReportsService {
       proyectosEnRiesgo: number;
     };
   }> {
-    type MonthlyFinancialReport = {
+    return apiClient.get<{
       resumen: {
-        ingresosTotales: number;
-        gastosTotales: number;
+        ingresos: number;
+        gastos: number;
+        utilidadBruta: number;
+        margenUtilidad: number;
+        nomina: number;
         utilidadNeta: number;
-        margenUtilidad: number;
-        nominaMensual: number;
-        proyectosActivos: number;
-        empleadosActivos: number;
       };
-      gastosPorCategoria: Record<string, number>;
-      proyectosMasRentables: Array<{
-        id: string;
-        nombre: string;
-        margenUtilidad: number;
-        ingresoGenerado: number;
+      proyectos: {
+        completados: number;
+        ingresosPorCompletados: number;
+        activos: number;
+        presupuestoActivos: number;
+      };
+      gastosPorCategoria: Array<{
+        categoria: string;
+        monto: number;
+        porcentaje: number;
+      }>;
+      nominaPorDepartamento: Array<{
+        departamento: string;
+        empleados: number;
+        costoTotal: number;
+        promedioSalario: number;
       }>;
       indicadores: {
         costoPorHora: number;
@@ -198,8 +207,7 @@ export class ReportsService {
         eficienciaPresupuestaria: number;
         proyectosEnRiesgo: number;
       };
-    };
-    return apiClient.get<MonthlyFinancialReport>(
+    }>(
       `${this.endpoint}/monthly-financial`,
       { month, year }
     );
@@ -445,8 +453,16 @@ export class ReportsService {
     reportType: string,
     filters?: Record<string, unknown>
   ): Promise<Blob> {
+    // Initialize API client to ensure config is loaded
+    await apiClient.initialize();
+    
+    // Get base URL dynamically
+    const baseUrl = process.env.NODE_ENV === "development"
+      ? "http://localhost:3001/api"
+      : (await import("../appConfig")).apiUrl("");
+    
     const response = await fetch(
-      `${apiClient["baseUrl"]}${this.endpoint}/export/excel`,
+      `${baseUrl}${this.endpoint}/export/excel`,
       {
         method: "POST",
         headers: {
@@ -470,8 +486,16 @@ export class ReportsService {
     reportType: string,
     filters?: Record<string, unknown>
   ): Promise<Blob> {
+    // Initialize API client to ensure config is loaded
+    await apiClient.initialize();
+    
+    // Get base URL dynamically
+    const baseUrl = process.env.NODE_ENV === "development"
+      ? "http://localhost:3001/api"
+      : (await import("../appConfig")).apiUrl("");
+    
     const response = await fetch(
-      `${apiClient["baseUrl"]}${this.endpoint}/export/pdf`,
+      `${baseUrl}${this.endpoint}/export/pdf`,
       {
         method: "POST",
         headers: {

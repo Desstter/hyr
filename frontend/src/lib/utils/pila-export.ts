@@ -324,14 +324,23 @@ export function generateLaborCertificateData(
  * Validar estructura de datos PILA
  */
 export function validatePILAData(data: unknown): data is PILAReportData {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+  
+  const typedData = data as Record<string, unknown>;
   return (
-    data &&
-    typeof data.periodo === "string" &&
-    Array.isArray(data.empleados) &&
-    data.empleados.length > 0 &&
-    data.empleados.every(
-      (emp: unknown) =>
-        emp.documento && emp.nombre && typeof emp.salario === "number"
+    typeof typedData.periodo === "string" &&
+    Array.isArray(typedData.empleados) &&
+    typedData.empleados.length > 0 &&
+    typedData.empleados.every(
+      (emp: unknown) => {
+        if (!emp || typeof emp !== "object") {
+          return false;
+        }
+        const typedEmp = emp as Record<string, unknown>;
+        return typedEmp.documento && typedEmp.nombre && typeof typedEmp.salario === "number";
+      }
     )
   );
 }

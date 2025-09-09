@@ -56,7 +56,8 @@
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src/**)",
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)",
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
