@@ -1,0 +1,200 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  Calculator,
+  Plus,
+  Trash2,
+  Download,
+  Save,
+  AlertTriangle,
+  TrendingUp,
+  Building,
+  Zap,
+} from "lucide-react";
+import { simulatorService } from "@/lib/api/simulator";
+import { api } from "@/lib/api";
+import type {
+  CostTemplate,
+  EstimationItem,
+  CostEstimation,
+  ProjectPreset,
+} from "@/lib/api/simulator";
+import type { Client } from "@/lib/api";
+
+export default function CostSimulatorPage() {
+  // Estados principales
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [templates, setTemplates] = useState<CostTemplate[]>([]);
+  const [presets, setPresets] = useState<ProjectPreset[]>([]);
+  const [items, setItems] = useState<EstimationItem[]>([]);
+  const [estimation, setEstimation] = useState<CostEstimation | null>(null);
+  const [projectDuration, setProjectDuration] = useState<number>(30);
+  const [applyBenefits, setApplyBenefits] = useState<boolean>(true);
+  const [selectedClient, setSelectedClient] = useState<string>("none");
+  const [clients, setClients] = useState<Client[]>([]);
+
+  // Estados de carga y error
+  const [loading, setLoading] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar templates y clientes al montar el componente
+  useEffect(() => {
+    async function loadTemplates() {
+      try {
+        const [templatesData, clientsData] = await Promise.all([
+          simulatorService.getTemplates(),
+          api.clients.getAll(),
+        ]);
+        setTemplates(templatesData);
+        setClients(clientsData);
+      } catch {
+        setError("Error al cargar templates de costos");
+      } finally {
+        setTemplatesLoading(false);
+      }
+    }
+
+    loadTemplates();
+  }, []);
+
+  // Cargar presets cuando cambie el template
+  useEffect(() => {
+    if (!selectedTemplate) return;
+
+    async function loadPresets() {
+      try {
+        const presetsData = await simulatorService.getPresets(selectedTemplate);
+        setPresets(presetsData);
+      } catch (err) {
+        console.error("Error cargando presets:", err);
+      }
+    }
+
+    loadPresets();
+  }, [selectedTemplate]);
+
+  // Agregar nuevo item
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        category: "materials",
+        subcategory: "",
+        quantity: 1,
+      },
+    ]);
+  };
+
+  // Remover item
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  // Actualizar item
+  const updateItem = (
+    index: number,
+    field: keyof EstimationItem,
+    value: string | number
+  ) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  // Aplicar preset
+  const applyPreset = (preset: ProjectPreset) => {
+    setItems(preset.items);
+  };
+
+  // Calcular estimación
+  const calculateCost = async () => {
+    if (!selectedTemplate || items.length === 0) {
+      setError("Seleccione un template y agregue al menos un item");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await simulatorService.calculateEstimation({
+        template_type: selectedTemplate,
+        items,
+        project_duration_days: projectDuration,
+        apply_benefits: applyBenefits,
+      });
+
+      setEstimation(result);
+    } catch {
+      setError("Error al calcular estimación");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Obtener categorías disponibles del template seleccionado
+  const getAvailableSubcategories = (category: string) => {
+    const template = templates.find(t => t.id === selectedTemplate);
+    if (!template) return [];
+
+    return Object.entries(
+      template.categories[category as keyof typeof template.categories] || {}
+    );
+  };
+
+  // Formatear moneda
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (templatesLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando simulador de costos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Calculator className="h-8 w-8 text-blue-600" />
+            Simulador de Costos
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Estimaciones precisas para proyectos de construcción y soldadura
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Save className="h-4 w-4 mr-2" />

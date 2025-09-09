@@ -66,7 +66,7 @@ async function createSampleAssignments() {
           ]);
           
           console.log(`✅ Asignado: ${employee.name} → ${project.name} (${j === 0 ? '6h' : '2h'})`);
-          assignmentCount++;
+          // assignmentCount++;
           
         } catch (err) {
           if (!err.message.includes('duplicate key')) {

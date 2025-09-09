@@ -35,7 +35,8 @@ export async function getAppConfig(): Promise<AppConfig> {
       config = await response.json();
     } catch (error) {
       console.warn(
-        "No se pudo cargar appconfig.json, usando configuración por defecto"
+        "No se pudo cargar appconfig.json, usando configuración por defecto:",
+        error
       );
       // Configuración de fallback
       config = {

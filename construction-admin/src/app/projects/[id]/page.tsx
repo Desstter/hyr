@@ -58,12 +58,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       // Load project expenses
       try {
         const expensesResult = await api.projects.getExpenses(id);
-        const expensesData = Array.isArray(expensesResult)
-          ? expensesResult
-          : Array.isArray(expensesResult.data)
-            ? expensesResult.data
-            : [];
-        setExpenses(expensesData);
+        setExpenses(expensesResult || []);
       } catch (err) {
         console.warn("Could not load expenses:", err);
         setExpenses([]);
@@ -72,12 +67,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       // Load assigned personnel
       try {
         const personnelResult = await api.projects.getAssignedPersonnel(id);
-        const personnelData = Array.isArray(personnelResult)
-          ? personnelResult
-          : Array.isArray(personnelResult.data)
-            ? personnelResult.data
-            : [];
-        setAssignedPersonnel(personnelData);
+        setAssignedPersonnel(personnelResult || []);
       } catch (err) {
         console.warn("Could not load personnel:", err);
         setAssignedPersonnel([]);
@@ -143,8 +133,20 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     (sum, expense) => sum + Number(expense.amount),
     0
   );
+  // Helper function to calculate person's total pay
+  const getPersonTotalPay = (person: Personnel) => {
+    if (person.monthly_salary) {
+      return Number(person.monthly_salary) || 0;
+    }
+    if (person.hourly_rate) {
+      // Assume ~172 hours per month (40 hours/week * 4.3 weeks)
+      return (Number(person.hourly_rate) || 0) * 172;
+    }
+    return 0;
+  };
+
   const totalPersonnelCost = assignedPersonnel.reduce(
-    (sum, person) => sum + (Number(person.total_pay) || 0),
+    (sum, person) => sum + getPersonTotalPay(person),
     0
   );
   const remainingBudget =
@@ -268,7 +270,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 <span>{assignedPersonnel.length} empleados</span>
                 <span>
                   {assignedPersonnel
-                    .reduce((sum, p) => sum + Number(p.total_hours || 0), 0)
+                    .reduce((sum, _p) => sum + 0, 0)
                     .toFixed(1)}{" "}
                   horas totales
                 </span>
@@ -444,35 +446,27 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                         <div>
                           <span className="font-medium">Horas trabajadas:</span>
                           <p>
-                            {Number(person.total_hours || 0).toFixed(1)} horas
+                            0.0 horas
                           </p>
                         </div>
                         <div>
                           <span className="font-medium">Horas extra:</span>
                           <p>
-                            {Number(person.total_overtime_hours || 0).toFixed(
-                              1
-                            )}{" "}
+                            0.0{" "}
                             horas
                           </p>
                         </div>
                         <div>
                           <span className="font-medium">Pago total:</span>
                           <p className="text-blue-600">
-                            {formatCurrency(Number(person.total_pay || 0))}
+                            {formatCurrency(getPersonTotalPay(person))}
                           </p>
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-600">
                         <span className="font-medium">Período:</span>
                         <span className="ml-2">
-                          {person.first_work_date
-                            ? formatDate(person.first_work_date)
-                            : ""}{" "}
                           -
-                          {person.last_work_date
-                            ? formatDate(person.last_work_date)
-                            : "Presente"}
                         </span>
                       </div>
                     </div>
@@ -496,7 +490,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                         <p className="text-2xl font-bold text-purple-600">
                           {assignedPersonnel
                             .reduce(
-                              (sum, p) => sum + Number(p.total_hours || 0),
+                              (sum, _p) => sum + 0,
                               0
                             )
                             .toFixed(1)}

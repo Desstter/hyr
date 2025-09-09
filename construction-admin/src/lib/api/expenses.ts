@@ -269,7 +269,7 @@ export const expensesService = new ExpensesService();
 // HOOKS PARA REACT (Opcional)
 // =====================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 /**
  * Hook para cargar lista de gastos
@@ -280,7 +280,9 @@ export function useExpenses(params?: Parameters<ExpensesService["list"]>[0]) {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  const loadExpenses = async () => {
+  const paramsKey = useMemo(() => JSON.stringify(params), [params]);
+
+  const loadExpenses = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -292,11 +294,11 @@ export function useExpenses(params?: Parameters<ExpensesService["list"]>[0]) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   useEffect(() => {
     loadExpenses();
-  }, [JSON.stringify(params)]);
+  }, [paramsKey, loadExpenses]);
 
   return {
     expenses,
@@ -317,7 +319,7 @@ export function useProjectExpenses(projectId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -332,13 +334,13 @@ export function useProjectExpenses(projectId: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     if (projectId) {
       loadData();
     }
-  }, [projectId]);
+  }, [projectId, loadData]);
 
   return {
     expenses: data?.expenses || [],
@@ -367,7 +369,7 @@ export function useExpensesStats(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -380,11 +382,11 @@ export function useExpensesStats(
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
 
   useEffect(() => {
     loadStats();
-  }, [period]);
+  }, [loadStats]);
 
   return {
     stats,

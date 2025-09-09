@@ -165,7 +165,7 @@ function calcularRetencionFuente(salarioMensual) {
  * Genera resumen ejecutivo de nómina para múltiples empleados
  */
 function generarResumenNomina(empleados, periodo) {
-    let resumen = {
+    const resumen = {
         periodo,
         totalEmpleados: empleados.length,
         totales: {

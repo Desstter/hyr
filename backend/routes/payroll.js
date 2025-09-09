@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../database/connection');
-const { calcularNominaCompleta, generarResumenNomina, validarCalculosLegales, COLOMBIA_PAYROLL_2024 } = require('../utils/payroll-colombia');
+const { calcularNominaCompleta, _generarResumenNomina, validarCalculosLegales, COLOMBIA_PAYROLL_2024 } = require('../utils/payroll-colombia');
 
 // Importar utilidades 2025
-const { COLOMBIA_PAYROLL_2025, calcularNominaCompleta2025 } = require('../utils/payroll-colombia-2025');
+const { COLOMBIA_PAYROLL_2025, _calcularNominaCompleta2025 } = require('../utils/payroll-colombia-2025');
 
 // Obtener períodos de nómina
 router.get('/periods', async (req, res) => {
@@ -421,7 +421,7 @@ router.get('/config/:year?', async (req, res) => {
     try {
         const year = req.params.year || 2025;
         
-        if (year == 2025) {
+        if (year === 2025) {
             // Respuesta directa para 2025
             res.json({
                 year: 2025,

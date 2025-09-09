@@ -84,7 +84,7 @@ export function BusinessProfile() {
     try {
       // Restablecer valores por defecto desde el API
       const response = await settingsService.reset("business_profile");
-      setProfile(response.data.value);
+      setProfile(response.data.value as BusinessProfileType);
       toast.success("Perfil restaurado a valores por defecto");
     } catch (error) {
       console.error("Error resetting business profile:", error);

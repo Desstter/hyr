@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
         const { search } = req.query;
         
         let query = 'SELECT * FROM clients';
-        let params = [];
+        const params = [];
         
         if (search) {
             query += ' WHERE name ILIKE $1 OR contact_name ILIKE $1';

@@ -44,13 +44,14 @@ const paymentReminderSchema = z.object({
   category: z.enum(
     ["tax", "insurance", "permit", "equipment", "other"] as const,
     {
-      required_error: "La categoría es requerida",
+      message: "La categoría es requerida",
     }
   ),
   amount: z.number().min(0, "El monto debe ser mayor o igual a 0").optional(),
   recurrence: z
     .enum(["none", "monthly", "quarterly", "yearly"] as const)
-    .default("none"),
+    .default("none")
+    .optional(),
   project_id: z.string().optional(),
   description: z.string().optional(),
 });
@@ -84,8 +85,8 @@ export function PaymentReminderDialog({
         // Handle both direct array response and {data: array} response
         const projectsData = Array.isArray(result)
           ? result
-          : Array.isArray(result.data)
-            ? result.data
+          : Array.isArray((result as {data?: Project[]}).data)
+            ? (result as {data: Project[]}).data
             : [];
         setProjects(projectsData);
       } catch (error) {

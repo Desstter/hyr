@@ -63,13 +63,13 @@ export function ExpensesTable() {
       // Handle both direct array response and {data: array} response
       const expensesData = Array.isArray(expensesResult)
         ? expensesResult
-        : expensesResult?.data && Array.isArray(expensesResult.data)
-          ? expensesResult.data
+        : (expensesResult as {data?: Expense[]})?.data && Array.isArray((expensesResult as {data?: Expense[]}).data)
+          ? (expensesResult as {data: Expense[]}).data
           : [];
       const projectsData = Array.isArray(projectsResult)
         ? projectsResult
-        : projectsResult?.data && Array.isArray(projectsResult.data)
-          ? projectsResult.data
+        : (projectsResult as {data?: Project[]})?.data && Array.isArray((projectsResult as {data?: Project[]}).data)
+          ? (projectsResult as {data: Project[]}).data
           : [];
 
       setExpenses(expensesData);

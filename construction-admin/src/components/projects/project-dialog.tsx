@@ -52,25 +52,21 @@ const projectSchema = z.object({
   client_id: z.string().optional(),
   clientName: z.string().optional(),
   status: z.enum(["planned", "in_progress", "on_hold", "completed"] as const, {
-    required_error: "El estado es requerido",
+    message: "El estado es requerido",
   }),
   // Presupuesto detallado
   budget_materials: z
     .number()
-    .min(0, "El presupuesto de materiales debe ser mayor o igual a 0")
-    .default(0),
+    .min(0, "El presupuesto de materiales debe ser mayor o igual a 0"),
   budget_labor: z
     .number()
-    .min(0, "El presupuesto de mano de obra debe ser mayor o igual a 0")
-    .default(0),
+    .min(0, "El presupuesto de mano de obra debe ser mayor o igual a 0"),
   budget_equipment: z
     .number()
-    .min(0, "El presupuesto de equipos debe ser mayor o igual a 0")
-    .default(0),
+    .min(0, "El presupuesto de equipos debe ser mayor o igual a 0"),
   budget_overhead: z
     .number()
-    .min(0, "El presupuesto de gastos generales debe ser mayor o igual a 0")
-    .default(0),
+    .min(0, "El presupuesto de gastos generales debe ser mayor o igual a 0"),
   start_date: z.string().optional(),
   estimated_end_date: z.string().optional(),
   description: z.string().optional(),

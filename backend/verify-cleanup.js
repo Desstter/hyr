@@ -21,7 +21,7 @@ async function verifyCompleteCleanup() {
     
     console.log('📊 DATA TABLES:');
     let allEmpty = true;
-    for (let table of dataTables) {
+    for (const table of dataTables) {
       try {
         const query = `SELECT COUNT(*) as count FROM ${table}`;
         const result = await pool.query(query);
@@ -39,7 +39,7 @@ async function verifyCompleteCleanup() {
     console.log('⚙️ CONFIGURATION TABLES:');
     const configTables = ['company_settings', 'settings', 'tax_tables', 'annual_payroll_settings'];
     
-    for (let table of configTables) {
+    for (const table of configTables) {
       try {
         const query = `SELECT COUNT(*) as count FROM ${table}`;
         const result = await pool.query(query);

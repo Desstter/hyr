@@ -38,7 +38,7 @@ const expenseSchema = z.object({
   date: z.string().min(1, "La fecha es requerida"),
   project_id: z.string().optional(),
   category: z.enum(["materials", "labor", "equipment", "overhead"] as const, {
-    required_error: "La categoría es requerida",
+    message: "La categoría es requerida",
   }),
   vendor: z.string().optional(),
   description: z.string().optional(),
@@ -117,8 +117,8 @@ export function ExpenseDialog({
       // Handle both direct array response and {data: array} response
       const projectsData = Array.isArray(result)
         ? result
-        : Array.isArray(result.data)
-          ? result.data
+        : Array.isArray((result as {data?: Project[]}).data)
+          ? (result as {data: Project[]}).data
           : [];
       setProjects(projectsData);
     } catch (err) {

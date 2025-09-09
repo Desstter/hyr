@@ -363,16 +363,16 @@ function calculateOvertimeRate(horaInicio, horaFin, esDominical, esFestivo) {
     if (esFestivo || esDominical) {
         if (esNocturno) {
             return recargos.extraNocturnaFestivo; // 150%
-        } else {
+        } 
             return recargos.extraDiurnaFestivo;   // 100%
-        }
+        
     }
     
     if (esNocturno) {
         return recargos.extraNocturna;            // 75%
-    } else {
+    } 
         return recargos.extraDiurna;              // 25%
-    }
+    
 }
 
 /**

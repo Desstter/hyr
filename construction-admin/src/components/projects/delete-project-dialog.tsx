@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -47,7 +47,7 @@ export function DeleteProjectDialog({
   } | null>(null);
   const [showForceDelete, setShowForceDelete] = useState(false);
 
-  const checkAssociatedData = async (projectId: string) => {
+  const checkAssociatedData = useCallback(async (_projectId: string) => {
     try {
       // Use the project's spent_total as an indicator of associated data
       const spent = project?.spent_total || 0;
@@ -62,7 +62,7 @@ export function DeleteProjectDialog({
       console.error("Error checking associated data:", error);
       setHasAssociatedData(null);
     }
-  };
+  }, [project]);
 
   const handleDelete = async () => {
     if (!project) return;
@@ -117,7 +117,7 @@ export function DeleteProjectDialog({
       checkAssociatedData(project.id);
       setShowForceDelete(false);
     }
-  }, [open, project]);
+  }, [open, project, checkAssociatedData]);
 
   if (!project) return null;
 
@@ -180,7 +180,7 @@ export function DeleteProjectDialog({
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span>Cliente: {project.client_name || "Sin cliente"}</span>
+                <span>Cliente: {project.client_id || "Sin cliente"}</span>
               </div>
             </div>
           </div>

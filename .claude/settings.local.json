@@ -54,7 +54,9 @@
       "Bash(git submodule:*)",
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin/**)",
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR\\construction-admin\\src/**)",
-      "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)"
+      "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

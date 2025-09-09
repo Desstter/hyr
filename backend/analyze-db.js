@@ -25,12 +25,12 @@ async function analyzeDatabase() {
     console.log('==================');
     
     const tables = tablesResult.rows.map(r => r.table_name);
-    for (let table of tables) {
+    for (const table of tables) {
       try {
         const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table}`);
         const count = countResult.rows[0].count;
         console.log(`  ${table.padEnd(25)}: ${count.toString().padStart(4)} rows`);
-      } catch (e) {
+      } catch (_e) {
         console.log(`  ${table.padEnd(25)}: ERROR`);
       }
     }
@@ -54,13 +54,13 @@ async function analyzeDatabase() {
       'time_entries': 'Registros de tiempo'
     };
     
-    for (let [table, description] of Object.entries(complianceTables)) {
+    for (const [table, description] of Object.entries(complianceTables)) {
       if (tables.includes(table)) {
         try {
           const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table}`);
           const count = countResult.rows[0].count;
           console.log(`  ✅ ${table.padEnd(20)}: ${count.toString().padStart(3)} - ${description}`);
-        } catch (e) {
+        } catch (_e) {
           console.log(`  ❌ ${table.padEnd(20)}: ERR - ${description}`);
         }
       } else {

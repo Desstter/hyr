@@ -154,6 +154,11 @@ export interface PayrollPeriod {
   end_date: string;
   processed_at?: string;
   status: "draft" | "processing" | "completed";
+  
+  // Aggregate fields from backend API GROUP BY queries
+  employees_processed: string;
+  total_net_pay: string;
+  total_employer_cost: string;
 }
 
 export interface PayrollDetail {

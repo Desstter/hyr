@@ -63,7 +63,7 @@ export function EnhancedKPISection({
     92000000,
     kpis.revenue_this_month,
   ];
-  const dailyActiveProjects = [4, 4, 5, 4, 4, 4, kpis.active_projects];
+  const _dailyActiveProjects = [4, 4, 5, 4, 4, 4, kpis.active_projects];
 
   const formatCurrency = (amount: number) => {
     const safeAmount = safeNumber(amount);

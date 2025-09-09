@@ -59,17 +59,8 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
         api.clients.list(),
       ]);
 
-      // Handle both direct array response and {data: array} response
-      const projectsData = Array.isArray(projectsResult)
-        ? projectsResult
-        : Array.isArray(projectsResult.data)
-          ? projectsResult.data
-          : [];
-      const clientsData = Array.isArray(clientsResult)
-        ? clientsResult
-        : Array.isArray(clientsResult.data)
-          ? clientsResult.data
-          : [];
+      const projectsData = projectsResult;
+      const clientsData = clientsResult.data || clientsResult;
 
       setProjects(projectsData);
       setClients(clientsData);

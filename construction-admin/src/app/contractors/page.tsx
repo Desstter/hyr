@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,11 +80,7 @@ export default function ContractorsPage() {
 
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadContractors();
-  }, []);
-
-  const loadContractors = async () => {
+  const loadContractors = useCallback(async () => {
     try {
       let url = "http://localhost:3001/api/contractors";
       const params = new URLSearchParams();
@@ -131,7 +127,11 @@ export default function ContractorsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, filterObligated]);
+
+  useEffect(() => {
+    loadContractors();
+  }, [loadContractors]);
 
   const handleAddContractor = async () => {
     if (!contractorForm.name || !contractorForm.document_number) {

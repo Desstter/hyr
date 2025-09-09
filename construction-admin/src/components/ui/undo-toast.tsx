@@ -6,6 +6,8 @@ import { useAppStore } from "@/store/app";
 import { clientsService } from "@/lib/api/clients";
 import { projectsService } from "@/lib/api/projects";
 import { expensesService } from "@/lib/api/expenses";
+import { personnelService } from "@/lib/api/personnel";
+import type { CreatePersonnelRequest } from "@/lib/api/types";
 import { toast } from "sonner";
 import { Undo2 } from "lucide-react";
 
@@ -19,7 +21,11 @@ export function UndoToast() {
     setIsUndoing(true);
     try {
       // Determine the type of item and restore it
-      if (
+      if (lastDeletedItem.type === "employee") {
+        // This is an employee - create new employee
+        await personnelService.create(lastDeletedItem.data as CreatePersonnelRequest);
+        toast.success("Empleado restaurado");
+      } else if (
         lastDeletedItem.project_id !== undefined ||
         lastDeletedItem.projectId !== undefined
       ) {

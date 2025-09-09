@@ -68,7 +68,7 @@ export function PersonnelTable({
   statusFilter: externalStatusFilter = "all",
   departmentFilter: externalDepartmentFilter = "all",
 }: PersonnelTableProps) {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [internalStatusFilter, setInternalStatusFilter] =
     useState<string>("all");
@@ -87,8 +87,8 @@ export function PersonnelTable({
   const {
     assignmentsSummary,
     stats: assignmentStats,
-    loading: assignmentsLoading,
-    error: assignmentsError,
+    loading: _assignmentsLoading,
+    error: _assignmentsError,
   } = usePersonnelAssignments(personnel);
 
   // Limpiar actionLoading después de 30 segundos en caso de error

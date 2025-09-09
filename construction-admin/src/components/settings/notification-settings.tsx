@@ -17,11 +17,11 @@ import {
   DollarSign,
   Briefcase,
 } from "lucide-react";
-import { settingsService, NotificationSettings } from "@/lib/api/settings";
+import { settingsService, type NotificationSettings as NotificationSettingsType } from "@/lib/api/settings";
 import { handleApiError } from "@/lib/api";
 
 export function NotificationSettings() {
-  const [settings, setSettings] = useState<NotificationSettings>({
+  const [settings, setSettings] = useState<NotificationSettingsType>({
     emailEnabled: true,
     pushEnabled: true,
     payrollReminders: true,
@@ -67,7 +67,7 @@ export function NotificationSettings() {
     }
   };
 
-  const handleChange = (field: keyof NotificationSettings, value: boolean) => {
+  const handleChange = (field: keyof NotificationSettingsType, value: boolean) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 

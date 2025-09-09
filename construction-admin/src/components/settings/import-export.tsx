@@ -72,27 +72,10 @@ export function ImportExport() {
           api.personnel.getAll(),
         ]);
 
-      // Handle both direct array response and {data: array} response
-      const projects = Array.isArray(projectsResult)
-        ? projectsResult
-        : Array.isArray(projectsResult.data)
-          ? projectsResult.data
-          : [];
-      const clients = Array.isArray(clientsResult)
-        ? clientsResult
-        : Array.isArray(clientsResult.data)
-          ? clientsResult.data
-          : [];
-      const expenses = Array.isArray(expensesResult)
-        ? expensesResult
-        : Array.isArray(expensesResult.data)
-          ? expensesResult.data
-          : [];
-      const personnel = Array.isArray(personnelResult)
-        ? personnelResult
-        : Array.isArray(personnelResult.data)
-          ? personnelResult.data
-          : [];
+      const projects = projectsResult;
+      const clients = clientsResult;
+      const expenses = expensesResult.data || expensesResult;
+      const personnel = personnelResult;
 
       const exportData: ExportData = {
         version: "1.0",
@@ -173,6 +156,9 @@ export function ImportExport() {
                 console.warn(
                   "Failed to import/update client:",
                   client.name,
+                  "Create error:",
+                  err,
+                  "Update error:",
                   updateErr
                 );
               }
@@ -200,6 +186,9 @@ export function ImportExport() {
                 console.warn(
                   "Failed to import/update personnel:",
                   person.name,
+                  "Create error:",
+                  err,
+                  "Update error:",
                   updateErr
                 );
               }
@@ -227,6 +216,9 @@ export function ImportExport() {
                 console.warn(
                   "Failed to import/update project:",
                   project.name,
+                  "Create error:",
+                  err,
+                  "Update error:",
                   updateErr
                 );
               }
@@ -254,6 +246,9 @@ export function ImportExport() {
                 console.warn(
                   "Failed to import/update expense:",
                   expense.description,
+                  "Create error:",
+                  err,
+                  "Update error:",
                   updateErr
                 );
               }
@@ -355,7 +350,10 @@ export function ImportExport() {
       let successCount = 0;
       for (const expense of expenses) {
         try {
-          await api.expenses.create(expense);
+          await api.expenses.create({
+            ...expense,
+            category: expense.category as "materials" | "labor" | "equipment" | "overhead"
+          });
           successCount++;
         } catch (error) {
           console.warn("Failed to create expense:", expense.description, error);

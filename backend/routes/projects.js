@@ -30,8 +30,17 @@ router.get('/', async (req, res) => {
         const params = [];
         
         if (status) {
-            query += ` AND p.status = $${params.length + 1}`;
-            params.push(status);
+            const statusValue = String(status);
+            if (statusValue.includes(',')) {
+                const statuses = statusValue.split(',').map(s => s.trim()).filter(Boolean);
+                if (statuses.length > 0) {
+                    query += ` AND p.status = ANY($${params.length + 1})`;
+                    params.push(statuses);
+                }
+            } else {
+                query += ` AND p.status = $${params.length + 1}`;
+                params.push(status);
+            }
         }
         
         if (client_id) {
@@ -251,14 +260,19 @@ router.get('/:id/expenses', async (req, res) => {
     }
 });
 
-// Obtener empleados asignados a un proyecto
+// Obtener personal asignado a un proyecto (incluye aunque no tengan horas)
 router.get('/:id/personnel', async (req, res) => {
     try {
         const { id } = req.params;
         
         const result = await db.query(`
             SELECT 
-                p.*,
+                p.id as id,
+                p.name,
+                p.position,
+                p.department,
+                p.hourly_rate,
+                p.monthly_salary,
                 COUNT(te.id) as time_entries,
                 COALESCE(SUM(te.hours_worked), 0) as total_hours,
                 COALESCE(SUM(te.overtime_hours), 0) as total_overtime_hours,
@@ -266,10 +280,11 @@ router.get('/:id/personnel', async (req, res) => {
                 COALESCE(AVG(te.hours_worked), 0) as avg_hours_per_day,
                 MIN(te.work_date) as first_work_date,
                 MAX(te.work_date) as last_work_date
-            FROM personnel p
-            JOIN time_entries te ON p.id = te.personnel_id
-            WHERE te.project_id = $1
-            GROUP BY p.id
+            FROM project_assignments pa
+            JOIN personnel p ON pa.personnel_id = p.id
+            LEFT JOIN time_entries te ON p.id = te.personnel_id AND te.project_id = pa.project_id
+            WHERE pa.project_id = $1 AND pa.status = 'active'
+            GROUP BY p.id, p.name, p.position, p.department, p.hourly_rate, p.monthly_salary
             ORDER BY total_hours DESC
         `, [id]);
         
@@ -333,8 +348,8 @@ router.get('/:id/financial-summary', async (req, res) => {
 // ASIGNACIONES DE PERSONAL
 // =====================================================
 
-// Obtener empleados asignados a un proyecto
-router.get('/:id/personnel', async (req, res) => {
+// Obtener detalle de asignaciones del proyecto (endpoint alterno)
+router.get('/:id/personnel-assignments', async (req, res) => {
     try {
         const { id } = req.params;
         

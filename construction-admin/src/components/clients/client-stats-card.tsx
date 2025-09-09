@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api, handleApiError } from "@/lib/api";
@@ -19,13 +19,13 @@ import {
 import { toast } from "sonner";
 
 interface ClientStats {
-  total_projects: string | number;
-  active_projects: string | number;
-  completed_projects: string | number;
-  projects_on_time: string | number;
-  projects_delayed: string | number;
-  total_revenue: string | number;
-  average_project_value: string | number;
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  projectsOnTime: number;
+  projectsDelayed: number;
+  totalRevenue: number;
+  averageProjectValue: number;
 }
 
 interface ClientStatsCardProps {
@@ -39,11 +39,7 @@ export function ClientStatsCard({ client, className }: ClientStatsCardProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStats();
-  }, [client.id]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -58,7 +54,11 @@ export function ClientStatsCard({ client, className }: ClientStatsCardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [client.id]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   if (loading) {
     return (
@@ -101,13 +101,13 @@ export function ClientStatsCard({ client, className }: ClientStatsCardProps) {
   }
 
   // Calculate percentages and performance indicators
-  const totalProjects = parseInt(stats.total_projects) || 0;
-  const activeProjects = parseInt(stats.active_projects) || 0;
-  const completedProjects = parseInt(stats.completed_projects) || 0;
-  const projectsOnTime = parseInt(stats.projects_on_time) || 0;
-  const projectsDelayed = parseInt(stats.projects_delayed) || 0;
-  const totalRevenue = parseFloat(stats.total_revenue) || 0;
-  const averageProjectValue = parseFloat(stats.average_project_value) || 0;
+  const totalProjects = stats.totalProjects || 0;
+  const activeProjects = stats.activeProjects || 0;
+  const completedProjects = stats.completedProjects || 0;
+  const projectsOnTime = stats.projectsOnTime || 0;
+  const projectsDelayed = stats.projectsDelayed || 0;
+  const totalRevenue = stats.totalRevenue || 0;
+  const averageProjectValue = stats.averageProjectValue || 0;
 
   const onTimePercentage =
     completedProjects > 0

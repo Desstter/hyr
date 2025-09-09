@@ -101,7 +101,7 @@ router.post('/calculate', (req, res) => {
     let totalMaterials = 0;
     let totalLabor = 0;
     let totalEquipment = 0;
-    let itemDetails = [];
+    const itemDetails = [];
 
     // Calcular costos por item
     items.forEach(item => {

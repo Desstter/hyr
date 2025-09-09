@@ -9,7 +9,7 @@ import { useTranslations } from "@/lib/i18n";
 import { Plus, Building2 } from "lucide-react";
 
 export default function ClientsPage() {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | undefined>();
 
@@ -24,7 +24,7 @@ export default function ClientsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                {t.clients.title}
+                Clientes
               </h1>
               <p className="text-muted-foreground text-lg">
                 Gestión integral de relaciones empresariales
@@ -42,7 +42,7 @@ export default function ClientsPage() {
             className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Plus className="h-4 w-4 mr-2" />
-            {t.clients.newClient}
+            Nuevo Cliente
           </Button>
         </div>
       </div>

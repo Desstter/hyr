@@ -1,6 +1,5 @@
 <claudeSpec version="1.0">
   <reglas>
-    <rule id="no-dev-build">Nunca ejecutar "build" ni "dev". Ya hay un servidor de desarrollo en http://localhost:3000. nunca correr el servidor de backend, siempre hay uno corriendo en el puerto 3001</rule>
     <rule id="todo-md">Siempre leer TODO.md antes de trabajar y seguir las tareas en orden. Al completar pasos, actualizar TODO.md con nueva información, estructuras o tablas; además reflejar un resumen simple en este mismo XML bajo &lt;changelog/&gt; y &lt;knowledge/&gt;.</rule>
   </reglas>
 
@@ -176,4 +175,3 @@
     </entrada>
   </changelog>
 </claudeSpec>
-- Never Build

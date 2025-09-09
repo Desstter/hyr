@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PersonnelDialog } from "./personnel-dialog";
-import { UndoToast } from "@/components/ui/undo-toast";
+import { useAppStore } from "@/store/app";
 
 interface PersonnelCardsProps {
   personnel?: Personnel[];
@@ -49,7 +49,8 @@ export function PersonnelCards({
   departmentFilter = "all",
   onEdit,
 }: PersonnelCardsProps) {
-  const t = useTranslations("es");
+  const _t = useTranslations("es");
+  const { setLastDeletedItem } = useAppStore();
   const [editingPersonnel, setEditingPersonnel] = useState<Personnel | null>(
     null
   );
@@ -91,33 +92,31 @@ export function PersonnelCards({
 
       await personnelService.delete(person.id);
 
-      // Show undo toast
-      UndoToast({
-        message: `Empleado ${person.name} eliminado`,
-        action: async () => {
-          // Re-create the employee
-          await personnelService.create({
-            name: person.name,
-            document_type: person.document_type || "CC",
-            document_number: person.document_number || "",
-            phone: person.phone || "",
-            email: person.email || "",
-            address: person.address || "",
-            position: person.position || "",
-            department: person.department || "construccion",
-            hire_date:
-              person.hire_date || new Date().toISOString().split("T")[0],
-            status: person.status || "active",
-            salary_type: person.salary_type || "hourly",
-            hourly_rate: person.hourly_rate,
-            monthly_salary: person.monthly_salary,
-            arl_risk_class: person.arl_risk_class || "V",
-            emergency_contact: person.emergency_contact || "",
-            emergency_phone: person.emergency_phone || "",
-            bank_account: person.bank_account || "",
-          });
-          onRefresh?.();
+      // Set up undo functionality using store
+      setLastDeletedItem({
+        type: "employee",
+        id: person.id,
+        name: person.name,
+        data: {
+          name: person.name,
+          document_type: person.document_type || "CC",
+          document_number: person.document_number || "",
+          phone: person.phone || "",
+          email: person.email || "",
+          address: person.address || "",
+          position: person.position || "",
+          department: person.department || "construccion",
+          hire_date: person.hire_date || new Date().toISOString().split("T")[0],
+          status: person.status || "active",
+          salary_type: person.salary_type || "hourly",
+          hourly_rate: person.hourly_rate,
+          monthly_salary: person.monthly_salary,
+          arl_risk_class: person.arl_risk_class || "V",
+          emergency_contact: person.emergency_contact || "",
+          emergency_phone: person.emergency_phone || "",
+          bank_account: person.bank_account || "",
         },
+        timestamp: new Date().toISOString(),
       });
 
       onRefresh?.();
