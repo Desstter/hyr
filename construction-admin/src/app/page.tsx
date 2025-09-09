@@ -1,27 +1,23 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { KPICard } from '@/components/dashboard/kpi-card';
-import { TopProjects } from '@/components/dashboard/top-projects-api';
-import { CashflowChart } from '@/components/dashboard/cashflow-chart-api';
-import { UpcomingPaymentsCard } from '@/components/dashboard/upcoming-payments-card';
-import { PersonnelKPIs } from '@/components/dashboard/personnel-kpis-api';
-import { useTranslations } from '@/lib/i18n';
-import { api, handleApiError } from '@/lib/api';
-import type { ExecutiveDashboardData } from '@/lib/api';
-import { EnhancedKPISection } from '@/components/dashboard/enhanced-kpi-section';
-import { 
-  FolderOpen, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign,
-  Users,
-  AlertTriangle 
-} from 'lucide-react';
+import { useEffect, useState } from "react";
+import { TopProjects } from "@/components/dashboard/top-projects-api";
+import { CashflowChart } from "@/components/dashboard/cashflow-chart-api";
+import { UpcomingPaymentsCard } from "@/components/dashboard/upcoming-payments-card";
+import { PersonnelKPIs } from "@/components/dashboard/personnel-kpis-api";
+import { useTranslations } from "@/lib/i18n";
+import { api, handleApiError } from "@/lib/api";
+import type { ExecutiveDashboardData } from "@/lib/api";
+import { EnhancedKPISection } from "@/components/dashboard/enhanced-kpi-section";
+import {
+  FolderOpen,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function Dashboard() {
-  const t = useTranslations('es');
-  const [dashboardData, setDashboardData] = useState<ExecutiveDashboardData | null>(null);
+  const _t = useTranslations("es");
+  const [dashboardData, setDashboardData] =
+    useState<ExecutiveDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +35,7 @@ export default function Dashboard() {
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      console.error('Error loading dashboard data:', err);
+      console.error("Error loading dashboard data:", err);
     } finally {
       setLoading(false);
     }
@@ -57,9 +53,15 @@ export default function Dashboard() {
             Cargando datos empresariales desde PostgreSQL...
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" suppressHydrationWarning>
+        <div
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          suppressHydrationWarning
+        >
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-lg" />
+            <div
+              key={i}
+              className="h-32 bg-gray-100 animate-pulse rounded-lg"
+            />
           ))}
         </div>
         <div className="grid gap-6 md:grid-cols-12">
@@ -79,9 +81,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
             Dashboard HYR Constructora
           </h1>
-          <p className="text-red-600">
-            Error cargando datos: {error}
-          </p>
+          <p className="text-red-600">Error cargando datos: {error}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex">
@@ -92,7 +92,7 @@ export default function Dashboard() {
               <div className="mt-2 text-sm text-red-700">
                 <p>No se pudo conectar con el servidor backend.</p>
                 <p className="mt-1">
-                  <strong>Verifica:</strong> 
+                  <strong>Verifica:</strong>
                 </p>
                 <ul className="list-disc list-inside mt-1">
                   <li>El servidor backend esté ejecutándose (puerto 3001)</li>
@@ -122,9 +122,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
             Dashboard HYR Constructora
           </h1>
-          <p className="text-muted-foreground">
-            No hay datos disponibles
-          </p>
+          <p className="text-muted-foreground">No hay datos disponibles</p>
         </div>
       </div>
     );
@@ -135,7 +133,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-6" suppressHydrationWarning>
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" suppressHydrationWarning>
+      <div
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        suppressHydrationWarning
+      >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
@@ -156,19 +157,24 @@ export default function Dashboard() {
               <span>PostgreSQL conectado</span>
             </div>
             <span>•</span>
-            <span>Datos actualizados: {new Date().toLocaleDateString('es-CO', {
-              day: '2-digit',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</span>
+            <span>
+              Datos actualizados:{" "}
+              {new Date().toLocaleDateString("es-CO", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-sm text-muted-foreground">Sistema v2.0</p>
-            <p className="text-xs text-muted-foreground">Migrado 100% PostgreSQL</p>
+            <p className="text-xs text-muted-foreground">
+              Migrado 100% PostgreSQL
+            </p>
           </div>
         </div>
       </div>
@@ -188,64 +194,80 @@ export default function Dashboard() {
                 Proyectos que Requieren Atención Inmediata
               </h3>
               <p className="text-sm text-muted-foreground">
-                {riskyProjects.length} proyecto{riskyProjects.length > 1 ? 's' : ''} con alertas de riesgo
+                {riskyProjects.length} proyecto
+                {riskyProjects.length > 1 ? "s" : ""} con alertas de riesgo
               </p>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             {riskyProjects.map((project, index) => (
-              <div key={index} className="hyr-card p-4 hover:shadow-md transition-all duration-200">
+              <div
+                key={index}
+                className="hyr-card p-4 hover:shadow-md transition-all duration-200"
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground mb-2">{project.name}</h4>
+                    <h4 className="font-semibold text-foreground mb-2">
+                      {project.name}
+                    </h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Gastado:</span>
-                        <span className="ml-2 font-medium">{project.spent_percentage}%</span>
+                        <span className="ml-2 font-medium">
+                          {project.spent_percentage}%
+                        </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Progreso:</span>
-                        <span className="ml-2 font-medium">{project.progress}%</span>
+                        <span className="ml-2 font-medium">
+                          {project.progress}%
+                        </span>
                       </div>
                     </div>
-                    
+
                     {/* Progress comparison bar */}
                     <div className="mt-3 space-y-2">
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Presupuesto vs Progreso</span>
                         <span>
-                          {project.spent_percentage > project.progress ? 'Sobregasto' : 'En línea'}
+                          {project.spent_percentage > project.progress
+                            ? "Sobregasto"
+                            : "En línea"}
                         </span>
                       </div>
                       <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="absolute left-0 top-0 h-full bg-[hsl(var(--success))] transition-all duration-300"
-                          style={{ width: `${Math.min(project.progress, 100)}%` }}
+                          style={{
+                            width: `${Math.min(project.progress, 100)}%`,
+                          }}
                         />
-                        <div 
+                        <div
                           className={`absolute left-0 top-0 h-full transition-all duration-300 ${
-                            project.spent_percentage > project.progress 
-                              ? 'bg-[hsl(var(--destructive))]' 
-                              : 'bg-[hsl(var(--warning))]'
+                            project.spent_percentage > project.progress
+                              ? "bg-[hsl(var(--destructive))]"
+                              : "bg-[hsl(var(--warning))]"
                           }`}
-                          style={{ 
+                          style={{
                             width: `${Math.min(project.spent_percentage, 100)}%`,
-                            opacity: 0.7 
+                            opacity: 0.7,
                           }}
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="ml-4 flex-shrink-0">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                      project.risk_level === 'CRÍTICO' 
-                        ? 'bg-[hsl(var(--destructive-light))] text-[hsl(var(--destructive))]' :
-                      project.risk_level === 'ALTO RIESGO' 
-                        ? 'bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]' :
-                        'bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        project.risk_level === "CRÍTICO"
+                          ? "bg-[hsl(var(--destructive-light))] text-[hsl(var(--destructive))]"
+                          : project.risk_level === "ALTO RIESGO"
+                            ? "bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]"
+                            : "bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]"
+                      }`}
+                    >
                       {project.risk_level}
                     </span>
                   </div>
@@ -264,14 +286,14 @@ export default function Dashboard() {
             <TopProjects />
           </div>
         </div>
-        
+
         {/* Upcoming Payments */}
         <div className="lg:col-span-4">
           <div className="hyr-card-elevated h-full">
             <UpcomingPaymentsCard />
           </div>
         </div>
-        
+
         {/* Cashflow Chart */}
         <div className="lg:col-span-4">
           <div className="hyr-card-elevated h-full">
@@ -298,7 +320,7 @@ export default function Dashboard() {
             <div className="hidden sm:block text-muted-foreground">•</div>
             <span>{kpis.employees_paid} empleados activos</span>
           </div>
-          
+
           <div className="text-right">
             <p className="text-sm font-medium text-foreground">
               Sistema HYR v2.0

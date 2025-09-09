@@ -1,24 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { api, handleApiError } from '@/lib/api';
-import { toast } from 'sonner';
-import { 
-  Calculator, 
-  Calendar, 
-  FileText, 
-  Settings, 
-  Download, 
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { api, handleApiError } from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Calculator,
+  Calendar,
+  FileText,
+  Settings,
+  Download,
   Play,
   CheckCircle,
   AlertCircle,
-  DollarSign
-} from 'lucide-react';
-import { downloadPILACSV, downloadPILAUGPP, validatePILAData } from '@/lib/utils/pila-export';
+  DollarSign,
+} from "lucide-react";
+import {
+  downloadPILACSV,
+  downloadPILAUGPP,
+  validatePILAData,
+} from "@/lib/utils/pila-export";
 
 interface PayrollPeriod {
   id: string;
@@ -46,7 +56,7 @@ export default function PayrollPage() {
       const data = await api.payroll.getPeriods({ year: 2025 });
       setPeriods(data);
     } catch (error) {
-      console.error('Error loading payroll periods:', error);
+      console.error("Error loading payroll periods:", error);
       toast.error(handleApiError(error));
     } finally {
       setLoading(false);
@@ -57,10 +67,12 @@ export default function PayrollPage() {
     try {
       setProcessingPeriod(periodId);
       const result = await api.payroll.processPayroll2025(periodId);
-      toast.success(`${result.message} - ${result.processed} empleados procesados`);
+      toast.success(
+        `${result.message} - ${result.processed} empleados procesados`
+      );
       loadPayrollPeriods(); // Recargar datos
     } catch (error) {
-      console.error('Error processing payroll 2025:', error);
+      console.error("Error processing payroll 2025:", error);
       toast.error(handleApiError(error));
     } finally {
       setProcessingPeriod(null);
@@ -69,59 +81,73 @@ export default function PayrollPage() {
 
   const downloadPILA2025 = async (periodId: string) => {
     try {
-      toast.loading('Generando reporte PILA 2025...');
-      
+      toast.loading("Generando reporte PILA 2025...");
+
       const pilaData = await api.payroll.getPILA2025Report(periodId);
-      
+
       // Validar estructura de datos
       if (!validatePILAData(pilaData)) {
-        throw new Error('Datos PILA inválidos recibidos del servidor');
+        throw new Error("Datos PILA inválidos recibidos del servidor");
       }
-      
+
       // Descargar archivo CSV formato estándar
       downloadPILACSV(pilaData);
-      
-      toast.success(`Archivo PILA descargado: ${pilaData.empleados.length} empleados, período ${pilaData.periodo}`);
+
+      toast.success(
+        `Archivo PILA descargado: ${pilaData.empleados.length} empleados, período ${pilaData.periodo}`
+      );
     } catch (error) {
-      console.error('Error downloading PILA 2025:', error);
-      toast.error('Error al descargar PILA: ' + handleApiError(error));
+      console.error("Error downloading PILA 2025:", error);
+      toast.error("Error al descargar PILA: " + handleApiError(error));
     }
   };
 
   const downloadPILAUGPPFormat = async (periodId: string) => {
     try {
-      toast.loading('Generando archivo para UGPP...');
-      
+      toast.loading("Generando archivo para UGPP...");
+
       const pilaData = await api.payroll.getPILA2025Report(periodId);
-      
+
       // Validar estructura de datos
       if (!validatePILAData(pilaData)) {
-        throw new Error('Datos PILA inválidos recibidos del servidor');
+        throw new Error("Datos PILA inválidos recibidos del servidor");
       }
-      
+
       // Descargar archivo CSV formato UGPP específico
       downloadPILAUGPP(pilaData);
-      
-      toast.success(`Archivo UGPP descargado: ${pilaData.empleados.length} empleados, listo para carga en plataforma UGPP`);
+
+      toast.success(
+        `Archivo UGPP descargado: ${pilaData.empleados.length} empleados, listo para carga en plataforma UGPP`
+      );
     } catch (error) {
-      console.error('Error downloading PILA UGPP:', error);
-      toast.error('Error al descargar archivo UGPP: ' + handleApiError(error));
+      console.error("Error downloading PILA UGPP:", error);
+      toast.error("Error al descargar archivo UGPP: " + handleApiError(error));
     }
   };
 
   const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
+    const num = typeof amount === "string" ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
     }).format(num);
   };
 
   const formatMonth = (month: number) => {
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
     ];
     return months[month - 1] || month.toString();
   };
@@ -130,11 +156,15 @@ export default function PayrollPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Nómina Colombiana 2025</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Nómina Colombiana 2025
+          </h1>
         </div>
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando períodos de nómina...</p>
+          <p className="mt-4 text-muted-foreground">
+            Cargando períodos de nómina...
+          </p>
         </div>
       </div>
     );
@@ -145,7 +175,9 @@ export default function PayrollPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nómina Colombiana 2025</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Nómina Colombiana 2025
+          </h1>
           <p className="text-muted-foreground">
             Gestión completa de nómina con compliance legal colombiano
           </p>
@@ -170,7 +202,9 @@ export default function PayrollPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Períodos Procesados</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Períodos Procesados
+                </CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -181,12 +215,14 @@ export default function PayrollPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Empleados</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Empleados
+                </CardTitle>
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {periods[0]?.employees_processed || '0'}
+                  {periods[0]?.employees_processed || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground">Activos</p>
               </CardContent>
@@ -194,7 +230,9 @@ export default function PayrollPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Nómina Neta</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Nómina Neta
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -207,14 +245,18 @@ export default function PayrollPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Costo Empleador</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Costo Empleador
+                </CardTitle>
                 <Calculator className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {periods[0] && formatCurrency(periods[0].total_employer_cost)}
                 </div>
-                <p className="text-xs text-muted-foreground">Total con prestaciones</p>
+                <p className="text-xs text-muted-foreground">
+                  Total con prestaciones
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -229,7 +271,7 @@ export default function PayrollPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {periods.map((period) => (
+                {periods.map(period => (
                   <div
                     key={period.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -240,13 +282,18 @@ export default function PayrollPage() {
                           {formatMonth(period.month)} {period.year}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {period.employees_processed} empleados • {formatCurrency(period.total_employer_cost)}
+                          {period.employees_processed} empleados •{" "}
+                          {formatCurrency(period.total_employer_cost)}
                         </p>
                       </div>
                       <Badge
-                        variant={period.status === 'completed' ? 'default' : 'secondary'}
+                        variant={
+                          period.status === "completed"
+                            ? "default"
+                            : "secondary"
+                        }
                       >
-                        {period.status === 'completed' ? (
+                        {period.status === "completed" ? (
                           <>
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Procesado
@@ -259,9 +306,9 @@ export default function PayrollPage() {
                         )}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                      {period.status !== 'completed' && (
+                      {period.status !== "completed" && (
                         <Button
                           size="sm"
                           onClick={() => processPayroll2025(period.id)}
@@ -275,7 +322,7 @@ export default function PayrollPage() {
                           Procesar 2025
                         </Button>
                       )}
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -284,7 +331,7 @@ export default function PayrollPage() {
                         <Download className="h-4 w-4 mr-1" />
                         PILA 2025
                       </Button>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -314,7 +361,9 @@ export default function PayrollPage() {
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <h3 className="font-semibold mb-2">Parámetros Salariales</h3>
+                    <h3 className="font-semibold mb-2">
+                      Parámetros Salariales
+                    </h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>SMMLV 2025:</span>
@@ -336,15 +385,21 @@ export default function PayrollPage() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>FSP (Solidaridad Pensional):</span>
-                        <span className="text-green-600 font-medium">✓ Activo</span>
+                        <span className="text-green-600 font-medium">
+                          ✓ Activo
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Ley 114-1 Exemptions:</span>
-                        <span className="text-green-600 font-medium">✓ Activo</span>
+                        <span className="text-green-600 font-medium">
+                          ✓ Activo
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>ARL por Sitio Trabajo:</span>
-                        <span className="text-green-600 font-medium">✓ Activo</span>
+                        <span className="text-green-600 font-medium">
+                          ✓ Activo
+                        </span>
                       </div>
                     </div>
                   </div>

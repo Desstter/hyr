@@ -1,11 +1,11 @@
-import { BusinessProfile } from '@/components/settings/business-profile';
-import { ThemeSettings } from '@/components/settings/theme-settings';
-import { ImportExport } from '@/components/settings/import-export';
-import { NotificationSettings } from '@/components/settings/notification-settings';
-import { useTranslations } from '@/lib/i18n';
+import { BusinessProfile } from "@/components/settings/business-profile";
+import { ThemeSettings } from "@/components/settings/theme-settings";
+import { ImportExport } from "@/components/settings/import-export";
+import { NotificationSettings } from "@/components/settings/notification-settings";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SettingsPage() {
-  const t = useTranslations('es');
+  const t = useTranslations("es");
 
   return (
     <div className="space-y-6">
@@ -26,7 +26,7 @@ export default function SettingsPage() {
           <div>
             <BusinessProfile />
           </div>
-          
+
           {/* Theme & Language Settings */}
           <div>
             <ThemeSettings />

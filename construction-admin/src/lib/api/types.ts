@@ -3,14 +3,25 @@
 // Compatible con backend PostgreSQL Express
 // =====================================================
 
-export type Currency = 'COP' | 'USD' | 'EUR';
-export type ProjectStatus = 'planned' | 'in_progress' | 'on_hold' | 'completed';
-export type ExpenseCategory = 'materials' | 'labor' | 'equipment' | 'overhead';
-export type PersonnelStatus = 'active' | 'inactive' | 'terminated';
-export type PersonnelDepartment = 'construccion' | 'soldadura' | 'administracion' | 'mantenimiento';
-export type PersonnelPosition = 'soldador' | 'operario' | 'supervisor' | 'capataz' | 'ayudante' | 'administrador' | 'gerente';
-export type SalaryType = 'hourly' | 'monthly';
-export type ARLRiskClass = 'I' | 'II' | 'III' | 'IV' | 'V';
+export type Currency = "COP" | "USD" | "EUR";
+export type ProjectStatus = "planned" | "in_progress" | "on_hold" | "completed";
+export type ExpenseCategory = "materials" | "labor" | "equipment" | "overhead";
+export type PersonnelStatus = "active" | "inactive" | "terminated";
+export type PersonnelDepartment =
+  | "construccion"
+  | "soldadura"
+  | "administracion"
+  | "mantenimiento";
+export type PersonnelPosition =
+  | "soldador"
+  | "operario"
+  | "supervisor"
+  | "capataz"
+  | "ayudante"
+  | "administrador"
+  | "gerente";
+export type SalaryType = "hourly" | "monthly";
+export type ARLRiskClass = "I" | "II" | "III" | "IV" | "V";
 
 // =====================================================
 // ENTIDADES PRINCIPALES
@@ -35,24 +46,24 @@ export interface Personnel {
   phone?: string;
   email?: string;
   address?: string;
-  
+
   // Información laboral
   position: PersonnelPosition;
   department: PersonnelDepartment;
   hire_date: string;
   status: PersonnelStatus;
-  
+
   // Información financiera
   salary_type: SalaryType;
   hourly_rate?: number;
   monthly_salary?: number;
   arl_risk_class: ARLRiskClass;
-  
+
   // Información adicional
   emergency_contact?: string;
   emergency_phone?: string;
   bank_account?: string;
-  
+
   created_at: string;
   updated_at: string;
 }
@@ -62,30 +73,30 @@ export interface Project {
   name: string;
   client_id?: string;
   description?: string;
-  
+
   // Información financiera
   budget_materials: number;
   budget_labor: number;
   budget_equipment: number;
   budget_overhead: number;
   budget_total: number;
-  
+
   spent_materials: number;
   spent_labor: number;
   spent_equipment: number;
   spent_overhead: number;
   spent_total: number;
-  
+
   // Fechas y estado
   start_date?: string;
   end_date?: string;
   estimated_end_date?: string;
   status: ProjectStatus;
   progress: number;
-  
+
   created_at: string;
   updated_at: string;
-  
+
   // Relaciones
   client?: Client;
 }
@@ -98,15 +109,15 @@ export interface TimeEntry {
   hours_worked: number;
   overtime_hours: number;
   description?: string;
-  
+
   // Costos calculados automáticamente
   hourly_rate: number;
   regular_pay: number;
   overtime_pay: number;
   total_pay: number;
-  
+
   created_at: string;
-  
+
   // Relaciones
   personnel?: Personnel;
   project?: Project;
@@ -123,13 +134,13 @@ export interface Expense {
   quantity?: number;
   unit_price?: number;
   amount: number;
-  
+
   // Documentación
   invoice_number?: string;
   receipt_url?: string;
-  
+
   created_at: string;
-  
+
   // Relaciones
   project?: Project;
 }
@@ -142,26 +153,26 @@ export interface PayrollPeriod {
   start_date: string;
   end_date: string;
   processed_at?: string;
-  status: 'draft' | 'processing' | 'completed';
+  status: "draft" | "processing" | "completed";
 }
 
 export interface PayrollDetail {
   id: string;
   payroll_period_id: string;
   personnel_id: string;
-  
+
   // Horas y salario base
   regular_hours: number;
   overtime_hours: number;
   base_salary: number;
-  
+
   // Ingresos
   regular_pay: number;
   overtime_pay: number;
   transport_allowance: number;
   bonuses: number;
   total_income: number;
-  
+
   // Deducciones empleado
   health_employee: number;
   pension_employee: number;
@@ -169,10 +180,10 @@ export interface PayrollDetail {
   withholding_tax: number;
   other_deductions: number;
   total_deductions: number;
-  
+
   // Neto a pagar
   net_pay: number;
-  
+
   // Aportes patronales
   health_employer: number;
   pension_employer: number;
@@ -181,17 +192,17 @@ export interface PayrollDetail {
   severance_interest: number;
   service_bonus: number;
   vacation: number;
-  
+
   // Parafiscales
   sena: number;
   icbf: number;
   compensation_fund: number;
-  
+
   // Costo total empleador
   total_employer_cost: number;
-  
+
   created_at: string;
-  
+
   // Relaciones
   personnel?: Personnel;
   payroll_period?: PayrollPeriod;
@@ -201,7 +212,12 @@ export interface PayrollDetail {
 // FACTURACIÓN ELECTRÓNICA DIAN
 // =====================================================
 
-export type DIANValidationStatus = 'PENDIENTE' | 'ACEPTADO_SIMULADO' | 'RECHAZADO_SIMULADO' | 'ACEPTADO' | 'RECHAZADO';
+export type DIANValidationStatus =
+  | "PENDIENTE"
+  | "ACEPTADO_SIMULADO"
+  | "RECHAZADO_SIMULADO"
+  | "ACEPTADO"
+  | "RECHAZADO";
 
 export interface InvoiceItem {
   description: string;
@@ -222,29 +238,29 @@ export interface ElectronicInvoice {
   client_name: string;
   client_nit?: string;
   city: string;
-  
+
   // Montos calculados
   subtotal: number;
   vat_amount: number;
   reteica_amount: number;
   total_amount: number;
-  
+
   // DIAN
   cufe: string;
   xml_ubl_content?: string;
   dian_validation_status: DIANValidationStatus;
-  
+
   // Items de la factura
   line_items: InvoiceItem[];
-  
+
   // Cálculos detallados (incluidos en respuesta del backend)
   calculations?: InvoiceCalculations & {
     vat_rate: number;
   };
-  
+
   // Metadatos
   created_at: string;
-  
+
   // Respuesta DIAN (incluida en creación)
   dian_response?: DIANResponse;
 }
@@ -303,7 +319,7 @@ export interface ProjectProfitabilityReport {
   spent_total: number;
   remaining_budget: number;
   profit_margin_percent: number;
-  
+
   // Desglose por categoría
   budget_materials: number;
   spent_materials: number;
@@ -313,13 +329,13 @@ export interface ProjectProfitabilityReport {
   spent_equipment: number;
   budget_overhead: number;
   spent_overhead: number;
-  
+
   // Indicadores
-  budget_status: 'NORMAL' | 'ALERTA' | 'SOBREPRESUPUESTO';
+  budget_status: "NORMAL" | "ALERTA" | "SOBREPRESUPUESTO";
   employees_assigned: number;
   total_labor_cost_direct: number;
   total_labor_cost_with_benefits: number;
-  
+
   start_date?: string;
   estimated_end_date?: string;
   progress: number;
@@ -332,17 +348,17 @@ export interface ExecutiveDashboardKPIs {
   completed_this_month: number;
   revenue_this_month: number;
   projected_profit: number;
-  
+
   // Nómina
   total_payroll_cost: number;
   total_net_pay: number;
   employees_paid: number;
-  
+
   // Gastos
   expenses_this_month: number;
   materials_this_month: number;
   equipment_this_month: number;
-  
+
   // Indicadores calculados
   net_profit_this_month: number;
   profit_margin_percent: number;
@@ -354,7 +370,7 @@ export interface RiskyProject {
   spent_total: number;
   spent_percentage: number;
   progress: number;
-  risk_level: 'NORMAL' | 'MONITOREAR' | 'ALTO RIESGO' | 'CRÍTICO';
+  risk_level: "NORMAL" | "MONITOREAR" | "ALTO RIESGO" | "CRÍTICO";
 }
 
 export interface ExecutiveDashboardData {
@@ -477,11 +493,20 @@ export interface ApiListResponse<T> {
 // CALENDAR TYPES (CALENDARIO Y EVENTOS)
 // =====================================================
 
-export type CalendarEventType = 'payroll' | 'project' | 'reminder' | 'payment';
-export type CalendarEventStatus = 'pending' | 'completed' | 'overdue' | 'cancelled';
-export type CalendarEventPriority = 'low' | 'medium' | 'high';
-export type PaymentCategory = 'tax' | 'insurance' | 'permit' | 'equipment' | 'other';
-export type RecurrenceType = 'none' | 'monthly' | 'quarterly' | 'yearly';
+export type CalendarEventType = "payroll" | "project" | "reminder" | "payment";
+export type CalendarEventStatus =
+  | "pending"
+  | "completed"
+  | "overdue"
+  | "cancelled";
+export type CalendarEventPriority = "low" | "medium" | "high";
+export type PaymentCategory =
+  | "tax"
+  | "insurance"
+  | "permit"
+  | "equipment"
+  | "other";
+export type RecurrenceType = "none" | "monthly" | "quarterly" | "yearly";
 
 export interface CalendarEvent {
   id: string;
@@ -492,30 +517,30 @@ export interface CalendarEvent {
   type: CalendarEventType;
   status: CalendarEventStatus;
   priority: CalendarEventPriority;
-  
+
   // Información financiera
   amount?: number;
   category?: PaymentCategory;
-  
+
   // Recurrencia
   recurrence: RecurrenceType;
   parent_event_id?: string;
-  
+
   // Referencias
   project_id?: string;
   personnel_id?: string;
   payroll_period_id?: string;
-  
+
   // Notificaciones
   notify_days_before?: number;
   notification_sent?: boolean;
   is_completed: boolean;
   completed_at?: string;
   completed_by?: string;
-  
+
   created_at: string;
   updated_at: string;
-  
+
   // Relaciones
   project?: Project;
   personnel?: Personnel;
@@ -525,24 +550,24 @@ export interface PayrollEvent {
   id: string;
   year: number;
   month: number;
-  period_type: 'monthly' | 'biweekly';
-  
+  period_type: "monthly" | "biweekly";
+
   // Fechas importantes
   process_date: string;
   payment_date: string;
   cutoff_date: string;
-  
+
   // Estado
-  status: 'pending' | 'processing' | 'processed' | 'paid';
-  
+  status: "pending" | "processing" | "processed" | "paid";
+
   // Información adicional
   total_employees: number;
   total_amount?: number;
   notes?: string;
-  
+
   created_at: string;
   updated_at: string;
-  
+
   // Eventos del calendario generados
   calendar_events?: CalendarEvent[];
 }
@@ -553,17 +578,17 @@ export interface ProjectEvent {
   title: string;
   description?: string;
   event_date: string;
-  type: 'start' | 'milestone' | 'deadline' | 'completion';
+  type: "start" | "milestone" | "deadline" | "completion";
   status: CalendarEventStatus;
   priority: CalendarEventPriority;
-  
+
   // Progreso y notas
   progress_percentage?: number;
   notes?: string;
-  
+
   created_at: string;
   updated_at: string;
-  
+
   // Relaciones
   project?: Project;
   calendar_event?: CalendarEvent;
@@ -576,18 +601,18 @@ export interface CreateCalendarEventRequest {
   event_time?: string;
   type: CalendarEventType;
   priority?: CalendarEventPriority;
-  
+
   // Información financiera
   amount?: number;
   category?: PaymentCategory;
-  
+
   // Recurrencia
   recurrence?: RecurrenceType;
-  
+
   // Referencias
   project_id?: string;
   personnel_id?: string;
-  
+
   // Notificaciones
   notify_days_before?: number;
 }
@@ -596,7 +621,11 @@ export interface CreateCalendarEventRequest {
 // BUDGET ITEMS - Items detallados del presupuesto
 // =====================================================
 
-export type BudgetItemCategory = 'materials' | 'labor' | 'equipment' | 'overhead';
+export type BudgetItemCategory =
+  | "materials"
+  | "labor"
+  | "equipment"
+  | "overhead";
 
 export interface BudgetItem {
   id: string;

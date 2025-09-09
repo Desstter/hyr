@@ -3,7 +3,7 @@
 // Servicios para gestión de proyectos y rentabilidad
 // =====================================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   Project,
   CreateProjectRequest,
@@ -12,10 +12,10 @@ import type {
   CreateExpenseRequest,
   TimeEntry,
   ProjectProfitabilityReport,
-} from './types';
+} from "./types";
 
 export class ProjectsService {
-  private endpoint = '/projects';
+  private endpoint = "/projects";
 
   // =====================================================
   // CRUD PROYECTOS
@@ -62,7 +62,10 @@ export class ProjectsService {
   /**
    * Actualizar proyecto
    */
-  async update(id: string, data: Partial<CreateProjectRequest>): Promise<Project> {
+  async update(
+    id: string,
+    data: Partial<CreateProjectRequest>
+  ): Promise<Project> {
     return apiClient.put<Project>(`${this.endpoint}/${id}`, data);
   }
 
@@ -80,25 +83,34 @@ export class ProjectsService {
   /**
    * Obtener gastos de un proyecto
    */
-  async getExpenses(projectId: string, filters?: {
-    category?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<Expense[]> {
-    return apiClient.get<Expense[]>(`${this.endpoint}/${projectId}/expenses`, filters);
+  async getExpenses(
+    projectId: string,
+    filters?: {
+      category?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<Expense[]> {
+    return apiClient.get<Expense[]>(
+      `${this.endpoint}/${projectId}/expenses`,
+      filters
+    );
   }
 
   /**
    * Crear gasto para proyecto
    */
   async createExpense(data: CreateExpenseRequest): Promise<Expense> {
-    return apiClient.post<Expense>('/expenses', data);
+    return apiClient.post<Expense>("/expenses", data);
   }
 
   /**
    * Actualizar gasto
    */
-  async updateExpense(id: string, data: Partial<CreateExpenseRequest>): Promise<Expense> {
+  async updateExpense(
+    id: string,
+    data: Partial<CreateExpenseRequest>
+  ): Promise<Expense> {
     return apiClient.put<Expense>(`/expenses/${id}`, data);
   }
 
@@ -116,19 +128,27 @@ export class ProjectsService {
   /**
    * Obtener horas trabajadas en un proyecto
    */
-  async getTimeEntries(projectId: string, filters?: {
-    personnelId?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<TimeEntry[]> {
-    return apiClient.get<TimeEntry[]>(`${this.endpoint}/${projectId}/time-entries`, filters);
+  async getTimeEntries(
+    projectId: string,
+    filters?: {
+      personnelId?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<TimeEntry[]> {
+    return apiClient.get<TimeEntry[]>(
+      `${this.endpoint}/${projectId}/time-entries`,
+      filters
+    );
   }
 
   /**
    * Obtener personal asignado al proyecto
    */
   async getAssignedPersonnel(projectId: string): Promise<Personnel[]> {
-    return apiClient.get<Personnel[]>(`${this.endpoint}/${projectId}/personnel`);
+    return apiClient.get<Personnel[]>(
+      `${this.endpoint}/${projectId}/personnel`
+    );
   }
 
   // =====================================================
@@ -162,7 +182,7 @@ export class ProjectsService {
     };
     profitMargin: number;
     profitMarginPercent: number;
-    status: 'NORMAL' | 'ALERTA' | 'SOBREPRESUPUESTO';
+    status: "NORMAL" | "ALERTA" | "SOBREPRESUPUESTO";
   }> {
     type Profitability = {
       budget: {
@@ -188,23 +208,29 @@ export class ProjectsService {
       };
       profitMargin: number;
       profitMarginPercent: number;
-      status: 'NORMAL' | 'ALERTA' | 'SOBREPRESUPUESTO';
+      status: "NORMAL" | "ALERTA" | "SOBREPRESUPUESTO";
     };
-    return apiClient.get<Profitability>(`${this.endpoint}/${projectId}/profitability`);
+    return apiClient.get<Profitability>(
+      `${this.endpoint}/${projectId}/profitability`
+    );
   }
 
   /**
    * Obtener reporte de rentabilidad de todos los proyectos
    */
   async getAllProfitability(): Promise<ProjectProfitabilityReport[]> {
-    return apiClient.get<ProjectProfitabilityReport[]>('/reports/project-profitability');
+    return apiClient.get<ProjectProfitabilityReport[]>(
+      "/reports/project-profitability"
+    );
   }
 
   /**
    * Actualizar progreso del proyecto
    */
   async updateProgress(projectId: string, progress: number): Promise<Project> {
-    return apiClient.put<Project>(`${this.endpoint}/${projectId}`, { progress });
+    return apiClient.put<Project>(`${this.endpoint}/${projectId}`, {
+      progress,
+    });
   }
 
   /**
@@ -229,7 +255,7 @@ export class ProjectsService {
    * Obtener proyectos activos
    */
   async getActiveProjects(): Promise<Project[]> {
-    return this.getAll({ status: 'in_progress' });
+    return this.getAll({ status: "in_progress" });
   }
 
   /**
@@ -284,7 +310,11 @@ export class ProjectsService {
     spent: Record<string, number>;
     remaining: Record<string, number>;
     recentExpenses: Expense[];
-    topExpenseCategories: Array<{ category: string; amount: number; percentage: number }>;
+    topExpenseCategories: Array<{
+      category: string;
+      amount: number;
+      percentage: number;
+    }>;
     monthlyTrend: Array<{ month: string; spent: number; budget: number }>;
   }> {
     type FinancialSummary = {
@@ -292,10 +322,16 @@ export class ProjectsService {
       spent: Record<string, number>;
       remaining: Record<string, number>;
       recentExpenses: Expense[];
-      topExpenseCategories: Array<{ category: string; amount: number; percentage: number }>;
+      topExpenseCategories: Array<{
+        category: string;
+        amount: number;
+        percentage: number;
+      }>;
       monthlyTrend: Array<{ month: string; spent: number; budget: number }>;
     };
-    return apiClient.get<FinancialSummary>(`${this.endpoint}/${projectId}/financial-summary`);
+    return apiClient.get<FinancialSummary>(
+      `${this.endpoint}/${projectId}/financial-summary`
+    );
   }
 }
 

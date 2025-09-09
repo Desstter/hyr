@@ -1,27 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { api, handleApiError } from '@/lib/api';
-import type { Client, Project } from '@/lib/api';
-import { formatCurrency, formatDate, getProjectStatusColor, getProjectStatusLabel } from '@/lib/finance';
-import { useTranslations } from '@/lib/i18n';
-import { 
-  FolderOpen, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { api, handleApiError } from "@/lib/api";
+import type { Client, Project } from "@/lib/api";
+import {
+  formatCurrency,
+  formatDate,
+  getProjectStatusColor,
+  getProjectStatusLabel,
+} from "@/lib/finance";
+import { useTranslations } from "@/lib/i18n";
+import {
+  FolderOpen,
   Calendar,
   DollarSign,
   TrendingUp,
   AlertCircle,
-  CheckCircle,
   Clock,
   Eye,
-  Loader2
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface ClientProjectsListProps {
   client: Client;
@@ -29,8 +33,12 @@ interface ClientProjectsListProps {
   limit?: number;
 }
 
-export function ClientProjectsList({ client, className, limit }: ClientProjectsListProps) {
-  const t = useTranslations('es');
+export function ClientProjectsList({
+  client,
+  className,
+  limit,
+}: ClientProjectsListProps) {
+  const t = useTranslations("es");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,21 +51,24 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
     try {
       setLoading(true);
       setError(null);
-      
+
       const clientProjects = await api.clients.getProjects(client.id);
-      
+
       // Handle response format
-      const projectsData = Array.isArray(clientProjects) ? clientProjects : 
-                          (Array.isArray(clientProjects.data) ? clientProjects.data : []);
-      
+      const projectsData = Array.isArray(clientProjects)
+        ? clientProjects
+        : Array.isArray(clientProjects.data)
+          ? clientProjects.data
+          : [];
+
       // Limit results if specified
       const finalProjects = limit ? projectsData.slice(0, limit) : projectsData;
       setProjects(finalProjects);
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      console.error('Error loading client projects:', err);
-      toast.error('Error cargando proyectos del cliente: ' + errorMessage);
+      console.error("Error loading client projects:", err);
+      toast.error("Error cargando proyectos del cliente: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -110,9 +121,7 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
           </div>
           {limit && projects.length === limit && (
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/projects?client=${client.id}`}>
-                Ver todos
-              </Link>
+              <Link href={`/projects?client=${client.id}`}>Ver todos</Link>
             </Button>
           )}
         </CardTitle>
@@ -121,18 +130,21 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
         {projects.length === 0 ? (
           <div className="text-center py-8">
             <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">{t.clients.noProjects}</p>
+            <p className="text-muted-foreground text-sm">
+              {t.clients.noProjects}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {projects.map((project) => {
-              const budgetUsed = (project.spent_total / project.budget_total) * 100;
+            {projects.map(project => {
+              const budgetUsed =
+                (project.spent_total / project.budget_total) * 100;
               const isOverBudget = project.spent_total > project.budget_total;
               const isNearBudget = budgetUsed > 90 && !isOverBudget;
-              
+
               return (
-                <div 
-                  key={project.id} 
+                <div
+                  key={project.id}
                   className="border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors"
                 >
                   {/* Project Header */}
@@ -148,8 +160,8 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
                       )}
                     </div>
                     <div className="flex items-center space-x-2 ml-2">
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={getProjectStatusColor(project.status)}
                       >
                         {getProjectStatusLabel(project.status)}
@@ -178,20 +190,31 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
                         <DollarSign className="h-3 w-3" />
                         <span>Presupuesto</span>
                       </div>
-                      <p className="font-semibold">{formatCurrency(project.budget_total)}</p>
+                      <p className="font-semibold">
+                        {formatCurrency(project.budget_total)}
+                      </p>
                     </div>
-                    
+
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1 text-muted-foreground">
                         <TrendingUp className="h-3 w-3" />
                         <span>Gastado</span>
-                        {isOverBudget && <AlertCircle className="h-3 w-3 text-red-500" />}
-                        {isNearBudget && <Clock className="h-3 w-3 text-orange-500" />}
+                        {isOverBudget && (
+                          <AlertCircle className="h-3 w-3 text-red-500" />
+                        )}
+                        {isNearBudget && (
+                          <Clock className="h-3 w-3 text-orange-500" />
+                        )}
                       </div>
-                      <p className={`font-semibold ${
-                        isOverBudget ? 'text-red-600' : 
-                        isNearBudget ? 'text-orange-600' : ''
-                      }`}>
+                      <p
+                        className={`font-semibold ${
+                          isOverBudget
+                            ? "text-red-600"
+                            : isNearBudget
+                              ? "text-orange-600"
+                              : ""
+                        }`}
+                      >
                         {formatCurrency(project.spent_total)}
                       </p>
                     </div>
@@ -206,11 +229,13 @@ export function ClientProjectsList({ client, className, limit }: ClientProjectsL
                           <span>Inicio: {formatDate(project.start_date)}</span>
                         </div>
                       )}
-                      
+
                       {project.estimated_end_date && (
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
-                          <span>Estimado: {formatDate(project.estimated_end_date)}</span>
+                          <span>
+                            Estimado: {formatDate(project.estimated_end_date)}
+                          </span>
                         </div>
                       )}
                     </div>

@@ -4,15 +4,27 @@
 // Conecta frontend Next.js con backend PostgreSQL/Express
 // =====================================================
 
-import { apiClient, ApiResponse, PaginatedApiResponse, handleApiError } from './client';
-import type { ElectronicInvoice, InvoiceItem, InvoiceCalculations, DIANResponse, CreateInvoiceRequest, InvoiceListFilters } from './types';
+import {
+  apiClient,
+  ApiResponse,
+  PaginatedApiResponse,
+  handleApiError,
+} from "./client";
+import type {
+  ElectronicInvoice,
+  InvoiceItem,
+  InvoiceCalculations,
+  DIANResponse,
+  CreateInvoiceRequest,
+  InvoiceListFilters,
+} from "./types";
 
 /**
  * Servicio completo para gestión de facturación electrónica DIAN
  * Conecta directamente con backend PostgreSQL
  */
 export class InvoicingService {
-  private readonly basePath = '/invoicing';
+  private readonly basePath = "/invoicing";
 
   // =====================================================
   // CREACIÓN Y GESTIÓN DE FACTURAS
@@ -23,21 +35,28 @@ export class InvoicingService {
    * @param request - Datos de la factura a crear
    * @returns Factura creada con CUFE, XML UBL y validación DIAN
    */
-  async createInvoice(request: CreateInvoiceRequest): Promise<ElectronicInvoice> {
+  async createInvoice(
+    request: CreateInvoiceRequest
+  ): Promise<ElectronicInvoice> {
     try {
-      console.log('📄 Creando factura electrónica:', request.client_name);
-      
-      const response = await apiClient.post<ApiResponse<ElectronicInvoice>>(`${this.basePath}/invoices`, request);
-      
+      console.log("📄 Creando factura electrónica:", request.client_name);
+
+      const response = await apiClient.post<ApiResponse<ElectronicInvoice>>(
+        `${this.basePath}/invoices`,
+        request
+      );
+
       if (!response.data) {
-        throw new Error('Error creating invoice');
+        throw new Error("Error creating invoice");
       }
 
-      console.log('✅ Factura creada exitosamente:', response.data.invoice_number);
+      console.log(
+        "✅ Factura creada exitosamente:",
+        response.data.invoice_number
+      );
       return response.data;
-
     } catch (error) {
-      console.error('❌ Error creando factura electrónica:', error);
+      console.error("❌ Error creando factura electrónica:", error);
       throw new Error(handleApiError(error));
     }
   }
@@ -49,16 +68,17 @@ export class InvoicingService {
    */
   async getInvoice(id: string): Promise<ElectronicInvoice> {
     try {
-      const response = await apiClient.get<ApiResponse<ElectronicInvoice>>(`${this.basePath}/invoices/${id}`);
-      
+      const response = await apiClient.get<ApiResponse<ElectronicInvoice>>(
+        `${this.basePath}/invoices/${id}`
+      );
+
       if (!response.data) {
-        throw new Error('Invoice not found');
+        throw new Error("Invoice not found");
       }
 
       return response.data;
-
     } catch (error) {
-      console.error('❌ Error obteniendo factura:', error);
+      console.error("❌ Error obteniendo factura:", error);
       throw new Error(handleApiError(error));
     }
   }
@@ -68,29 +88,32 @@ export class InvoicingService {
    * @param filters - Filtros opcionales de búsqueda
    * @returns Lista paginada de facturas
    */
-  async listInvoices(filters?: InvoiceListFilters): Promise<PaginatedApiResponse<ElectronicInvoice>> {
+  async listInvoices(
+    filters?: InvoiceListFilters
+  ): Promise<PaginatedApiResponse<ElectronicInvoice>> {
     try {
       const params = new URLSearchParams();
-      
-      if (filters?.client_name) params.append('client_name', filters.client_name);
-      if (filters?.city) params.append('city', filters.city);
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.date_from) params.append('date_from', filters.date_from);
-      if (filters?.date_to) params.append('date_to', filters.date_to);
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      if (filters?.offset) params.append('offset', filters.offset.toString());
 
-      const url = `${this.basePath}/invoices${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await apiClient.get<PaginatedApiResponse<ElectronicInvoice>>(url);
+      if (filters?.client_name)
+        params.append("client_name", filters.client_name);
+      if (filters?.city) params.append("city", filters.city);
+      if (filters?.status) params.append("status", filters.status);
+      if (filters?.date_from) params.append("date_from", filters.date_from);
+      if (filters?.date_to) params.append("date_to", filters.date_to);
+      if (filters?.limit) params.append("limit", filters.limit.toString());
+      if (filters?.offset) params.append("offset", filters.offset.toString());
+
+      const url = `${this.basePath}/invoices${params.toString() ? "?" + params.toString() : ""}`;
+      const response =
+        await apiClient.get<PaginatedApiResponse<ElectronicInvoice>>(url);
 
       if (!response.data) {
-        throw new Error('Error listing invoices');
+        throw new Error("Error listing invoices");
       }
 
       return response;
-
     } catch (error) {
-      console.error('❌ Error listando facturas:', error);
+      console.error("❌ Error listando facturas:", error);
       throw new Error(handleApiError(error));
     }
   }
@@ -102,19 +125,20 @@ export class InvoicingService {
    */
   async resendToDian(id: string): Promise<DIANResponse> {
     try {
-      console.log('🔄 Reenviando factura a DIAN:', id);
+      console.log("🔄 Reenviando factura a DIAN:", id);
 
-      const response = await apiClient.post<ApiResponse<DIANResponse>>(`${this.basePath}/invoices/${id}/resend-dian`);
-      
+      const response = await apiClient.post<ApiResponse<DIANResponse>>(
+        `${this.basePath}/invoices/${id}/resend-dian`
+      );
+
       if (!response.data) {
-        throw new Error('Error resending to DIAN');
+        throw new Error("Error resending to DIAN");
       }
 
-      console.log('✅ Factura reenviada a DIAN:', response.data.status);
+      console.log("✅ Factura reenviada a DIAN:", response.data.status);
       return response.data;
-
     } catch (error) {
-      console.error('❌ Error reenviando a DIAN:', error);
+      console.error("❌ Error reenviando a DIAN:", error);
       throw new Error(handleApiError(error));
     }
   }
@@ -130,10 +154,13 @@ export class InvoicingService {
    * @param city - Ciudad para cálculo ReteICA
    * @returns Cálculos tributarios completos
    */
-  calculateTotals(items: InvoiceItem[], city: string = 'Bogota'): InvoiceCalculations {
+  calculateTotals(
+    items: InvoiceItem[],
+    city: string = "Bogota"
+  ): InvoiceCalculations {
     // Calcular subtotal
     const subtotal = items.reduce((sum, item) => {
-      return sum + (item.quantity * item.unit_price);
+      return sum + item.quantity * item.unit_price;
     }, 0);
 
     // IVA 19% (estándar construcción)
@@ -141,7 +168,7 @@ export class InvoicingService {
 
     // ReteICA por ciudad (solo Bogotá implementada por ahora)
     let reteica_amount = 0;
-    if (city === 'Bogota') {
+    if (city === "Bogota") {
       reteica_amount = subtotal * 0.00966; // 0.966% construcción Bogotá
     }
 
@@ -166,15 +193,15 @@ export class InvoicingService {
 
     // Validaciones básicas
     if (!request.client_name?.trim()) {
-      errors.push('El nombre del cliente es requerido');
+      errors.push("El nombre del cliente es requerido");
     }
 
     if (!request.city?.trim()) {
-      errors.push('La ciudad es requerida');
+      errors.push("La ciudad es requerida");
     }
 
     if (!request.items || request.items.length === 0) {
-      errors.push('Debe agregar al menos un ítem');
+      errors.push("Debe agregar al menos un ítem");
     }
 
     // Validar items individualmente
@@ -204,23 +231,23 @@ export class InvoicingService {
    */
   downloadXML(invoice: ElectronicInvoice, filename?: string): void {
     if (!invoice.xml_ubl_content) {
-      throw new Error('La factura no tiene contenido XML');
+      throw new Error("La factura no tiene contenido XML");
     }
 
-    const blob = new Blob([invoice.xml_ubl_content], { type: 'text/xml' });
+    const blob = new Blob([invoice.xml_ubl_content], { type: "text/xml" });
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
+    const link = document.createElement("a");
+
     link.href = url;
     link.download = filename || `factura_${invoice.invoice_number}.xml`;
-    
+
     document.body.appendChild(link);
     link.click();
-    
+
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    console.log('📄 XML descargado:', link.download);
+    console.log("📄 XML descargado:", link.download);
   }
 
   /**
@@ -230,17 +257,17 @@ export class InvoicingService {
    */
   formatCUFE(cufe: string): string {
     if (!cufe || cufe.length < 16) return cufe;
-    
-    const cleanCUFE = cufe.replace(/-/g, '');
+
+    const cleanCUFE = cufe.replace(/-/g, "");
     if (cleanCUFE.length === 32) {
       return [
         cleanCUFE.substring(0, 8),
         cleanCUFE.substring(8, 16),
         cleanCUFE.substring(16, 24),
-        cleanCUFE.substring(24, 32)
-      ].join('-');
+        cleanCUFE.substring(24, 32),
+      ].join("-");
     }
-    
+
     return cufe;
   }
 
@@ -257,7 +284,7 @@ export class InvoicingService {
     try {
       const filters: InvoiceListFilters = { limit: 1000 }; // Obtener todas para stats locales
       if (period) {
-        const [year, month] = period.split('-');
+        const [year, month] = period.split("-");
         filters.date_from = `${year}-${month}-01`;
         filters.date_to = `${year}-${month}-31`;
       }
@@ -267,23 +294,45 @@ export class InvoicingService {
 
       const stats = {
         total_count: invoices.length,
-        total_amount: invoices.reduce((sum: number, inv: ElectronicInvoice) => sum + inv.total_amount, 0),
-        avg_amount: invoices.length > 0 ? invoices.reduce((sum: number, inv: ElectronicInvoice) => sum + inv.total_amount, 0) / invoices.length : 0,
+        total_amount: invoices.reduce(
+          (sum: number, inv: ElectronicInvoice) => sum + inv.total_amount,
+          0
+        ),
+        avg_amount:
+          invoices.length > 0
+            ? invoices.reduce(
+                (sum: number, inv: ElectronicInvoice) => sum + inv.total_amount,
+                0
+              ) / invoices.length
+            : 0,
         by_status: {
-          ACEPTADO: invoices.filter((inv: ElectronicInvoice) => inv.dian_validation_status === 'ACEPTADO' || inv.dian_validation_status === 'ACEPTADO_SIMULADO').length,
-          RECHAZADO: invoices.filter((inv: ElectronicInvoice) => inv.dian_validation_status === 'RECHAZADO' || inv.dian_validation_status === 'RECHAZADO_SIMULADO').length,
-          PENDIENTE: invoices.filter((inv: ElectronicInvoice) => inv.dian_validation_status === 'PENDIENTE').length,
+          ACEPTADO: invoices.filter(
+            (inv: ElectronicInvoice) =>
+              inv.dian_validation_status === "ACEPTADO" ||
+              inv.dian_validation_status === "ACEPTADO_SIMULADO"
+          ).length,
+          RECHAZADO: invoices.filter(
+            (inv: ElectronicInvoice) =>
+              inv.dian_validation_status === "RECHAZADO" ||
+              inv.dian_validation_status === "RECHAZADO_SIMULADO"
+          ).length,
+          PENDIENTE: invoices.filter(
+            (inv: ElectronicInvoice) =>
+              inv.dian_validation_status === "PENDIENTE"
+          ).length,
         },
-        by_city: invoices.reduce((acc: Record<string, number>, inv: ElectronicInvoice) => {
-          acc[inv.city] = (acc[inv.city] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
+        by_city: invoices.reduce(
+          (acc: Record<string, number>, inv: ElectronicInvoice) => {
+            acc[inv.city] = (acc[inv.city] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       };
 
       return stats;
-
     } catch (error) {
-      console.error('❌ Error obteniendo estadísticas:', error);
+      console.error("❌ Error obteniendo estadísticas:", error);
       throw new Error(handleApiError(error));
     }
   }
@@ -307,7 +356,8 @@ export const useInvoicingService = () => {
   return {
     service: invoicingService,
     calculateTotals: invoicingService.calculateTotals.bind(invoicingService),
-    validateInvoiceData: invoicingService.validateInvoiceData.bind(invoicingService),
+    validateInvoiceData:
+      invoicingService.validateInvoiceData.bind(invoicingService),
     formatCUFE: invoicingService.formatCUFE.bind(invoicingService),
   };
 };

@@ -1,36 +1,43 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { PersonnelTable } from '@/components/personnel/personnel-table';
-import { PersonnelCards } from '@/components/personnel/personnel-cards';
-import { PersonnelDialog } from '@/components/personnel/personnel-dialog';
-import { useTranslations } from '@/lib/i18n';
-import { personnelService } from '@/lib/api/personnel';
-import type { Personnel } from '@/lib/api/types';
-import { Plus, Table, Grid3x3, Search, Loader2, AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+} from "@/components/ui/select";
+import { PersonnelTable } from "@/components/personnel/personnel-table";
+import { PersonnelCards } from "@/components/personnel/personnel-cards";
+import { PersonnelDialog } from "@/components/personnel/personnel-dialog";
+import { useTranslations } from "@/lib/i18n";
+import { personnelService } from "@/lib/api/personnel";
+import type { Personnel } from "@/lib/api/types";
+import {
+  Plus,
+  Table,
+  Grid3x3,
+  Search,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
-type ViewMode = 'table' | 'cards';
+type ViewMode = "table" | "cards";
 
 export default function PersonnelPage() {
-  const t = useTranslations('es');
-  
+  const t = useTranslations("es");
+
   // Estado local
   const [showPersonnelDialog, setShowPersonnelDialog] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('active');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+
   // Estado para datos API
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,21 +53,24 @@ export default function PersonnelPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const filters: Record<string, string> = {};
-      if (statusFilter !== 'all') filters.status = statusFilter;
-      if (departmentFilter !== 'all') filters.department = departmentFilter;
-      
+      if (statusFilter !== "all") filters.status = statusFilter;
+      if (departmentFilter !== "all") filters.department = departmentFilter;
+
       const [personnelData, statsData] = await Promise.all([
         personnelService.getAll(filters),
-        personnelService.getStats().catch(() => null) // Stats opcional
+        personnelService.getStats().catch(() => null), // Stats opcional
       ]);
-      
+
       setPersonnel(personnelData);
       setStats(statsData);
     } catch (err: unknown) {
-      console.error('Error loading personnel:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el personal. Por favor intente nuevamente.';
+      console.error("Error loading personnel:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Error al cargar el personal. Por favor intente nuevamente.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -120,14 +130,16 @@ export default function PersonnelPage() {
               {stats.totalMonthlyCost > 0 && (
                 <>
                   <span>•</span>
-                  <span>Costo mensual: ${stats.totalMonthlyCost.toLocaleString()}</span>
+                  <span>
+                    Costo mensual: ${stats.totalMonthlyCost.toLocaleString()}
+                  </span>
                 </>
               )}
             </div>
           )}
         </div>
-        <Button 
-          onClick={() => setShowPersonnelDialog(true)} 
+        <Button
+          onClick={() => setShowPersonnelDialog(true)}
           disabled={loading && personnel.length === 0}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -143,9 +155,9 @@ export default function PersonnelPage() {
             <div className="flex-1">
               <p className="text-red-700">{error}</p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={loadPersonnel}
               className="ml-2"
             >
@@ -163,21 +175,29 @@ export default function PersonnelPage() {
             <Input
               placeholder="Buscar empleados..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder={t.personnel.filters.allStatuses} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.personnel.filters.allStatuses}</SelectItem>
+              <SelectItem value="all">
+                {t.personnel.filters.allStatuses}
+              </SelectItem>
               <SelectItem value="active">{t.personnelStatus.active}</SelectItem>
-              <SelectItem value="on_leave">{t.personnelStatus.on_leave}</SelectItem>
-              <SelectItem value="inactive">{t.personnelStatus.inactive}</SelectItem>
-              <SelectItem value="terminated">{t.personnelStatus.terminated}</SelectItem>
+              <SelectItem value="on_leave">
+                {t.personnelStatus.on_leave}
+              </SelectItem>
+              <SelectItem value="inactive">
+                {t.personnelStatus.inactive}
+              </SelectItem>
+              <SelectItem value="terminated">
+                {t.personnelStatus.terminated}
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -186,11 +206,19 @@ export default function PersonnelPage() {
               <SelectValue placeholder={t.personnel.filters.allDepartments} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.personnel.filters.allDepartments}</SelectItem>
-              <SelectItem value="construction">{t.departments.construction}</SelectItem>
+              <SelectItem value="all">
+                {t.personnel.filters.allDepartments}
+              </SelectItem>
+              <SelectItem value="construction">
+                {t.departments.construction}
+              </SelectItem>
               <SelectItem value="welding">{t.departments.welding}</SelectItem>
-              <SelectItem value="administration">{t.departments.administration}</SelectItem>
-              <SelectItem value="maintenance">{t.departments.maintenance}</SelectItem>
+              <SelectItem value="administration">
+                {t.departments.administration}
+              </SelectItem>
+              <SelectItem value="maintenance">
+                {t.departments.maintenance}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -198,18 +226,18 @@ export default function PersonnelPage() {
         {/* View Mode Toggle */}
         <div className="flex rounded-lg border">
           <Button
-            variant={viewMode === 'table' ? 'default' : 'ghost'}
+            variant={viewMode === "table" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode('table')}
+            onClick={() => setViewMode("table")}
             className="rounded-r-none"
           >
             <Table className="h-4 w-4" />
             <span className="sr-only">Vista de tabla</span>
           </Button>
           <Button
-            variant={viewMode === 'cards' ? 'default' : 'ghost'}
+            variant={viewMode === "cards" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setViewMode('cards')}
+            onClick={() => setViewMode("cards")}
             className="rounded-l-none"
           >
             <Grid3x3 className="h-4 w-4" />
@@ -223,25 +251,28 @@ export default function PersonnelPage() {
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== 'all' || departmentFilter !== 'all' 
-                ? 'No se encontraron empleados con los filtros aplicados.'
-                : 'No hay empleados registrados aún.'
-              }
+              {searchTerm ||
+              statusFilter !== "all" ||
+              departmentFilter !== "all"
+                ? "No se encontraron empleados con los filtros aplicados."
+                : "No hay empleados registrados aún."}
             </p>
-            {(!searchTerm && statusFilter === 'all' && departmentFilter === 'all') && (
-              <Button 
-                onClick={() => setShowPersonnelDialog(true)}
-                className="mt-4"
-                variant="outline"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar primer empleado
-              </Button>
-            )}
+            {!searchTerm &&
+              statusFilter === "all" &&
+              departmentFilter === "all" && (
+                <Button
+                  onClick={() => setShowPersonnelDialog(true)}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar primer empleado
+                </Button>
+              )}
           </CardContent>
         </Card>
-      ) : viewMode === 'table' ? (
-        <PersonnelTable 
+      ) : viewMode === "table" ? (
+        <PersonnelTable
           personnel={filteredPersonnel}
           loading={loading}
           onRefresh={loadPersonnel}

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { api, handleApiError } from '@/lib/api';
-import type { EmployeeProductivity } from '@/lib/api';
-import { Users, Clock, DollarSign, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { api, handleApiError } from "@/lib/api";
+import type { EmployeeProductivity } from "@/lib/api";
+import { Users, Clock, DollarSign, TrendingUp } from "lucide-react";
 
 // Utility function to safely convert to number for .toFixed() operations
 const safeNumber = (value: unknown): number => {
@@ -26,18 +26,18 @@ export function PersonnelKPIs() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Obtener datos del mes actual
       const currentDate = new Date();
       const productivityData = await api.reports.getEmployeeProductivity({
         month: currentDate.getMonth() + 1,
         year: currentDate.getFullYear(),
       });
-      
+
       setProductivity(productivityData);
     } catch (err) {
       setError(handleApiError(err));
-      console.error('Error loading productivity data:', err);
+      console.error("Error loading productivity data:", err);
     } finally {
       setLoading(false);
     }
@@ -45,9 +45,16 @@ export function PersonnelKPIs() {
 
   // Calcular estadísticas generales
   const totalEmployees = productivity.length;
-  const totalHours = productivity.reduce((sum, emp) => sum + Number(emp.total_hours || 0), 0);
-  const totalCost = productivity.reduce((sum, emp) => sum + Number(emp.total_cost_to_company || 0), 0);
-  const avgHoursPerEmployee = totalEmployees > 0 ? totalHours / totalEmployees : 0;
+  const totalHours = productivity.reduce(
+    (sum, emp) => sum + Number(emp.total_hours || 0),
+    0
+  );
+  const totalCost = productivity.reduce(
+    (sum, emp) => sum + Number(emp.total_cost_to_company || 0),
+    0
+  );
+  const avgHoursPerEmployee =
+    totalEmployees > 0 ? totalHours / totalEmployees : 0;
 
   // Empleados más productivos (por horas trabajadas)
   const topProductiveEmployees = productivity
@@ -57,15 +64,23 @@ export function PersonnelKPIs() {
   // Empleados más eficientes (menor costo por hora)
   const mostEfficient = productivity
     .filter(emp => safeNumber(emp.cost_per_hour_with_benefits) > 0)
-    .sort((a, b) => safeNumber(a.cost_per_hour_with_benefits) - safeNumber(b.cost_per_hour_with_benefits))
+    .sort(
+      (a, b) =>
+        safeNumber(a.cost_per_hour_with_benefits) -
+        safeNumber(b.cost_per_hour_with_benefits)
+    )
     .slice(0, 3);
 
   const getDepartmentColor = (department: string) => {
     switch (department.toLowerCase()) {
-      case 'soldadura': return 'bg-orange-100 text-orange-800';
-      case 'construccion': return 'bg-blue-100 text-blue-800';
-      case 'administracion': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "soldadura":
+        return "bg-orange-100 text-orange-800";
+      case "construccion":
+        return "bg-blue-100 text-blue-800";
+      case "administracion":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -79,7 +94,10 @@ export function PersonnelKPIs() {
           <CardContent>
             <div className="space-y-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-100 animate-pulse rounded" />
+                <div
+                  key={i}
+                  className="h-16 bg-gray-100 animate-pulse rounded"
+                />
               ))}
             </div>
           </CardContent>
@@ -91,7 +109,10 @@ export function PersonnelKPIs() {
           <CardContent>
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-100 animate-pulse rounded" />
+                <div
+                  key={i}
+                  className="h-12 bg-gray-100 animate-pulse rounded"
+                />
               ))}
             </div>
           </CardContent>
@@ -103,7 +124,10 @@ export function PersonnelKPIs() {
           <CardContent>
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-100 animate-pulse rounded" />
+                <div
+                  key={i}
+                  className="h-12 bg-gray-100 animate-pulse rounded"
+                />
               ))}
             </div>
           </CardContent>
@@ -121,7 +145,7 @@ export function PersonnelKPIs() {
         <CardContent>
           <div className="text-center text-red-600 py-4">
             <p>Error cargando datos de personal: {error}</p>
-            <button 
+            <button
               onClick={loadProductivityData}
               className="mt-2 text-sm bg-red-100 px-3 py-1 rounded hover:bg-red-200"
             >
@@ -151,7 +175,7 @@ export function PersonnelKPIs() {
             </div>
             <span className="font-bold text-lg">{totalEmployees}</span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-green-600" />
@@ -159,24 +183,26 @@ export function PersonnelKPIs() {
             </div>
             <span className="font-bold text-lg">{totalHours.toFixed(0)}</span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-purple-600" />
               <span className="text-sm text-gray-600">Promedio/Empleado</span>
             </div>
-            <span className="font-bold text-lg">{avgHoursPerEmployee.toFixed(1)}h</span>
+            <span className="font-bold text-lg">
+              {avgHoursPerEmployee.toFixed(1)}h
+            </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-red-600" />
               <span className="text-sm text-gray-600">Costo Total</span>
             </div>
             <span className="font-bold text-lg">
-              {new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
+              {new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               }).format(totalCost)}
@@ -199,7 +225,10 @@ export function PersonnelKPIs() {
           ) : (
             <div className="space-y-3">
               {topProductiveEmployees.map((employee, index) => (
-                <div key={employee.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={employee.name}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-bold">
                       {index + 1}
@@ -207,21 +236,28 @@ export function PersonnelKPIs() {
                     <div>
                       <h4 className="font-medium text-sm">{employee.name}</h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge className={getDepartmentColor(employee.department)}>
+                        <Badge
+                          className={getDepartmentColor(employee.department)}
+                        >
                           {employee.department}
                         </Badge>
-                        <span className="text-xs text-gray-600">{employee.position}</span>
+                        <span className="text-xs text-gray-600">
+                          {employee.position}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="font-bold text-green-600">
                       {safeNumber(employee.total_hours).toFixed(1)}h
                     </div>
                     <div className="text-xs text-gray-500">
                       {safeNumber(employee.overtime_hours) > 0 && (
-                        <span>+{safeNumber(employee.overtime_hours).toFixed(1)}h extra</span>
+                        <span>
+                          +{safeNumber(employee.overtime_hours).toFixed(1)}h
+                          extra
+                        </span>
                       )}
                     </div>
                     <div className="text-xs text-gray-500">
@@ -249,7 +285,10 @@ export function PersonnelKPIs() {
           ) : (
             <div className="space-y-3">
               {mostEfficient.map((employee, index) => (
-                <div key={employee.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={employee.name}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-green-100 text-green-800 rounded-full flex items-center justify-center text-sm font-bold">
                       {index + 1}
@@ -257,21 +296,30 @@ export function PersonnelKPIs() {
                     <div>
                       <h4 className="font-medium text-sm">{employee.name}</h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-600">{employee.position}</span>
+                        <span className="text-xs text-gray-600">
+                          {employee.position}
+                        </span>
                         <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-600">{safeNumber(employee.total_hours).toFixed(1)}h</span>
+                        <span className="text-xs text-gray-600">
+                          {safeNumber(employee.total_hours).toFixed(1)}h
+                        </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="font-bold text-blue-600 text-sm">
-                      ${Math.round(safeNumber(employee.cost_per_hour_with_benefits)).toLocaleString()}/h
+                      $
+                      {Math.round(
+                        safeNumber(employee.cost_per_hour_with_benefits)
+                      ).toLocaleString()}
+                      /h
                     </div>
                     <div className="text-xs text-gray-500">
-                      Total: {new Intl.NumberFormat('es-CO', {
-                        style: 'currency',
-                        currency: 'COP',
+                      Total:{" "}
+                      {new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: "COP",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       }).format(safeNumber(employee.total_cost_to_company))}

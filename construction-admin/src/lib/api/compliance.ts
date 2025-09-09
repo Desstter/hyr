@@ -3,7 +3,7 @@
 // Real-time compliance statistics and data
 // =====================================================
 
-import { apiClient, ApiResponse } from './client';
+import { apiClient, ApiResponse } from "./client";
 
 // =====================================================
 // TYPES AND INTERFACES
@@ -66,10 +66,10 @@ export interface InvoicesSummary extends InvoicesStats {
 }
 
 export interface ComplianceObligation {
-  type: 'payroll' | 'pila' | 'tax';
+  type: "payroll" | "pila" | "tax";
   description: string;
   days_left: number;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
 }
 
 // =====================================================
@@ -77,7 +77,7 @@ export interface ComplianceObligation {
 // =====================================================
 
 export class ComplianceService {
-  private readonly baseUrl = '/compliance';
+  private readonly baseUrl = "/compliance";
 
   /**
    * Get comprehensive dashboard statistics
@@ -120,7 +120,7 @@ export const complianceService = new ComplianceService();
 // REACT HOOKS
 // =====================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Hook for dashboard statistics with auto-refresh
@@ -136,8 +136,8 @@ export const useComplianceDashboard = (refreshInterval: number = 30000) => {
       const data = await complianceService.getDashboardStats();
       setStats(data);
     } catch (err) {
-      console.error('Error fetching compliance dashboard stats:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching compliance dashboard stats:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export const useComplianceDashboard = (refreshInterval: number = 30000) => {
 
     // Set up auto-refresh
     const interval = setInterval(fetchStats, refreshInterval);
-    
+
     return () => clearInterval(interval);
   }, [refreshInterval]);
 
@@ -175,8 +175,8 @@ export const useUpcomingObligations = () => {
         const data = await complianceService.getUpcomingObligations();
         setObligations(data);
       } catch (err) {
-        console.error('Error fetching upcoming obligations:', err);
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        console.error("Error fetching upcoming obligations:", err);
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setLoading(false);
       }
@@ -203,8 +203,8 @@ export const useInvoicesSummary = () => {
         const data = await complianceService.getInvoicesSummary();
         setSummary(data);
       } catch (err) {
-        console.error('Error fetching invoices summary:', err);
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        console.error("Error fetching invoices summary:", err);
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setLoading(false);
       }
@@ -214,7 +214,7 @@ export const useInvoicesSummary = () => {
 
     // Refresh every 5 minutes
     const interval = setInterval(fetchSummary, 300000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -230,20 +230,20 @@ export const useInvoicesSummary = () => {
  */
 export const getDianStatusBadge = (status: string) => {
   switch (status?.toUpperCase()) {
-    case 'ACEPTADO':
-    case 'ACEPTADO_SIMULADO':
-      return { color: 'green', text: 'Aceptado' };
-    case 'RECHAZADO':
-    case 'RECHAZADO_SIMULADO':
-      return { color: 'red', text: 'Rechazado' };
-    case 'ENVIADO':
-      return { color: 'yellow', text: 'Enviado' };
-    case 'GENERADO':
-      return { color: 'blue', text: 'Generado' };
-    case 'SIN_DATOS':
-      return { color: 'gray', text: 'Sin datos' };
+    case "ACEPTADO":
+    case "ACEPTADO_SIMULADO":
+      return { color: "green", text: "Aceptado" };
+    case "RECHAZADO":
+    case "RECHAZADO_SIMULADO":
+      return { color: "red", text: "Rechazado" };
+    case "ENVIADO":
+      return { color: "yellow", text: "Enviado" };
+    case "GENERADO":
+      return { color: "blue", text: "Generado" };
+    case "SIN_DATOS":
+      return { color: "gray", text: "Sin datos" };
     default:
-      return { color: 'gray', text: 'Pendiente' };
+      return { color: "gray", text: "Pendiente" };
   }
 };
 
@@ -252,14 +252,14 @@ export const getDianStatusBadge = (status: string) => {
  */
 export const getPriorityBadge = (priority: string) => {
   switch (priority) {
-    case 'high':
-      return { color: 'red', text: 'Alta' };
-    case 'medium':
-      return { color: 'yellow', text: 'Media' };
-    case 'low':
-      return { color: 'green', text: 'Baja' };
+    case "high":
+      return { color: "red", text: "Alta" };
+    case "medium":
+      return { color: "yellow", text: "Media" };
+    case "low":
+      return { color: "green", text: "Baja" };
     default:
-      return { color: 'gray', text: 'Normal' };
+      return { color: "gray", text: "Normal" };
   }
 };
 
@@ -267,11 +267,11 @@ export const getPriorityBadge = (priority: string) => {
  * Format currency in Colombian pesos
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 

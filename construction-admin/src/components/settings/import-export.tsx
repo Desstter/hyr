@@ -1,18 +1,46 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { api, handleApiError } from '@/lib/api';
-import type { Project, Client, Expense, Personnel } from '@/lib/api';
-import { Download, Upload, FileText, AlertTriangle, Database } from 'lucide-react';
-import { toast } from 'sonner';
-import Papa from 'papaparse';
-import { format } from 'date-fns';
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { api, handleApiError } from "@/lib/api";
+import type { Project, Client, Expense, Personnel } from "@/lib/api";
+import {
+  Download,
+  Upload,
+  FileText,
+  AlertTriangle,
+  Database,
+} from "lucide-react";
+import { toast } from "sonner";
+import Papa from "papaparse";
+import { format } from "date-fns";
+
+interface CsvRow {
+  date?: string;
+  fecha?: string;
+  project_id?: string;
+  projectid?: string;
+  proyecto?: string;
+  category?: string;
+  categoria?: string;
+  vendor?: string;
+  proveedor?: string;
+  description?: string;
+  descripcion?: string;
+  amount?: string;
+  monto?: string;
+  [key: string]: string | undefined;
+}
 
 interface ExportData {
   version: string;
@@ -26,8 +54,8 @@ interface ExportData {
 export function ImportExport() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge');
-  const [csvData, setCsvData] = useState('');
+  const [importMode, setImportMode] = useState<"merge" | "overwrite">("merge");
+  const [csvData, setCsvData] = useState("");
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,56 +64,73 @@ export function ImportExport() {
     setIsExporting(true);
     try {
       // Load all data from API
-      const [projectsResult, clientsResult, expensesResult, personnelResult] = await Promise.all([
-        api.projects.getAll(),
-        api.clients.getAll(),
-        api.expenses.list(),
-        api.personnel.getAll()
-      ]);
-      
+      const [projectsResult, clientsResult, expensesResult, personnelResult] =
+        await Promise.all([
+          api.projects.getAll(),
+          api.clients.getAll(),
+          api.expenses.list(),
+          api.personnel.getAll(),
+        ]);
+
       // Handle both direct array response and {data: array} response
-      const projects = Array.isArray(projectsResult) ? projectsResult : 
-                      (Array.isArray(projectsResult.data) ? projectsResult.data : []);
-      const clients = Array.isArray(clientsResult) ? clientsResult : 
-                     (Array.isArray(clientsResult.data) ? clientsResult.data : []);
-      const expenses = Array.isArray(expensesResult) ? expensesResult : 
-                      (Array.isArray(expensesResult.data) ? expensesResult.data : []);
-      const personnel = Array.isArray(personnelResult) ? personnelResult : 
-                       (Array.isArray(personnelResult.data) ? personnelResult.data : []);
+      const projects = Array.isArray(projectsResult)
+        ? projectsResult
+        : Array.isArray(projectsResult.data)
+          ? projectsResult.data
+          : [];
+      const clients = Array.isArray(clientsResult)
+        ? clientsResult
+        : Array.isArray(clientsResult.data)
+          ? clientsResult.data
+          : [];
+      const expenses = Array.isArray(expensesResult)
+        ? expensesResult
+        : Array.isArray(expensesResult.data)
+          ? expensesResult.data
+          : [];
+      const personnel = Array.isArray(personnelResult)
+        ? personnelResult
+        : Array.isArray(personnelResult.data)
+          ? personnelResult.data
+          : [];
 
       const exportData: ExportData = {
-        version: '1.0',
+        version: "1.0",
         exportDate: new Date().toISOString(),
         projects,
         clients,
         expenses,
-        personnel
+        personnel,
       };
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-        type: 'application/json' 
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
       });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `hyr-constructora-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`;
+      a.download = `hyr-constructora-backup-${format(new Date(), "yyyy-MM-dd-HHmm")}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      toast.success(`Datos exportados exitosamente: ${projects.length} proyectos, ${clients.length} clientes, ${expenses.length} gastos, ${personnel.length} empleados`);
+
+      toast.success(
+        `Datos exportados exitosamente: ${projects.length} proyectos, ${clients.length} clientes, ${expenses.length} gastos, ${personnel.length} empleados`
+      );
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error("Export failed:", error);
       const errorMessage = handleApiError(error);
-      toast.error('Error al exportar los datos: ' + errorMessage);
+      toast.error("Error al exportar los datos: " + errorMessage);
     } finally {
       setIsExporting(false);
     }
   };
 
   // Import JSON data back to API
-  const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportJSON = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -93,10 +138,17 @@ export function ImportExport() {
     try {
       const text = await file.text();
       const data: ExportData = JSON.parse(text);
-      
+
       // Basic validation
-      if (!data.projects && !data.clients && !data.expenses && !data.personnel) {
-        throw new Error('Formato de archivo inválido - no se encontraron datos válidos');
+      if (
+        !data.projects &&
+        !data.clients &&
+        !data.expenses &&
+        !data.personnel
+      ) {
+        throw new Error(
+          "Formato de archivo inválido - no se encontraron datos válidos"
+        );
       }
 
       let importedCount = 0;
@@ -105,20 +157,24 @@ export function ImportExport() {
       if (data.clients && Array.isArray(data.clients)) {
         for (const client of data.clients) {
           try {
-            if (importMode === 'overwrite') {
+            if (importMode === "overwrite") {
               await api.clients.update(client.id, client);
             } else {
               await api.clients.create(client);
             }
             importedCount++;
           } catch (err) {
-            if (importMode === 'merge') {
+            if (importMode === "merge") {
               // Try to update if create failed (already exists)
               try {
                 await api.clients.update(client.id, client);
                 importedCount++;
               } catch (updateErr) {
-                console.warn('Failed to import/update client:', client.name, updateErr);
+                console.warn(
+                  "Failed to import/update client:",
+                  client.name,
+                  updateErr
+                );
               }
             }
           }
@@ -129,19 +185,23 @@ export function ImportExport() {
       if (data.personnel && Array.isArray(data.personnel)) {
         for (const person of data.personnel) {
           try {
-            if (importMode === 'overwrite') {
+            if (importMode === "overwrite") {
               await api.personnel.update(person.id, person);
             } else {
               await api.personnel.create(person);
             }
             importedCount++;
           } catch (err) {
-            if (importMode === 'merge') {
+            if (importMode === "merge") {
               try {
                 await api.personnel.update(person.id, person);
                 importedCount++;
               } catch (updateErr) {
-                console.warn('Failed to import/update personnel:', person.name, updateErr);
+                console.warn(
+                  "Failed to import/update personnel:",
+                  person.name,
+                  updateErr
+                );
               }
             }
           }
@@ -152,19 +212,23 @@ export function ImportExport() {
       if (data.projects && Array.isArray(data.projects)) {
         for (const project of data.projects) {
           try {
-            if (importMode === 'overwrite') {
+            if (importMode === "overwrite") {
               await api.projects.update(project.id, project);
             } else {
               await api.projects.create(project);
             }
             importedCount++;
           } catch (err) {
-            if (importMode === 'merge') {
+            if (importMode === "merge") {
               try {
                 await api.projects.update(project.id, project);
                 importedCount++;
               } catch (updateErr) {
-                console.warn('Failed to import/update project:', project.name, updateErr);
+                console.warn(
+                  "Failed to import/update project:",
+                  project.name,
+                  updateErr
+                );
               }
             }
           }
@@ -175,35 +239,42 @@ export function ImportExport() {
       if (data.expenses && Array.isArray(data.expenses)) {
         for (const expense of data.expenses) {
           try {
-            if (importMode === 'overwrite') {
+            if (importMode === "overwrite") {
               await api.expenses.update(expense.id, expense);
             } else {
               await api.expenses.create(expense);
             }
             importedCount++;
           } catch (err) {
-            if (importMode === 'merge') {
+            if (importMode === "merge") {
               try {
                 await api.expenses.update(expense.id, expense);
                 importedCount++;
               } catch (updateErr) {
-                console.warn('Failed to import/update expense:', expense.description, updateErr);
+                console.warn(
+                  "Failed to import/update expense:",
+                  expense.description,
+                  updateErr
+                );
               }
             }
           }
         }
       }
 
-      toast.success(`Datos importados exitosamente: ${importedCount} registros procesados (modo: ${importMode === 'merge' ? 'combinar' : 'sobrescribir'})`);
-      
+      toast.success(
+        `Datos importados exitosamente: ${importedCount} registros procesados (modo: ${importMode === "merge" ? "combinar" : "sobrescribir"})`
+      );
+
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error('Import failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      toast.error('Error al importar los datos: ' + errorMessage);
+      console.error("Import failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
+      toast.error("Error al importar los datos: " + errorMessage);
     } finally {
       setIsImporting(false);
     }
@@ -212,7 +283,7 @@ export function ImportExport() {
   // Import CSV expenses
   const handleImportCSV = async () => {
     if (!csvData.trim()) {
-      toast.error('Por favor ingresa datos CSV');
+      toast.error("Por favor ingresa datos CSV");
       return;
     }
 
@@ -221,25 +292,36 @@ export function ImportExport() {
       const parsed = Papa.parse(csvData, {
         header: true,
         skipEmptyLines: true,
-        transformHeader: (header: string) => header.toLowerCase().trim()
+        transformHeader: (header: string) => header.toLowerCase().trim(),
       });
 
       if (parsed.errors.length > 0) {
-        console.warn('CSV parsing warnings:', parsed.errors);
+        console.warn("CSV parsing warnings:", parsed.errors);
       }
 
       const expenses = [];
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = format(new Date(), "yyyy-MM-dd");
 
       for (const [index, row] of parsed.data.entries()) {
         try {
+          const csvRow = row as CsvRow;
           const expenseData = {
-            date: (row as any).date || (row as any).fecha || currentDate,
-            project_id: (row as any).project_id || (row as any).projectid || (row as any).proyecto || undefined,
-            category: (row as any).category || (row as any).categoria || 'materials',
-            vendor: (row as any).vendor || (row as any).proveedor || undefined,
-            description: (row as any).description || (row as any).descripcion || `Gasto importado CSV #${index + 1}`,
-            amount: parseFloat((row as any).amount || (row as any).monto || '0'),
+            date: csvRow.date || csvRow.fecha || currentDate,
+            project_id:
+              csvRow.project_id ||
+              csvRow.projectid ||
+              csvRow.proyecto ||
+              undefined,
+            category:
+              csvRow.category || csvRow.categoria || "materials",
+            vendor: csvRow.vendor || csvRow.proveedor || undefined,
+            description:
+              csvRow.description ||
+              csvRow.descripcion ||
+              `Gasto importado CSV #${index + 1}`,
+            amount: parseFloat(
+              csvRow.amount || csvRow.monto || "0"
+            ),
           };
 
           // Validate required fields
@@ -249,9 +331,14 @@ export function ImportExport() {
           }
 
           // Validate category
-          const validCategories = ['materials', 'labor', 'equipment', 'overhead'];
+          const validCategories = [
+            "materials",
+            "labor",
+            "equipment",
+            "overhead",
+          ];
           if (!validCategories.includes(expenseData.category)) {
-            expenseData.category = 'materials'; // Default fallback
+            expenseData.category = "materials"; // Default fallback
           }
 
           expenses.push(expenseData);
@@ -261,7 +348,7 @@ export function ImportExport() {
       }
 
       if (expenses.length === 0) {
-        throw new Error('No se pudieron procesar gastos válidos del CSV');
+        throw new Error("No se pudieron procesar gastos válidos del CSV");
       }
 
       // Import expenses via API
@@ -271,16 +358,19 @@ export function ImportExport() {
           await api.expenses.create(expense);
           successCount++;
         } catch (error) {
-          console.warn('Failed to create expense:', expense.description, error);
+          console.warn("Failed to create expense:", expense.description, error);
         }
       }
 
-      toast.success(`${successCount}/${expenses.length} gastos importados desde CSV`);
-      setCsvData('');
+      toast.success(
+        `${successCount}/${expenses.length} gastos importados desde CSV`
+      );
+      setCsvData("");
     } catch (error) {
-      console.error('CSV import failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      toast.error('Error al importar CSV: ' + errorMessage);
+      console.error("CSV import failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
+      toast.error("Error al importar CSV: " + errorMessage);
     } finally {
       setIsImportingCsv(false);
     }
@@ -294,17 +384,17 @@ export function ImportExport() {
 2024-12-02,45000,equipment,Alquiler soldadora,Equipos Industriales,
 2024-12-02,25000,overhead,Transporte materiales,Transportes HYR,`;
 
-    const blob = new Blob([csvTemplate], { type: 'text/csv' });
+    const blob = new Blob([csvTemplate], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'plantilla-gastos-hyr.csv';
+    a.download = "plantilla-gastos-hyr.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    toast.success('Plantilla CSV descargada');
+
+    toast.success("Plantilla CSV descargada");
   };
 
   return (
@@ -317,7 +407,8 @@ export function ImportExport() {
             <span>Respaldo y Restauración (JSON)</span>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Exporta e importa todos los datos del sistema: proyectos, clientes, empleados y gastos
+            Exporta e importa todos los datos del sistema: proyectos, clientes,
+            empleados y gastos
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -325,15 +416,16 @@ export function ImportExport() {
           <div className="space-y-2">
             <Label>Exportar todos los datos</Label>
             <p className="text-sm text-muted-foreground">
-              Descarga un archivo JSON con todos tus proyectos, clientes, empleados y gastos desde PostgreSQL.
+              Descarga un archivo JSON con todos tus proyectos, clientes,
+              empleados y gastos desde PostgreSQL.
             </p>
-            <Button 
-              onClick={handleExportJSON} 
+            <Button
+              onClick={handleExportJSON}
               disabled={isExporting}
               className="w-full"
             >
               <Download className="h-4 w-4 mr-2" />
-              {isExporting ? 'Exportando datos...' : 'Exportar JSON Completo'}
+              {isExporting ? "Exportando datos..." : "Exportar JSON Completo"}
             </Button>
           </div>
 
@@ -342,30 +434,43 @@ export function ImportExport() {
               <div>
                 <Label>Importar desde JSON</Label>
                 <p className="text-sm text-muted-foreground">
-                  Restaura tus datos desde un archivo de respaldo. Los datos se importarán a PostgreSQL.
+                  Restaura tus datos desde un archivo de respaldo. Los datos se
+                  importarán a PostgreSQL.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="import-mode">Modo de importación</Label>
-                <Select value={importMode} onValueChange={(value: 'merge' | 'overwrite') => setImportMode(value)}>
+                <Select
+                  value={importMode}
+                  onValueChange={(value: "merge" | "overwrite") =>
+                    setImportMode(value)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar modo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="merge">Combinar (mantener datos existentes)</SelectItem>
-                    <SelectItem value="overwrite">Sobrescribir (actualizar registros existentes)</SelectItem>
+                    <SelectItem value="merge">
+                      Combinar (mantener datos existentes)
+                    </SelectItem>
+                    <SelectItem value="overwrite">
+                      Sobrescribir (actualizar registros existentes)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {importMode === 'overwrite' && (
+              {importMode === "overwrite" && (
                 <div className="flex items-start space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                   <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-yellow-800">¡Atención!</p>
+                    <p className="text-sm font-medium text-yellow-800">
+                      ¡Atención!
+                    </p>
                     <p className="text-sm text-yellow-700">
-                      El modo sobrescribir actualizará los registros existentes con los datos del archivo.
+                      El modo sobrescribir actualizará los registros existentes
+                      con los datos del archivo.
                     </p>
                   </div>
                 </div>
@@ -387,7 +492,9 @@ export function ImportExport() {
                   className="w-full"
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isImporting ? 'Importando datos...' : 'Seleccionar archivo JSON'}
+                  {isImporting
+                    ? "Importando datos..."
+                    : "Seleccionar archivo JSON"}
                 </Button>
               </div>
             </div>
@@ -408,7 +515,11 @@ export function ImportExport() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleExportCSVTemplate} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={handleExportCSVTemplate}
+              className="flex-1"
+            >
               <Download className="h-4 w-4 mr-2" />
               Descargar Plantilla
             </Button>
@@ -417,14 +528,17 @@ export function ImportExport() {
           <div className="space-y-2">
             <Label htmlFor="csv-data">Datos CSV</Label>
             <p className="text-sm text-muted-foreground">
-              Columnas requeridas: <code>date, amount, category, description</code><br />
-              Columnas opcionales: <code>vendor, project_id</code><br />
+              Columnas requeridas:{" "}
+              <code>date, amount, category, description</code>
+              <br />
+              Columnas opcionales: <code>vendor, project_id</code>
+              <br />
               Categorías válidas: materials, labor, equipment, overhead
             </p>
             <Textarea
               id="csv-data"
               value={csvData}
-              onChange={(e) => setCsvData(e.target.value)}
+              onChange={e => setCsvData(e.target.value)}
               placeholder="date,amount,category,description,vendor,project_id
 2024-12-01,150000,materials,Cemento Portland 50kg,Ferretería Central,
 2024-12-01,85000,labor,Soldadura especializada,Juan Pérez,
@@ -433,14 +547,16 @@ export function ImportExport() {
               className="font-mono text-sm"
             />
           </div>
-          
+
           <Button
             onClick={handleImportCSV}
             disabled={!csvData.trim() || isImportingCsv}
             className="w-full"
           >
             <Upload className="h-4 w-4 mr-2" />
-            {isImportingCsv ? 'Importando gastos CSV...' : 'Importar Gastos desde CSV'}
+            {isImportingCsv
+              ? "Importando gastos CSV..."
+              : "Importar Gastos desde CSV"}
           </Button>
         </CardContent>
       </Card>

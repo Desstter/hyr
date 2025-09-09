@@ -1,11 +1,11 @@
-import { formatCurrency } from '@/lib/finance';
-import type { CostEstimate, CostEstimateItem } from './pdf-generator';
+import { formatCurrency } from "@/lib/finance";
+import type { CostEstimate, CostEstimateItem } from "./pdf-generator";
 
 // Additional types for cost calculation
 export interface CostTemplateItem {
   id: string;
   name: string;
-  type: 'material' | 'labor' | 'equipment' | 'overhead';
+  type: "material" | "labor" | "equipment" | "overhead";
   unit: string;
   unitCost: number;
   description?: string;
@@ -26,7 +26,7 @@ interface HistoricalProject {
   budget_total: number;
 }
 
-export type Currency = 'COP' | 'USD' | 'EUR';
+export type Currency = "COP" | "USD" | "EUR";
 
 export interface CostCalculationResult {
   subtotal: number;
@@ -40,7 +40,7 @@ export interface EstimateTemplateData {
   name: string;
   category: string;
   description?: string;
-  baseItems: Omit<CostTemplateItem, 'id'>[];
+  baseItems: Omit<CostTemplateItem, "id">[];
 }
 
 /**
@@ -59,7 +59,7 @@ export function calculateEstimateTotal(
     profitMargin,
     totalBeforeMargin: subtotal,
     total,
-    items
+    items,
   };
 }
 
@@ -76,7 +76,7 @@ export function calculateItemTotal(unitCost: number, quantity: number): number {
 export function createEstimateItemFromTemplate(
   templateItem: CostTemplateItem,
   quantity: number = 1
-): Omit<CostEstimateItem, 'id'> {
+): Omit<CostEstimateItem, "id"> {
   return {
     templateItemId: templateItem.id,
     name: templateItem.name,
@@ -85,7 +85,7 @@ export function createEstimateItemFromTemplate(
     unitCost: templateItem.unitCost,
     quantity,
     total: calculateItemTotal(templateItem.unitCost, quantity),
-    description: templateItem.description
+    description: templateItem.description,
   };
 }
 
@@ -96,13 +96,18 @@ export function generateEstimateFromTemplate(
   template: CostTemplate,
   profitMargin: number = 15,
   itemQuantities?: Record<string, number>
-): Omit<CostEstimate, 'id' | 'createdAt' | 'updatedAt'> {
-  const items: Omit<CostEstimateItem, 'id'>[] = template.items.map(templateItem => {
-    const quantity = itemQuantities?.[templateItem.id] || 1;
-    return createEstimateItemFromTemplate(templateItem, quantity);
-  });
+): Omit<CostEstimate, "id" | "createdAt" | "updatedAt"> {
+  const items: Omit<CostEstimateItem, "id">[] = template.items.map(
+    templateItem => {
+      const quantity = itemQuantities?.[templateItem.id] || 1;
+      return createEstimateItemFromTemplate(templateItem, quantity);
+    }
+  );
 
-  const calculation = calculateEstimateTotal(items as CostEstimateItem[], profitMargin);
+  const calculation = calculateEstimateTotal(
+    items as CostEstimateItem[],
+    profitMargin
+  );
 
   return {
     name: `Cotización - ${template.name}`,
@@ -121,131 +126,131 @@ export function generateEstimateFromTemplate(
  */
 export const DEFAULT_COST_TEMPLATES: EstimateTemplateData[] = [
   {
-    name: 'Soldadura Estructural Básica',
-    category: 'structural_welding',
-    description: 'Plantilla para trabajos básicos de soldadura estructural',
+    name: "Soldadura Estructural Básica",
+    category: "structural_welding",
+    description: "Plantilla para trabajos básicos de soldadura estructural",
     baseItems: [
       {
-        name: 'Electrodos E6013',
-        type: 'material',
-        unit: 'kg',
+        name: "Electrodos E6013",
+        type: "material",
+        unit: "kg",
         unitCost: 8500,
-        description: 'Electrodos para soldadura general'
+        description: "Electrodos para soldadura general",
       },
       {
         name: 'Varilla Corrugada 1/2"',
-        type: 'material', 
-        unit: 'kg',
+        type: "material",
+        unit: "kg",
         unitCost: 2800,
-        description: 'Acero corrugado para estructura'
+        description: "Acero corrugado para estructura",
       },
       {
-        name: 'Soldador Especializado',
-        type: 'labor',
-        unit: 'hora',
+        name: "Soldador Especializado",
+        type: "labor",
+        unit: "hora",
         unitCost: 15000,
-        description: 'Hora de soldador con experiencia'
+        description: "Hora de soldador con experiencia",
       },
       {
-        name: 'Ayudante de Soldadura',
-        type: 'labor',
-        unit: 'hora', 
+        name: "Ayudante de Soldadura",
+        type: "labor",
+        unit: "hora",
         unitCost: 8000,
-        description: 'Hora de ayudante'
+        description: "Hora de ayudante",
       },
       {
-        name: 'Alquiler Equipo de Soldadura',
-        type: 'equipment',
-        unit: 'día',
+        name: "Alquiler Equipo de Soldadura",
+        type: "equipment",
+        unit: "día",
         unitCost: 45000,
-        description: 'Alquiler máquina soldadora'
-      }
-    ]
+        description: "Alquiler máquina soldadora",
+      },
+    ],
   },
   {
-    name: 'Construcción Residencial',
-    category: 'residential_construction',
-    description: 'Plantilla para proyectos de construcción residencial',
+    name: "Construcción Residencial",
+    category: "residential_construction",
+    description: "Plantilla para proyectos de construcción residencial",
     baseItems: [
       {
-        name: 'Cemento Portland',
-        type: 'material',
-        unit: 'bulto',
+        name: "Cemento Portland",
+        type: "material",
+        unit: "bulto",
         unitCost: 21000,
-        description: 'Cemento de 50kg'
+        description: "Cemento de 50kg",
       },
       {
-        name: 'Arena de Rio',
-        type: 'material',
-        unit: 'm³',
+        name: "Arena de Rio",
+        type: "material",
+        unit: "m³",
         unitCost: 45000,
-        description: 'Arena lavada para construcción'
+        description: "Arena lavada para construcción",
       },
       {
-        name: 'Grava',
-        type: 'material',
-        unit: 'm³',
+        name: "Grava",
+        type: "material",
+        unit: "m³",
         unitCost: 52000,
-        description: 'Grava triturada'
+        description: "Grava triturada",
       },
       {
-        name: 'Maestro de Obra',
-        type: 'labor',
-        unit: 'día',
+        name: "Maestro de Obra",
+        type: "labor",
+        unit: "día",
         unitCost: 120000,
-        description: 'Día de maestro especializado'
+        description: "Día de maestro especializado",
       },
       {
-        name: 'Oficial',
-        type: 'labor',
-        unit: 'día',
+        name: "Oficial",
+        type: "labor",
+        unit: "día",
         unitCost: 80000,
-        description: 'Día de oficial de construcción'
+        description: "Día de oficial de construcción",
       },
       {
-        name: 'Ayudante',
-        type: 'labor',
-        unit: 'día',
+        name: "Ayudante",
+        type: "labor",
+        unit: "día",
         unitCost: 50000,
-        description: 'Día de ayudante general'
-      }
-    ]
+        description: "Día de ayudante general",
+      },
+    ],
   },
   {
-    name: 'Reparación Industrial',
-    category: 'industrial_repair',
-    description: 'Plantilla para reparaciones industriales',
+    name: "Reparación Industrial",
+    category: "industrial_repair",
+    description: "Plantilla para reparaciones industriales",
     baseItems: [
       {
-        name: 'Soldadura MIG',
-        type: 'material',
-        unit: 'kg',
+        name: "Soldadura MIG",
+        type: "material",
+        unit: "kg",
         unitCost: 12000,
-        description: 'Alambre MIG ER70S-6'
+        description: "Alambre MIG ER70S-6",
       },
       {
-        name: 'Gas Argón',
-        type: 'material',
-        unit: 'm³',
+        name: "Gas Argón",
+        type: "material",
+        unit: "m³",
         unitCost: 85000,
-        description: 'Gas argón para soldadura MIG'
+        description: "Gas argón para soldadura MIG",
       },
       {
-        name: 'Técnico Especializado',
-        type: 'labor',
-        unit: 'hora',
+        name: "Técnico Especializado",
+        type: "labor",
+        unit: "hora",
         unitCost: 25000,
-        description: 'Hora de técnico industrial'
+        description: "Hora de técnico industrial",
       },
       {
-        name: 'Transporte Equipo',
-        type: 'equipment',
-        unit: 'viaje',
+        name: "Transporte Equipo",
+        type: "equipment",
+        unit: "viaje",
         unitCost: 150000,
-        description: 'Transporte de equipo especializado'
-      }
-    ]
-  }
+        description: "Transporte de equipo especializado",
+      },
+    ],
+  },
 ];
 
 /**
@@ -253,7 +258,7 @@ export const DEFAULT_COST_TEMPLATES: EstimateTemplateData[] = [
  */
 export function formatEstimateForDisplay(
   estimate: CostEstimate,
-  currency: Currency = 'COP'
+  currency: Currency = "COP"
 ) {
   return {
     ...estimate,
@@ -263,8 +268,8 @@ export function formatEstimateForDisplay(
     items: estimate.items.map(item => ({
       ...item,
       unitCostFormatted: formatCurrency(item.unitCost, currency),
-      totalFormatted: formatCurrency(item.total, currency)
-    }))
+      totalFormatted: formatCurrency(item.total, currency),
+    })),
   };
 }
 
@@ -277,8 +282,8 @@ export function estimateProjectCostFromHistory(
   projectSize: number
 ): number {
   // Filter similar projects
-  const similarProjects = historicalProjects.filter(p => 
-    p.category === projectType || p.description?.includes(projectType)
+  const similarProjects = historicalProjects.filter(
+    p => p.category === projectType || p.description?.includes(projectType)
   );
 
   if (similarProjects.length === 0) {
@@ -286,9 +291,10 @@ export function estimateProjectCostFromHistory(
   }
 
   // Calculate average cost per unit
-  const avgCostPerUnit = similarProjects.reduce((sum, project) => {
-    return sum + (project.spent || project.budget) / (project.size || 1);
-  }, 0) / similarProjects.length;
+  const avgCostPerUnit =
+    similarProjects.reduce((sum, project) => {
+      return sum + (project.spent || project.budget) / (project.size || 1);
+    }, 0) / similarProjects.length;
 
   return avgCostPerUnit * projectSize;
 }

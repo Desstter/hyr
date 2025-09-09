@@ -21,7 +21,10 @@ export const toast = (props: ToastProps) => {
   }
 
   // Configure toast options
-  const options: { duration: number; action?: { label: string; onClick: () => void; } } = {
+  const options: {
+    duration: number;
+    action?: { label: string; onClick: () => void };
+  } = {
     duration: duration || 4000,
   };
 
@@ -36,9 +39,9 @@ export const toast = (props: ToastProps) => {
   // Display toast based on variant
   if (variant === "destructive") {
     return sonnerToast.error(message, options);
-  } else {
+  } 
     return sonnerToast.success(message, options);
-  }
+  
 };
 
 // Export individual toast methods for convenience

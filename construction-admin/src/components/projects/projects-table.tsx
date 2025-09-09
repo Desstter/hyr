@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -9,35 +9,40 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { api, handleApiError } from '@/lib/api';
-import type { Project, Client } from '@/lib/api';
-import { formatCurrency, formatDate, getProjectStatusColor, getProjectStatusLabel } from '@/lib/finance';
-import { useTranslations } from '@/lib/i18n';
-import { Eye, Edit, Search, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { api, handleApiError } from "@/lib/api";
+import type { Project, Client } from "@/lib/api";
+import {
+  formatCurrency,
+  formatDate,
+  getProjectStatusColor,
+  getProjectStatusLabel,
+} from "@/lib/finance";
+import { useTranslations } from "@/lib/i18n";
+import { Eye, Edit, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProjectsTableProps {
   onEditProject?: (project: Project) => void;
 }
 
 export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
-  const t = useTranslations('es');
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const t = useTranslations("es");
+  const [searchQuery, setSearchQuery] = useState("");
+
   // State for API data
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Client lookup map
   const clientMap = new Map(clients.map(c => [c.id, c.name]));
-  
+
   // Load data from API
   useEffect(() => {
     loadData();
@@ -47,26 +52,32 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Load projects and clients in parallel
       const [projectsResult, clientsResult] = await Promise.all([
         api.projects.list(),
-        api.clients.list()
+        api.clients.list(),
       ]);
-      
+
       // Handle both direct array response and {data: array} response
-      const projectsData = Array.isArray(projectsResult) ? projectsResult : 
-                          (Array.isArray(projectsResult.data) ? projectsResult.data : []);
-      const clientsData = Array.isArray(clientsResult) ? clientsResult : 
-                         (Array.isArray(clientsResult.data) ? clientsResult.data : []);
-      
+      const projectsData = Array.isArray(projectsResult)
+        ? projectsResult
+        : Array.isArray(projectsResult.data)
+          ? projectsResult.data
+          : [];
+      const clientsData = Array.isArray(clientsResult)
+        ? clientsResult
+        : Array.isArray(clientsResult.data)
+          ? clientsResult.data
+          : [];
+
       setProjects(projectsData);
       setClients(clientsData);
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      console.error('Error loading projects data:', err);
-      toast.error('Error cargando proyectos: ' + errorMessage);
+      console.error("Error loading projects data:", err);
+      toast.error("Error cargando proyectos: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -74,34 +85,42 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
 
   const handleDeleteProject = async (project: Project) => {
     // Confirmación del usuario
-    if (!confirm(`¿Estás seguro de que deseas eliminar el proyecto "${project.name}"?\n\nEsta acción no se puede deshacer.`)) {
+    if (
+      !confirm(
+        `¿Estás seguro de que deseas eliminar el proyecto "${project.name}"?\n\nEsta acción no se puede deshacer.`
+      )
+    ) {
       return;
     }
 
     try {
       await api.projects.delete(project.id);
       toast.success(`Proyecto "${project.name}" eliminado exitosamente`);
-      
+
       // Recargar datos para actualizar la lista
       await loadData();
     } catch (err) {
       const errorMessage = handleApiError(err);
-      console.error('Error deleting project:', err);
-      
+      console.error("Error deleting project:", err);
+
       // Mostrar mensaje de error específico
-      if (errorMessage.includes('gastos') || errorMessage.includes('horas')) {
+      if (errorMessage.includes("gastos") || errorMessage.includes("horas")) {
         toast.error(`No se puede eliminar el proyecto: ${errorMessage}`);
       } else {
         toast.error(`Error eliminando proyecto: ${errorMessage}`);
       }
     }
   };
-  
+
   // Filter projects (ensure projects is an array)
   const filteredProjects = (projects || []).filter(project => {
-    const clientName = project.client_id ? clientMap.get(project.client_id) || '' : '';
-    return project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           clientName.toLowerCase().includes(searchQuery.toLowerCase());
+    const clientName = project.client_id
+      ? clientMap.get(project.client_id) || ""
+      : "";
+    return (
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      clientName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   // Loading state
@@ -148,7 +167,7 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
           <Input
             placeholder="Buscar proyectos..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -170,7 +189,7 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProjects.map((project) => (
+            {filteredProjects.map(project => (
               <TableRow key={project.id}>
                 <TableCell className="font-medium">
                   <div>
@@ -183,11 +202,13 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {project.client_id ? clientMap.get(project.client_id) || 'Cliente desconocido' : 'Sin cliente'}
+                  {project.client_id
+                    ? clientMap.get(project.client_id) || "Cliente desconocido"
+                    : "Sin cliente"}
                 </TableCell>
                 <TableCell>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={getProjectStatusColor(project.status)}
                   >
                     {getProjectStatusLabel(project.status)}
@@ -204,7 +225,7 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {project.start_date ? formatDate(project.start_date) : '-'}
+                  {project.start_date ? formatDate(project.start_date) : "-"}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-1">
@@ -213,15 +234,15 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => onEditProject?.(project)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteProject(project)}
                       className="text-red-600 hover:text-red-800"
@@ -235,10 +256,12 @@ export function ProjectsTable({ onEditProject }: ProjectsTableProps) {
           </TableBody>
         </Table>
       </div>
-      
+
       {filteredProjects.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          {searchQuery ? 'No se encontraron proyectos con esos criterios' : 'No hay proyectos registrados'}
+          {searchQuery
+            ? "No se encontraron proyectos con esos criterios"
+            : "No hay proyectos registrados"}
         </div>
       )}
     </div>

@@ -1,23 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { 
-  Edit2, 
-  Trash2, 
-  Plus, 
+import React, { useState } from "react";
+import {
+  Trash2,
+  Plus,
   Calculator,
   ChevronDown,
-  ChevronRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,15 +24,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useTranslations } from '@/lib/i18n';
-import { formatCurrency } from '@/lib/finance';
-import type { CostEstimateItem } from '@/lib/pdf-generator';
-import { calculateItemTotal } from '@/lib/cost-calculator';
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/finance";
+import type { CostEstimateItem } from "@/lib/pdf-generator";
 
-export type CostItemType = 'material' | 'labor' | 'equipment' | 'overhead';
+export type CostItemType = "material" | "labor" | "equipment" | "overhead";
 
 interface CostBreakdownTableProps {
   items: CostEstimateItem[];
@@ -54,10 +52,10 @@ type GroupedItems = {
 };
 
 const itemTypeColors = {
-  material: 'bg-blue-100 text-blue-800',
-  labor: 'bg-green-100 text-green-800',
-  equipment: 'bg-orange-100 text-orange-800',
-  overhead: 'bg-purple-100 text-purple-800',
+  material: "bg-blue-100 text-blue-800",
+  labor: "bg-green-100 text-green-800",
+  equipment: "bg-orange-100 text-orange-800",
+  overhead: "bg-purple-100 text-purple-800",
 };
 
 export function CostBreakdownTable({
@@ -68,13 +66,15 @@ export function CostBreakdownTable({
   profitMargin = 0,
   subtotal,
   total,
-  currency = 'COP',
+  currency = "COP",
   editable = true,
   showTotals = true,
   groupByType = false,
 }: CostBreakdownTableProps) {
-  const t = useTranslations('es');
-  const [expandedGroups, setExpandedGroups] = useState<Record<CostItemType, boolean>>({
+  const t = useTranslations("es");
+  const [expandedGroups, setExpandedGroups] = useState<
+    Record<CostItemType, boolean>
+  >({
     material: true,
     labor: true,
     equipment: true,
@@ -84,7 +84,7 @@ export function CostBreakdownTable({
   const toggleGroup = (type: CostItemType) => {
     setExpandedGroups(prev => ({
       ...prev,
-      [type]: !prev[type]
+      [type]: !prev[type],
     }));
   };
 
@@ -136,13 +136,17 @@ export function CostBreakdownTable({
     );
   };
 
-  const renderItemRow = (item: CostEstimateItem, index: number, actualIndex: number) => (
+  const renderItemRow = (
+    item: CostEstimateItem,
+    index: number,
+    actualIndex: number
+  ) => (
     <TableRow key={item.id} className={groupByType ? "bg-white" : ""}>
       <TableCell className="font-medium">
         {editable ? (
           <Input
             value={item.name}
-            onChange={(e) => onUpdateItem(actualIndex, { name: e.target.value })}
+            onChange={e => onUpdateItem(actualIndex, { name: e.target.value })}
             placeholder="Nombre del elemento"
             className="border-0 shadow-none focus-visible:ring-0 p-0"
           />
@@ -150,21 +154,31 @@ export function CostBreakdownTable({
           <span>{item.name}</span>
         )}
       </TableCell>
-      
+
       <TableCell>
         {editable ? (
-          <Select 
-            value={item.type} 
-            onValueChange={(value: CostItemType) => onUpdateItem(actualIndex, { type: value })}
+          <Select
+            value={item.type}
+            onValueChange={(value: CostItemType) =>
+              onUpdateItem(actualIndex, { type: value })
+            }
           >
             <SelectTrigger className="border-0 shadow-none focus-visible:ring-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="material">{t.simulator.itemTypes.material}</SelectItem>
-              <SelectItem value="labor">{t.simulator.itemTypes.labor}</SelectItem>
-              <SelectItem value="equipment">{t.simulator.itemTypes.equipment}</SelectItem>
-              <SelectItem value="overhead">{t.simulator.itemTypes.overhead}</SelectItem>
+              <SelectItem value="material">
+                {t.simulator.itemTypes.material}
+              </SelectItem>
+              <SelectItem value="labor">
+                {t.simulator.itemTypes.labor}
+              </SelectItem>
+              <SelectItem value="equipment">
+                {t.simulator.itemTypes.equipment}
+              </SelectItem>
+              <SelectItem value="overhead">
+                {t.simulator.itemTypes.overhead}
+              </SelectItem>
             </SelectContent>
           </Select>
         ) : (
@@ -173,15 +187,17 @@ export function CostBreakdownTable({
           </Badge>
         )}
       </TableCell>
-      
+
       <TableCell>
         {editable ? (
           <Input
             type="number"
             value={item.quantity}
-            onChange={(e) => onUpdateItem(actualIndex, { 
-              quantity: parseFloat(e.target.value) || 0 
-            })}
+            onChange={e =>
+              onUpdateItem(actualIndex, {
+                quantity: parseFloat(e.target.value) || 0,
+              })
+            }
             min="0"
             step="0.01"
             className="border-0 shadow-none focus-visible:ring-0 p-0"
@@ -190,12 +206,12 @@ export function CostBreakdownTable({
           <span>{item.quantity}</span>
         )}
       </TableCell>
-      
+
       <TableCell>
         {editable ? (
           <Input
             value={item.unit}
-            onChange={(e) => onUpdateItem(actualIndex, { unit: e.target.value })}
+            onChange={e => onUpdateItem(actualIndex, { unit: e.target.value })}
             placeholder="m²"
             className="border-0 shadow-none focus-visible:ring-0 p-0"
           />
@@ -203,15 +219,17 @@ export function CostBreakdownTable({
           <span>{item.unit}</span>
         )}
       </TableCell>
-      
+
       <TableCell>
         {editable ? (
           <Input
             type="number"
             value={item.unitCost}
-            onChange={(e) => onUpdateItem(actualIndex, { 
-              unitCost: parseFloat(e.target.value) || 0 
-            })}
+            onChange={e =>
+              onUpdateItem(actualIndex, {
+                unitCost: parseFloat(e.target.value) || 0,
+              })
+            }
             min="0"
             step="0.01"
             className="border-0 shadow-none focus-visible:ring-0 p-0"
@@ -220,11 +238,11 @@ export function CostBreakdownTable({
           <span>{formatCurrency(item.unitCost, currency)}</span>
         )}
       </TableCell>
-      
+
       <TableCell className="font-medium">
         {formatCurrency(item.total, currency)}
       </TableCell>
-      
+
       {editable && (
         <TableCell>
           <Button
@@ -244,23 +262,24 @@ export function CostBreakdownTable({
     if (groupByType) {
       return Object.entries(groupedItems).map(([type, typeItems]) => {
         if (typeItems.length === 0) return null;
-        
+
         const itemType = type as CostItemType;
         const isExpanded = expandedGroups[itemType];
-        
+
         return (
           <React.Fragment key={type}>
             {renderGroupHeader(itemType, typeItems.length)}
-            {isExpanded && typeItems.map((item, index) => {
-              const actualIndex = items.findIndex(i => i.id === item.id);
-              return renderItemRow(item, index, actualIndex);
-            })}
+            {isExpanded &&
+              typeItems.map((item, index) => {
+                const actualIndex = items.findIndex(i => i.id === item.id);
+                return renderItemRow(item, index, actualIndex);
+              })}
           </React.Fragment>
         );
       });
-    } else {
+    } 
       return items.map((item, index) => renderItemRow(item, index, index));
-    }
+    
   };
 
   return (
@@ -277,7 +296,7 @@ export function CostBreakdownTable({
             </Button>
           )}
         </CardHeader>
-        
+
         <CardContent className="px-0">
           {items.length === 0 ? (
             <div className="text-center py-8 text-gray-500 px-6">
@@ -300,12 +319,12 @@ export function CostBreakdownTable({
                   <TableHead className="font-semibold">Unidad</TableHead>
                   <TableHead className="font-semibold">Costo Unit.</TableHead>
                   <TableHead className="font-semibold">Total</TableHead>
-                  {editable && <TableHead className="font-semibold">Acciones</TableHead>}
+                  {editable && (
+                    <TableHead className="font-semibold">Acciones</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {renderItems()}
-              </TableBody>
+              <TableBody>{renderItems()}</TableBody>
             </Table>
           )}
         </CardContent>
@@ -323,18 +342,22 @@ export function CostBreakdownTable({
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal:</span>
-              <span className="font-medium">{formatCurrency(subtotal, currency)}</span>
+              <span className="font-medium">
+                {formatCurrency(subtotal, currency)}
+              </span>
             </div>
-            
+
             {profitMargin > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Margen de Ganancia ({profitMargin}%):</span>
+                <span className="text-gray-600">
+                  Margen de Ganancia ({profitMargin}%):
+                </span>
                 <span className="font-medium">
                   {formatCurrency(total - subtotal, currency)}
                 </span>
               </div>
             )}
-            
+
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total:</span>

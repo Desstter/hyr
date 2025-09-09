@@ -1,18 +1,16 @@
-import React from 'react';
-import { toast, ToastT } from 'sonner';
-import { 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  Info, 
+import React from "react";
+import { toast } from "sonner";
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Info,
   Zap,
-  TrendingUp,
-  Users,
   DollarSign,
   Clock,
-  X
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EnhancedToastOptions {
   title: string;
@@ -29,19 +27,25 @@ interface EnhancedToastOptions {
 export const enhancedToast = {
   success: (options: EnhancedToastOptions) => {
     return toast.custom(
-      (t) => (
-        <div className={cn(
-          'hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--success))] bg-gradient-to-r from-[hsl(var(--success-light))] to-card shadow-lg',
-          'animate-in slide-in-from-right-full duration-300'
-        )}>
+      t => (
+        <div
+          className={cn(
+            "hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--success))] bg-gradient-to-r from-[hsl(var(--success-light))] to-card shadow-lg",
+            "animate-in slide-in-from-right-full duration-300"
+          )}
+        >
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full bg-[hsl(var(--success))]/20 flex items-center justify-center flex-shrink-0">
               <CheckCircle className="h-4 w-4 text-[hsl(var(--success))]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{options.title}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {options.title}
+              </p>
               {options.description && (
-                <p className="text-xs text-muted-foreground mt-1">{options.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {options.description}
+                </p>
               )}
               {options.action && (
                 <button
@@ -72,19 +76,25 @@ export const enhancedToast = {
 
   error: (options: EnhancedToastOptions) => {
     return toast.custom(
-      (t) => (
-        <div className={cn(
-          'hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--destructive))] bg-gradient-to-r from-[hsl(var(--destructive-light))] to-card shadow-lg',
-          'animate-in slide-in-from-right-full duration-300'
-        )}>
+      t => (
+        <div
+          className={cn(
+            "hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--destructive))] bg-gradient-to-r from-[hsl(var(--destructive-light))] to-card shadow-lg",
+            "animate-in slide-in-from-right-full duration-300"
+          )}
+        >
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full bg-[hsl(var(--destructive))]/20 flex items-center justify-center flex-shrink-0">
               <XCircle className="h-4 w-4 text-[hsl(var(--destructive))]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{options.title}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {options.title}
+              </p>
               {options.description && (
-                <p className="text-xs text-muted-foreground mt-1">{options.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {options.description}
+                </p>
               )}
               {options.action && (
                 <button
@@ -115,19 +125,25 @@ export const enhancedToast = {
 
   warning: (options: EnhancedToastOptions) => {
     return toast.custom(
-      (t) => (
-        <div className={cn(
-          'hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--warning))] bg-gradient-to-r from-[hsl(var(--warning-light))] to-card shadow-lg',
-          'animate-in slide-in-from-right-full duration-300'
-        )}>
+      t => (
+        <div
+          className={cn(
+            "hyr-card p-4 max-w-md w-full border-l-4 border-l-[hsl(var(--warning))] bg-gradient-to-r from-[hsl(var(--warning-light))] to-card shadow-lg",
+            "animate-in slide-in-from-right-full duration-300"
+          )}
+        >
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full bg-[hsl(var(--warning))]/20 flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="h-4 w-4 text-[hsl(var(--warning))]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{options.title}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {options.title}
+              </p>
               {options.description && (
-                <p className="text-xs text-muted-foreground mt-1">{options.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {options.description}
+                </p>
               )}
               {options.action && (
                 <button
@@ -158,19 +174,25 @@ export const enhancedToast = {
 
   info: (options: EnhancedToastOptions) => {
     return toast.custom(
-      (t) => (
-        <div className={cn(
-          'hyr-card p-4 max-w-md w-full border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-card shadow-lg',
-          'animate-in slide-in-from-right-full duration-300'
-        )}>
+      t => (
+        <div
+          className={cn(
+            "hyr-card p-4 max-w-md w-full border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-card shadow-lg",
+            "animate-in slide-in-from-right-full duration-300"
+          )}
+        >
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
               <Info className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{options.title}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {options.title}
+              </p>
               {options.description && (
-                <p className="text-xs text-muted-foreground mt-1">{options.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {options.description}
+                </p>
               )}
               {options.action && (
                 <button
@@ -200,26 +222,30 @@ export const enhancedToast = {
   },
 
   // Business-specific notifications
-  projectAlert: (options: { projectName: string; type: 'budget' | 'deadline' | 'completion'; action?: () => void }) => {
+  projectAlert: (options: {
+    projectName: string;
+    type: "budget" | "deadline" | "completion";
+    action?: () => void;
+  }) => {
     const config = {
       budget: {
         icon: DollarSign,
-        title: 'Alerta de Presupuesto',
+        title: "Alerta de Presupuesto",
         description: `${options.projectName} está cerca del límite presupuestal`,
-        color: 'warning' as const
+        color: "warning" as const,
       },
       deadline: {
         icon: Clock,
-        title: 'Fecha Límite Próxima',
+        title: "Fecha Límite Próxima",
         description: `${options.projectName} vence pronto`,
-        color: 'warning' as const
+        color: "warning" as const,
       },
       completion: {
         icon: CheckCircle,
-        title: 'Proyecto Completado',
+        title: "Proyecto Completado",
         description: `${options.projectName} ha sido completado exitosamente`,
-        color: 'success' as const
-      }
+        color: "success" as const,
+      },
     };
 
     const { icon: Icon, title, description, color } = config[options.type];
@@ -227,17 +253,26 @@ export const enhancedToast = {
     return enhancedToast[color]({
       title,
       description,
-      action: options.action ? { label: 'Ver proyecto', onClick: options.action } : undefined,
-      duration: 8000
+      action: options.action
+        ? { label: "Ver proyecto", onClick: options.action }
+        : undefined,
+      duration: 8000,
     });
   },
 
-  payrollUpdate: (options: { month: string; amount: number; employeeCount: number; action?: () => void }) => {
+  payrollUpdate: (options: {
+    month: string;
+    amount: number;
+    employeeCount: number;
+    action?: () => void;
+  }) => {
     return enhancedToast.info({
-      title: 'Nómina Procesada',
+      title: "Nómina Procesada",
       description: `${options.month}: $${options.amount.toLocaleString()} para ${options.employeeCount} empleados`,
-      action: options.action ? { label: 'Ver detalles', onClick: options.action } : undefined,
-      duration: 6000
+      action: options.action
+        ? { label: "Ver detalles", onClick: options.action }
+        : undefined,
+      duration: 6000,
     });
   },
 
@@ -245,16 +280,16 @@ export const enhancedToast = {
     return enhancedToast.info({
       title: `Nueva funcionalidad: ${options.feature}`,
       description: options.description,
-      duration: 5000
+      duration: 5000,
     });
-  }
+  },
 };
 
 // Auto-dismiss loading toast
 export const loadingToast = {
-  show: (message: string = 'Procesando...') => {
+  show: (message: string = "Procesando...") => {
     return toast.custom(
-      (t) => (
+      t => (
         <div className="hyr-card p-4 max-w-md w-full bg-card shadow-lg">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -270,5 +305,5 @@ export const loadingToast = {
 
   dismiss: (id: string | number) => {
     toast.dismiss(id);
-  }
+  },
 };

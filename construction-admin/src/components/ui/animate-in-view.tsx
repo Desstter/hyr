@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface AnimateInViewProps {
   children: React.ReactNode;
   className?: string;
-  animation?: 'fade' | 'slide-up' | 'slide-left' | 'slide-right' | 'scale' | 'flip';
+  animation?:
+    | "fade"
+    | "slide-up"
+    | "slide-left"
+    | "slide-right"
+    | "scale"
+    | "flip";
   delay?: number;
   duration?: number;
   threshold?: number;
@@ -16,11 +22,11 @@ interface AnimateInViewProps {
 export function AnimateInView({
   children,
   className,
-  animation = 'fade',
+  animation = "fade",
   delay = 0,
   duration = 600,
   threshold = 0.1,
-  once = true
+  once = true,
 }: AnimateInViewProps) {
   const [isInView, setIsInView] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,62 +59,46 @@ export function AnimateInView({
   }, [threshold, once]);
 
   const getAnimationClasses = () => {
-    const baseClasses = 'transition-all ease-out';
-    
+    const baseClasses = "transition-all ease-out";
+
     switch (animation) {
-      case 'slide-up':
+      case "slide-up":
         return cn(
           baseClasses,
-          isInView 
-            ? 'opacity-100 translate-y-0' 
-            : 'opacity-0 translate-y-8'
+          isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
         );
-      case 'slide-left':
+      case "slide-left":
         return cn(
           baseClasses,
-          isInView 
-            ? 'opacity-100 translate-x-0' 
-            : 'opacity-0 translate-x-8'
+          isInView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
         );
-      case 'slide-right':
+      case "slide-right":
         return cn(
           baseClasses,
-          isInView 
-            ? 'opacity-100 translate-x-0' 
-            : 'opacity-0 -translate-x-8'
+          isInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
         );
-      case 'scale':
+      case "scale":
         return cn(
           baseClasses,
-          isInView 
-            ? 'opacity-100 scale-100' 
-            : 'opacity-0 scale-95'
+          isInView ? "opacity-100 scale-100" : "opacity-0 scale-95"
         );
-      case 'flip':
+      case "flip":
         return cn(
           baseClasses,
-          isInView 
-            ? 'opacity-100 rotate-0' 
-            : 'opacity-0 rotate-12'
+          isInView ? "opacity-100 rotate-0" : "opacity-0 rotate-12"
         );
       default: // fade
-        return cn(
-          baseClasses,
-          isInView ? 'opacity-100' : 'opacity-0'
-        );
+        return cn(baseClasses, isInView ? "opacity-100" : "opacity-0");
     }
   };
 
   return (
     <div
       ref={ref}
-      className={cn(
-        getAnimationClasses(),
-        className
-      )}
+      className={cn(getAnimationClasses(), className)}
       style={{
         transitionDelay: `${delay}ms`,
-        transitionDuration: `${duration}ms`
+        transitionDuration: `${duration}ms`,
       }}
     >
       {children}
@@ -120,15 +110,15 @@ export function AnimateInView({
 interface StaggeredAnimationProps {
   children: React.ReactNode[];
   staggerDelay?: number;
-  animation?: AnimateInViewProps['animation'];
+  animation?: AnimateInViewProps["animation"];
   className?: string;
 }
 
 export function StaggeredAnimation({
   children,
   staggerDelay = 100,
-  animation = 'slide-up',
-  className
+  animation = "slide-up",
+  className,
 }: StaggeredAnimationProps) {
   return (
     <div className={className}>
@@ -147,7 +137,10 @@ export function StaggeredAnimation({
 }
 
 // Specific animation components for common use cases
-export function FadeInView({ children, ...props }: Omit<AnimateInViewProps, 'animation'>) {
+export function FadeInView({
+  children,
+  ...props
+}: Omit<AnimateInViewProps, "animation">) {
   return (
     <AnimateInView animation="fade" {...props}>
       {children}
@@ -155,7 +148,10 @@ export function FadeInView({ children, ...props }: Omit<AnimateInViewProps, 'ani
   );
 }
 
-export function SlideUpView({ children, ...props }: Omit<AnimateInViewProps, 'animation'>) {
+export function SlideUpView({
+  children,
+  ...props
+}: Omit<AnimateInViewProps, "animation">) {
   return (
     <AnimateInView animation="slide-up" {...props}>
       {children}
@@ -163,7 +159,10 @@ export function SlideUpView({ children, ...props }: Omit<AnimateInViewProps, 'an
   );
 }
 
-export function ScaleInView({ children, ...props }: Omit<AnimateInViewProps, 'animation'>) {
+export function ScaleInView({
+  children,
+  ...props
+}: Omit<AnimateInViewProps, "animation">) {
   return (
     <AnimateInView animation="scale" {...props}>
       {children}

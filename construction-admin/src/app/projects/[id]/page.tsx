@@ -1,19 +1,24 @@
-'use client';
+"use client";
 
-import { notFound } from 'next/navigation';
-import { useState, use, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api, handleApiError } from '@/lib/api';
-import type { Project, Client, Expense, TimeEntry, Personnel } from '@/lib/api';
-import { formatCurrency, formatDate, getProjectStatusColor, getProjectStatusLabel } from '@/lib/finance';
-import { useTranslations } from '@/lib/i18n';
-import { ArrowLeft, Edit, Users, DollarSign, Clock } from 'lucide-react';
-import Link from 'next/link';
-import { toast } from 'sonner';
+import { notFound } from "next/navigation";
+import { useState, use, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api, handleApiError } from "@/lib/api";
+import type { Project, Client, Expense, Personnel } from "@/lib/api";
+import {
+  formatCurrency,
+  formatDate,
+  getProjectStatusColor,
+  getProjectStatusLabel,
+} from "@/lib/finance";
+import { useTranslations } from "@/lib/i18n";
+import { ArrowLeft, Edit, Users, DollarSign, Clock } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -21,8 +26,8 @@ interface ProjectDetailPageProps {
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { id } = use(params);
-  const t = useTranslations('es');
-  
+  const t = useTranslations("es");
+
   // State for API data
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -30,53 +35,58 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const [assignedPersonnel, setAssignedPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const loadProjectData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Load project
       const projectData = await api.projects.getById(id);
       setProject(projectData);
-      
+
       // Load client if project has one
       if (projectData.client_id) {
         try {
           const clientData = await api.clients.getById(projectData.client_id);
           setClient(clientData);
         } catch (err) {
-          console.warn('Could not load client:', err);
+          console.warn("Could not load client:", err);
         }
       }
-      
+
       // Load project expenses
       try {
         const expensesResult = await api.projects.getExpenses(id);
-        const expensesData = Array.isArray(expensesResult) ? expensesResult : 
-                           (Array.isArray(expensesResult.data) ? expensesResult.data : []);
+        const expensesData = Array.isArray(expensesResult)
+          ? expensesResult
+          : Array.isArray(expensesResult.data)
+            ? expensesResult.data
+            : [];
         setExpenses(expensesData);
       } catch (err) {
-        console.warn('Could not load expenses:', err);
+        console.warn("Could not load expenses:", err);
         setExpenses([]);
       }
-      
+
       // Load assigned personnel
       try {
         const personnelResult = await api.projects.getAssignedPersonnel(id);
-        const personnelData = Array.isArray(personnelResult) ? personnelResult : 
-                             (Array.isArray(personnelResult.data) ? personnelResult.data : []);
+        const personnelData = Array.isArray(personnelResult)
+          ? personnelResult
+          : Array.isArray(personnelResult.data)
+            ? personnelResult.data
+            : [];
         setAssignedPersonnel(personnelData);
       } catch (err) {
-        console.warn('Could not load personnel:', err);
+        console.warn("Could not load personnel:", err);
         setAssignedPersonnel([]);
       }
-      
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      console.error('Error loading project data:', err);
-      toast.error('Error cargando proyecto: ' + errorMessage);
+      console.error("Error loading project data:", err);
+      toast.error("Error cargando proyecto: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,7 +96,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   useEffect(() => {
     loadProjectData();
   }, [loadProjectData]);
-  
+
   // Loading state
   if (loading) {
     return (
@@ -129,9 +139,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     notFound();
   }
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-  const totalPersonnelCost = assignedPersonnel.reduce((sum, person) => sum + (Number(person.total_pay) || 0), 0);
-  const remainingBudget = Number(project.budget_total) - Number(project.spent_total);
+  const totalExpenses = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount),
+    0
+  );
+  const totalPersonnelCost = assignedPersonnel.reduce(
+    (sum, person) => sum + (Number(person.total_pay) || 0),
+    0
+  );
+  const remainingBudget =
+    Number(project.budget_total) - Number(project.spent_total);
 
   return (
     <div className="space-y-6">
@@ -159,14 +176,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">{project.name}</CardTitle>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={getProjectStatusColor(project.status)}
               >
                 {getProjectStatusLabel(project.status)}
               </Badge>
             </div>
-            <p className="text-muted-foreground text-lg">{client?.name || 'Sin cliente'}</p>
+            <p className="text-muted-foreground text-lg">
+              {client?.name || "Sin cliente"}
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {project.description && (
@@ -175,31 +194,45 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
             )}
-            
+
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <h3 className="font-semibold mb-2">Fechas</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Inicio:</span>
-                    <span>{project.start_date ? formatDate(project.start_date) : 'No definida'}</span>
+                    <span>
+                      {project.start_date
+                        ? formatDate(project.start_date)
+                        : "No definida"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Fin:</span>
-                    <span>{project.end_date ? formatDate(project.end_date) : 'No definida'}</span>
+                    <span>
+                      {project.end_date
+                        ? formatDate(project.end_date)
+                        : "No definida"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Estimada:</span>
-                    <span>{project.estimated_end_date ? formatDate(project.estimated_end_date) : 'No definida'}</span>
+                    <span>
+                      {project.estimated_end_date
+                        ? formatDate(project.estimated_end_date)
+                        : "No definida"}
+                    </span>
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold mb-2">Progreso</h3>
                 <div className="space-y-2">
                   <Progress value={project.progress} className="h-3" />
-                  <p className="text-sm text-muted-foreground">{project.progress}% completado</p>
+                  <p className="text-sm text-muted-foreground">
+                    {project.progress}% completado
+                  </p>
                 </div>
               </div>
             </div>
@@ -215,36 +248,64 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Presupuesto Total:</span>
-                <span className="font-semibold">{formatCurrency(Number(project.budget_total))}</span>
+                <span className="font-semibold">
+                  {formatCurrency(Number(project.budget_total))}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Gastado:</span>
-                <span className="font-semibold text-red-600">{formatCurrency(Number(project.spent_total))}</span>
+                <span className="font-semibold text-red-600">
+                  {formatCurrency(Number(project.spent_total))}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Costo Mano de Obra:</span>
-                <span className="font-semibold text-blue-600">{formatCurrency(totalPersonnelCost)}</span>
+                <span className="font-semibold text-blue-600">
+                  {formatCurrency(totalPersonnelCost)}
+                </span>
               </div>
               <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>{assignedPersonnel.length} empleados</span>
-                <span>{assignedPersonnel.reduce((sum, p) => sum + Number(p.total_hours || 0), 0).toFixed(1)} horas totales</span>
+                <span>
+                  {assignedPersonnel
+                    .reduce((sum, p) => sum + Number(p.total_hours || 0), 0)
+                    .toFixed(1)}{" "}
+                  horas totales
+                </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm">Restante:</span>
-                <span className={`font-semibold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span
+                  className={`font-semibold ${remainingBudget >= 0 ? "text-green-600" : "text-red-600"}`}
+                >
                   {formatCurrency(remainingBudget)}
                 </span>
               </div>
             </div>
-            
+
             <div className="pt-4">
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Uso del presupuesto</span>
-                <span>{Number(project.budget_total) > 0 ? Math.round((Number(project.spent_total) / Number(project.budget_total)) * 100) : 0}%</span>
+                <span>
+                  {Number(project.budget_total) > 0
+                    ? Math.round(
+                        (Number(project.spent_total) /
+                          Number(project.budget_total)) *
+                          100
+                      )
+                    : 0}
+                  %
+                </span>
               </div>
-              <Progress 
-                value={Number(project.budget_total) > 0 ? (Number(project.spent_total) / Number(project.budget_total)) * 100 : 0} 
-                className="h-2" 
+              <Progress
+                value={
+                  Number(project.budget_total) > 0
+                    ? (Number(project.spent_total) /
+                        Number(project.budget_total)) *
+                      100
+                    : 0
+                }
+                className="h-2"
               />
             </div>
           </CardContent>
@@ -256,7 +317,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
         <TabsList>
           <TabsTrigger value="budget">Presupuesto</TabsTrigger>
           <TabsTrigger value="expenses">Gastos ({expenses.length})</TabsTrigger>
-          <TabsTrigger value="personnel">Personal ({assignedPersonnel.length})</TabsTrigger>
+          <TabsTrigger value="personnel">
+            Personal ({assignedPersonnel.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="budget">
@@ -272,14 +335,18 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       <DollarSign className="h-4 w-4 text-green-600" />
                       <span className="font-medium">Materiales</span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(Number(project.budget_materials))}</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Number(project.budget_materials))}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center p-3 border rounded">
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-blue-600" />
                       <span className="font-medium">Mano de Obra</span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(Number(project.budget_labor))}</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Number(project.budget_labor))}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -288,14 +355,18 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       <Clock className="h-4 w-4 text-yellow-600" />
                       <span className="font-medium">Equipos</span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(Number(project.budget_equipment))}</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Number(project.budget_equipment))}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center p-3 border rounded">
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-purple-600" />
                       <span className="font-medium">Gastos Generales</span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(Number(project.budget_overhead))}</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Number(project.budget_overhead))}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -317,21 +388,32 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
             <CardContent>
               {expenses.length > 0 ? (
                 <div className="space-y-3">
-                  {expenses.map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-3 border rounded">
+                  {expenses.map(expense => (
+                    <div
+                      key={expense.id}
+                      className="flex items-center justify-between p-3 border rounded"
+                    >
                       <div>
-                        <p className="font-medium">{expense.description || 'Gasto sin descripción'}</p>
+                        <p className="font-medium">
+                          {expense.description || "Gasto sin descripción"}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(expense.date)} • {expense.vendor || 'Sin proveedor'} • {expense.category}
+                          {formatDate(expense.date)} •{" "}
+                          {expense.vendor || "Sin proveedor"} •{" "}
+                          {expense.category}
                         </p>
                       </div>
-                      <span className="font-semibold">{formatCurrency(Number(expense.amount))}</span>
+                      <span className="font-semibold">
+                        {formatCurrency(Number(expense.amount))}
+                      </span>
                     </div>
                   ))}
                   <div className="pt-4 border-t">
                     <div className="flex justify-between items-center text-lg font-semibold">
                       <span>Total Gastos:</span>
-                      <span className="text-red-600">{formatCurrency(totalExpenses)}</span>
+                      <span className="text-red-600">
+                        {formatCurrency(totalExpenses)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -352,7 +434,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
             <CardContent>
               {assignedPersonnel.length > 0 ? (
                 <div className="space-y-4">
-                  {assignedPersonnel.map((person) => (
+                  {assignedPersonnel.map(person => (
                     <div key={person.id} className="p-4 border rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{person.name}</h4>
@@ -361,22 +443,36 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                         <div>
                           <span className="font-medium">Horas trabajadas:</span>
-                          <p>{Number(person.total_hours || 0).toFixed(1)} horas</p>
+                          <p>
+                            {Number(person.total_hours || 0).toFixed(1)} horas
+                          </p>
                         </div>
                         <div>
                           <span className="font-medium">Horas extra:</span>
-                          <p>{Number(person.total_overtime_hours || 0).toFixed(1)} horas</p>
+                          <p>
+                            {Number(person.total_overtime_hours || 0).toFixed(
+                              1
+                            )}{" "}
+                            horas
+                          </p>
                         </div>
                         <div>
                           <span className="font-medium">Pago total:</span>
-                          <p className="text-blue-600">{formatCurrency(Number(person.total_pay || 0))}</p>
+                          <p className="text-blue-600">
+                            {formatCurrency(Number(person.total_pay || 0))}
+                          </p>
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-600">
                         <span className="font-medium">Período:</span>
                         <span className="ml-2">
-                          {person.first_work_date ? formatDate(person.first_work_date) : ''} - 
-                          {person.last_work_date ? formatDate(person.last_work_date) : 'Presente'}
+                          {person.first_work_date
+                            ? formatDate(person.first_work_date)
+                            : ""}{" "}
+                          -
+                          {person.last_work_date
+                            ? formatDate(person.last_work_date)
+                            : "Presente"}
                         </span>
                       </div>
                     </div>
@@ -385,16 +481,25 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Total Personal</p>
-                        <p className="text-2xl font-bold text-blue-600">{assignedPersonnel.length}</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {assignedPersonnel.length}
+                        </p>
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Costo Total</p>
-                        <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPersonnelCost)}</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {formatCurrency(totalPersonnelCost)}
+                        </p>
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Horas Totales</p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {assignedPersonnel.reduce((sum, p) => sum + Number(p.total_hours || 0), 0).toFixed(1)}
+                          {assignedPersonnel
+                            .reduce(
+                              (sum, p) => sum + Number(p.total_hours || 0),
+                              0
+                            )
+                            .toFixed(1)}
                         </p>
                       </div>
                     </div>
@@ -403,7 +508,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               ) : (
                 <div className="text-center py-8">
                   <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-500">No hay personal asignado a este proyecto</p>
+                  <p className="text-gray-500">
+                    No hay personal asignado a este proyecto
+                  </p>
                 </div>
               )}
             </CardContent>

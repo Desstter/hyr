@@ -27,7 +27,7 @@ interface ProjectCreationResponse {
 }
 
 export interface EstimationItem {
-  category: 'materials' | 'labor' | 'equipment';
+  category: "materials" | "labor" | "equipment";
   subcategory: string;
   quantity: number;
   name?: string;
@@ -88,26 +88,28 @@ export interface SavedEstimation {
 }
 
 // SECURITY FIX: Use runtime configuration instead of hardcoded URL
-import { apiUrl } from '../appConfig';
+import { apiUrl } from "../appConfig";
 
 // =====================================================
 // TEMPLATES Y CONFIGURACIONES
 // =====================================================
 
 export async function getTemplates(): Promise<CostTemplate[]> {
-  const url = await apiUrl('/simulator/templates');
+  const url = await apiUrl("/simulator/templates");
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error('Error al cargar templates de costos');
+    throw new Error("Error al cargar templates de costos");
   }
   return response.json();
 }
 
-export async function getPresets(templateType: string): Promise<ProjectPreset[]> {
+export async function getPresets(
+  templateType: string
+): Promise<ProjectPreset[]> {
   const url = await apiUrl(`/simulator/presets/${templateType}`);
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error('Error al cargar presets del template');
+    throw new Error("Error al cargar presets del template");
   }
   return response.json();
 }
@@ -122,19 +124,19 @@ export async function calculateEstimation(data: {
   project_duration_days?: number;
   apply_benefits?: boolean;
 }): Promise<CostEstimation> {
-  const url = await apiUrl('/simulator/calculate');
+  const url = await apiUrl("/simulator/calculate");
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al calcular estimación de costos');
+    throw new Error("Error al calcular estimación de costos");
   }
-  
+
   return response.json();
 }
 
@@ -145,19 +147,19 @@ export async function saveEstimation(data: {
   estimation_data: CostEstimation;
   notes?: string;
 }): Promise<SavedEstimation> {
-  const url = await apiUrl('/simulator/save-estimation');
+  const url = await apiUrl("/simulator/save-estimation");
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al guardar estimación');
+    throw new Error("Error al guardar estimación");
   }
-  
+
   return response.json();
 }
 
@@ -169,19 +171,19 @@ export async function createProjectFromEstimation(data: {
   start_date: string;
   estimated_end_date: string;
 }): Promise<ProjectCreationResponse> {
-  const url = await apiUrl('/simulator/create-project-from-estimation');
+  const url = await apiUrl("/simulator/create-project-from-estimation");
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al crear proyecto desde estimación');
+    throw new Error("Error al crear proyecto desde estimación");
   }
-  
+
   return response.json();
 }
 
@@ -201,7 +203,7 @@ export function useTemplates() {
       const data = await getTemplates();
       setTemplates(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -229,7 +231,7 @@ export function usePresets(templateType: string) {
         const data = await getPresets(templateType);
         setPresets(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setLoading(false);
       }
@@ -242,7 +244,9 @@ export function usePresets(templateType: string) {
 }
 
 export function useCostCalculation() {
-  const [estimation, setEstimation] = React.useState<CostEstimation | null>(null);
+  const [estimation, setEstimation] = React.useState<CostEstimation | null>(
+    null
+  );
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -259,7 +263,8 @@ export function useCostCalculation() {
       setEstimation(result);
       return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error en el cálculo';
+      const errorMessage =
+        err instanceof Error ? err.message : "Error en el cálculo";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -272,12 +277,12 @@ export function useCostCalculation() {
     setError(null);
   };
 
-  return { 
-    estimation, 
-    loading, 
-    error, 
-    calculate, 
-    reset 
+  return {
+    estimation,
+    loading,
+    error,
+    calculate,
+    reset,
   };
 }
 
@@ -286,9 +291,9 @@ export function useCostCalculation() {
 // =====================================================
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -298,7 +303,10 @@ export function formatPercentage(value: number): string {
   return `${Math.round(value)}%`;
 }
 
-export function calculateTotalByCategory(items: EstimationItem[], category: string): number {
+export function calculateTotalByCategory(
+  items: EstimationItem[],
+  category: string
+): number {
   return items
     .filter(item => item.category === category)
     .reduce((total, item) => total + (item.total_cost || 0), 0);
@@ -306,9 +314,9 @@ export function calculateTotalByCategory(items: EstimationItem[], category: stri
 
 export function validateEstimationItems(items: EstimationItem[]): string[] {
   const errors: string[] = [];
-  
+
   if (!items || items.length === 0) {
-    errors.push('Debe agregar al menos un item');
+    errors.push("Debe agregar al menos un item");
   }
 
   items.forEach((item, index) => {
@@ -327,7 +335,7 @@ export function validateEstimationItems(items: EstimationItem[]): string[] {
 }
 
 // React import necesario para hooks
-import * as React from 'react';
+import * as React from "react";
 
 // =====================================================
 // SERVICE OBJECT EXPORT
@@ -338,40 +346,44 @@ import * as React from 'react';
 // =====================================================
 
 export async function getSavedEstimations(): Promise<SavedEstimation[]> {
-  const url = await apiUrl('/simulator/saved-estimations');
+  const url = await apiUrl("/simulator/saved-estimations");
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error('Error al cargar estimaciones guardadas');
+    throw new Error("Error al cargar estimaciones guardadas");
   }
   return response.json();
 }
 
-export async function duplicateEstimation(estimationId: string): Promise<SavedEstimation> {
+export async function duplicateEstimation(
+  estimationId: string
+): Promise<SavedEstimation> {
   const url = await apiUrl(`/simulator/duplicate-estimation/${estimationId}`);
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al duplicar estimación');
+    throw new Error("Error al duplicar estimación");
   }
-  
+
   return response.json();
 }
 
-export async function deleteEstimation(estimationId: string): Promise<{ message: string }> {
+export async function deleteEstimation(
+  estimationId: string
+): Promise<{ message: string }> {
   const url = await apiUrl(`/simulator/estimations/${estimationId}`);
   const response = await fetch(url, {
-    method: 'DELETE',
+    method: "DELETE",
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al eliminar estimación');
+    throw new Error("Error al eliminar estimación");
   }
-  
+
   return response.json();
 }
 
@@ -383,19 +395,19 @@ export async function convertEstimationToProject(data: {
   start_date: string;
   estimated_end_date: string;
 }): Promise<ProjectCreationResponse> {
-  const url = await apiUrl('/simulator/convert-to-project');
+  const url = await apiUrl("/simulator/convert-to-project");
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
-    throw new Error('Error al convertir estimación a proyecto');
+    throw new Error("Error al convertir estimación a proyecto");
   }
-  
+
   return response.json();
 }
 
@@ -415,7 +427,7 @@ export function useSavedEstimations() {
       const data = await getSavedEstimations();
       setEstimations(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -425,11 +437,11 @@ export function useSavedEstimations() {
     fetchEstimations();
   }, [fetchEstimations]);
 
-  return { 
-    estimations, 
-    loading, 
-    error, 
-    refetch: fetchEstimations 
+  return {
+    estimations,
+    loading,
+    error,
+    refetch: fetchEstimations,
   };
 }
 

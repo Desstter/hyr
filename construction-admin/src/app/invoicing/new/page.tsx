@@ -1,56 +1,76 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/components/ui/use-toast';
-import { 
-  Plus, 
-  Trash2, 
-  FileText, 
-  Calculator, 
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Plus,
+  Trash2,
+  FileText,
+  Calculator,
   Eye,
   Loader2,
   CheckCircle,
-  Download
-} from 'lucide-react';
+  Download,
+} from "lucide-react";
 
 // Importar servicio API real
-import { invoicingService } from '@/lib/api';
-import type { InvoiceItem, InvoiceCalculations, ElectronicInvoice } from '@/lib/api/types';
+import { invoicingService } from "@/lib/api";
+import type {
+  InvoiceItem,
+  InvoiceCalculations,
+  ElectronicInvoice,
+} from "@/lib/api/types";
 
 export default function NewInvoicePage() {
   const [formData, setFormData] = useState({
-    client_name: '',
-    client_nit: '',
-    city: 'Bogota',
-    notes: ''
+    client_name: "",
+    client_nit: "",
+    city: "Bogota",
+    notes: "",
   });
 
   const [items, setItems] = useState<InvoiceItem[]>([
-    { description: '', quantity: 1, unit_price: 0 }
+    { description: "", quantity: 1, unit_price: 0 },
   ]);
 
   const [calculations, setCalculations] = useState<InvoiceCalculations>({
     subtotal: 0,
     vat_amount: 0,
     reteica_amount: 0,
-    total_amount: 0
+    total_amount: 0,
   });
 
-  const [createdInvoice, setCreatedInvoice] = useState<ElectronicInvoice | null>(null);
+  const [createdInvoice, setCreatedInvoice] =
+    useState<ElectronicInvoice | null>(null);
   const [showXmlDialog, setShowXmlDialog] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Recalcular totales cuando cambien los items usando el servicio real
   React.useEffect(() => {
-    const newCalculations = invoicingService.calculateTotals(items, formData.city);
+    const newCalculations = invoicingService.calculateTotals(
+      items,
+      formData.city
+    );
     setCalculations(newCalculations);
   }, [items, formData.city]);
 
@@ -58,17 +78,22 @@ export default function NewInvoicePage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleItemChange = (index: number, field: keyof InvoiceItem, value: string | number) => {
+  const handleItemChange = (
+    index: number,
+    field: keyof InvoiceItem,
+    value: string | number
+  ) => {
     const newItems = [...items];
     newItems[index] = {
       ...newItems[index],
-      [field]: field === 'description' ? value : parseFloat(value.toString()) || 0
+      [field]:
+        field === "description" ? value : parseFloat(value.toString()) || 0,
     };
     setItems(newItems);
   };
 
   const addItem = () => {
-    setItems([...items, { description: '', quantity: 1, unit_price: 0 }]);
+    setItems([...items, { description: "", quantity: 1, unit_price: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -79,10 +104,12 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Filtrar items válidos
-    const validItems = items.filter(item => item.description && item.quantity > 0 && item.unit_price > 0);
-    
+    const validItems = items.filter(
+      item => item.description && item.quantity > 0 && item.unit_price > 0
+    );
+
     // Crear request object
     const invoiceRequest = {
       client_name: formData.client_name,
@@ -90,11 +117,12 @@ export default function NewInvoicePage() {
       city: formData.city,
       items: validItems,
       notes: formData.notes,
-      year: new Date().getFullYear()
+      year: new Date().getFullYear(),
     };
 
     // Validar usando el servicio
-    const validationErrors = invoicingService.validateInvoiceData(invoiceRequest);
+    const validationErrors =
+      invoicingService.validateInvoiceData(invoiceRequest);
     if (validationErrors.length > 0) {
       toast({
         title: "Error de Validación",
@@ -107,23 +135,25 @@ export default function NewInvoicePage() {
     setCreating(true);
 
     try {
-      console.log('🚀 Creando factura electrónica con API real...');
-      
+      console.log("🚀 Creando factura electrónica con API real...");
+
       // Crear factura usando API real
       const newInvoice = await invoicingService.createInvoice(invoiceRequest);
-      
+
       setCreatedInvoice(newInvoice);
-      
+
       toast({
         title: "✅ Factura creada exitosamente",
         description: `Factura ${newInvoice.invoice_number} generada con CUFE real`,
       });
-
     } catch (error) {
-      console.error('❌ Error creando factura:', error);
+      console.error("❌ Error creando factura:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear la factura",
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se pudo crear la factura",
         variant: "destructive",
       });
     } finally {
@@ -152,7 +182,9 @@ export default function NewInvoicePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <Label className="text-sm font-medium">Número</Label>
-                <p className="text-lg font-bold">{createdInvoice.invoice_number}</p>
+                <p className="text-lg font-bold">
+                  {createdInvoice.invoice_number}
+                </p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Cliente</Label>
@@ -161,7 +193,7 @@ export default function NewInvoicePage() {
               <div>
                 <Label className="text-sm font-medium">Total</Label>
                 <p className="text-lg font-bold">
-                  ${createdInvoice.total_amount.toLocaleString('es-CO')}
+                  ${createdInvoice.total_amount.toLocaleString("es-CO")}
                 </p>
               </div>
               <div>
@@ -189,7 +221,9 @@ export default function NewInvoicePage() {
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
                   <DialogHeader>
-                    <DialogTitle>XML UBL 2.1 - {createdInvoice.invoice_number}</DialogTitle>
+                    <DialogTitle>
+                      XML UBL 2.1 - {createdInvoice.invoice_number}
+                    </DialogTitle>
                   </DialogHeader>
                   <pre className="text-xs bg-gray-100 p-4 rounded overflow-auto">
                     {createdInvoice.xml_ubl_content}
@@ -233,7 +267,9 @@ export default function NewInvoicePage() {
                 <Input
                   id="client_name"
                   value={formData.client_name}
-                  onChange={(e) => handleInputChange('client_name', e.target.value)}
+                  onChange={e =>
+                    handleInputChange("client_name", e.target.value)
+                  }
                   placeholder="Nombre o razón social del cliente"
                   required
                 />
@@ -244,14 +280,19 @@ export default function NewInvoicePage() {
                 <Input
                   id="client_nit"
                   value={formData.client_nit}
-                  onChange={(e) => handleInputChange('client_nit', e.target.value)}
+                  onChange={e =>
+                    handleInputChange("client_nit", e.target.value)
+                  }
                   placeholder="123456789 (opcional)"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="city">Ciudad *</Label>
-                <Select value={formData.city} onValueChange={(value) => handleInputChange('city', value)}>
+                <Select
+                  value={formData.city}
+                  onValueChange={value => handleInputChange("city", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -270,7 +311,7 @@ export default function NewInvoicePage() {
                 <Textarea
                   id="notes"
                   value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  onChange={e => handleInputChange("notes", e.target.value)}
                   placeholder="Observaciones adicionales (opcional)"
                   rows={2}
                 />
@@ -296,16 +337,21 @@ export default function NewInvoicePage() {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 border rounded-lg">
+                <div
+                  key={index}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3 p-3 border rounded-lg"
+                >
                   <div className="md:col-span-6">
                     <Label className="text-xs">Descripción</Label>
                     <Input
                       value={item.description}
-                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                      onChange={e =>
+                        handleItemChange(index, "description", e.target.value)
+                      }
                       placeholder="Descripción del servicio o producto"
                     />
                   </div>
-                  
+
                   <div className="md:col-span-2">
                     <Label className="text-xs">Cantidad</Label>
                     <Input
@@ -313,10 +359,12 @@ export default function NewInvoicePage() {
                       min="1"
                       step="0.01"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      onChange={e =>
+                        handleItemChange(index, "quantity", e.target.value)
+                      }
                     />
                   </div>
-                  
+
                   <div className="md:col-span-2">
                     <Label className="text-xs">Precio Unit.</Label>
                     <Input
@@ -324,16 +372,21 @@ export default function NewInvoicePage() {
                       min="0"
                       step="0.01"
                       value={item.unit_price}
-                      onChange={(e) => handleItemChange(index, 'unit_price', e.target.value)}
+                      onChange={e =>
+                        handleItemChange(index, "unit_price", e.target.value)
+                      }
                       placeholder="0.00"
                     />
                   </div>
-                  
+
                   <div className="md:col-span-2 flex items-end">
                     <div className="w-full">
                       <Label className="text-xs">Total</Label>
                       <p className="text-sm font-medium p-2 bg-gray-50 rounded">
-                        ${(item.quantity * item.unit_price).toLocaleString('es-CO')}
+                        $
+                        {(item.quantity * item.unit_price).toLocaleString(
+                          "es-CO"
+                        )}
                       </p>
                     </div>
                     {items.length > 1 && (
@@ -363,22 +416,26 @@ export default function NewInvoicePage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${calculations.subtotal.toLocaleString('es-CO')}</span>
+                <span>${calculations.subtotal.toLocaleString("es-CO")}</span>
               </div>
               <div className="flex justify-between">
                 <span>IVA (19%):</span>
-                <span>${calculations.vat_amount.toLocaleString('es-CO')}</span>
+                <span>${calculations.vat_amount.toLocaleString("es-CO")}</span>
               </div>
               {calculations.reteica_amount > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>ReteICA ({formData.city}):</span>
-                  <span>-${calculations.reteica_amount.toLocaleString('es-CO')}</span>
+                  <span>
+                    -${calculations.reteica_amount.toLocaleString("es-CO")}
+                  </span>
                 </div>
               )}
               <hr />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total a Pagar:</span>
-                <span>${calculations.total_amount.toLocaleString('es-CO')}</span>
+                <span>
+                  ${calculations.total_amount.toLocaleString("es-CO")}
+                </span>
               </div>
             </div>
           </CardContent>

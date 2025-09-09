@@ -1,21 +1,19 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ProgressRing, ProgressRingCard } from '@/components/ui/progress-ring';
-import { BarChart, MiniBarChart } from '@/components/ui/bar-chart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  FolderOpen, 
+import React from "react";
+import { ProgressRing, ProgressRingCard } from "@/components/ui/progress-ring";
+import { BarChart, MiniBarChart } from "@/components/ui/bar-chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  TrendingUp,
+  Users,
+  FolderOpen,
   DollarSign,
-  AlertTriangle,
   CheckCircle,
-  Clock
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { safeNumber } from '@/lib/finance';
+  Clock,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { safeNumber } from "@/lib/finance";
 
 interface KPIData {
   active_projects: number;
@@ -34,32 +32,44 @@ interface EnhancedKPISectionProps {
   className?: string;
 }
 
-export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps) {
+export function EnhancedKPISection({
+  kpis,
+  className,
+}: EnhancedKPISectionProps) {
   // Calculate additional metrics with safe number validation
   const safeExpenses = safeNumber(kpis.expenses_this_month);
   const safePayrollCost = safeNumber(kpis.total_payroll_cost);
   const safeRevenue = safeNumber(kpis.revenue_this_month);
   const safeProfitMargin = safeNumber(kpis.profit_margin_percent);
   const safeNetProfit = safeNumber(kpis.net_profit_this_month);
-  
+
   const totalCosts = safeExpenses + safePayrollCost;
-  const budgetUtilization = safeRevenue > 0 
-    ? (totalCosts / safeRevenue) * 100 
-    : 0;
-  
-  const projectCompletion = safeNumber(kpis.total_projects) > 0 
-    ? (safeNumber(kpis.completed_this_month) / safeNumber(kpis.total_projects)) * 100 
-    : 0;
+  const budgetUtilization =
+    safeRevenue > 0 ? (totalCosts / safeRevenue) * 100 : 0;
+
+  const projectCompletion =
+    safeNumber(kpis.total_projects) > 0
+      ? (safeNumber(kpis.completed_this_month) /
+          safeNumber(kpis.total_projects)) *
+        100
+      : 0;
 
   // Mock data for trends (in real app, this would come from API)
-  const monthlyRevenueTrend = [65000000, 72000000, 68000000, 85000000, 92000000, kpis.revenue_this_month];
+  const monthlyRevenueTrend = [
+    65000000,
+    72000000,
+    68000000,
+    85000000,
+    92000000,
+    kpis.revenue_this_month,
+  ];
   const dailyActiveProjects = [4, 4, 5, 4, 4, 4, kpis.active_projects];
 
   const formatCurrency = (amount: number) => {
     const safeAmount = safeNumber(amount);
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(safeAmount);
@@ -95,17 +105,17 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
                   {formatCompactCurrency(safeRevenue)}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +{safeProfitMargin.toFixed(1)}% utilidad
+                  <TrendingUp className="h-3 w-3 mr-1" />+
+                  {safeProfitMargin.toFixed(1)}% utilidad
                 </div>
               </div>
               <div className="h-12 w-12 rounded-xl bg-[hsl(var(--success))]/10 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-[hsl(var(--success))]" />
               </div>
             </div>
-            <MiniBarChart 
-              data={monthlyRevenueTrend} 
-              variant="success" 
+            <MiniBarChart
+              data={monthlyRevenueTrend}
+              variant="success"
               height={32}
             />
           </CardContent>
@@ -114,7 +124,11 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
         {/* Projects Progress Ring */}
         <ProgressRingCard
           title="Proyectos Activos"
-          progress={(safeNumber(kpis.active_projects) / Math.max(1, safeNumber(kpis.total_projects))) * 100}
+          progress={
+            (safeNumber(kpis.active_projects) /
+              Math.max(1, safeNumber(kpis.total_projects))) *
+            100
+          }
           value={safeNumber(kpis.active_projects)}
           subtitle={`de ${safeNumber(kpis.total_projects)} totales`}
           variant="primary"
@@ -126,7 +140,13 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
           progress={Math.min(budgetUtilization, 100)}
           value={`${budgetUtilization.toFixed(0)}%`}
           subtitle="Gastos vs Ingresos"
-          variant={budgetUtilization > 90 ? "danger" : budgetUtilization > 75 ? "warning" : "success"}
+          variant={
+            budgetUtilization > 90
+              ? "danger"
+              : budgetUtilization > 75
+                ? "warning"
+                : "success"
+          }
         />
 
         {/* Employees Cost Card */}
@@ -151,7 +171,11 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              Promedio: {formatCompactCurrency(safePayrollCost / Math.max(1, safeNumber(kpis.employees_paid)))} por empleado
+              Promedio:{" "}
+              {formatCompactCurrency(
+                safePayrollCost / Math.max(1, safeNumber(kpis.employees_paid))
+              )}{" "}
+              por empleado
             </div>
           </CardContent>
         </Card>
@@ -164,20 +188,20 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
           title="Distribución de Costos"
           data={[
             {
-              label: 'Nómina',
+              label: "Nómina",
               value: safePayrollCost,
-              variant: 'primary'
+              variant: "primary",
             },
             {
-              label: 'Gastos',
+              label: "Gastos",
               value: safeExpenses,
-              variant: 'warning'
+              variant: "warning",
             },
             {
-              label: 'Utilidad',
+              label: "Utilidad",
               value: Math.max(0, safeNetProfit),
-              variant: 'success'
-            }
+              variant: "success",
+            },
           ]}
           orientation="horizontal"
           showValues={true}
@@ -233,7 +257,7 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
                   <span>{projectCompletion.toFixed(1)}%</span>
                 </div>
                 <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-[hsl(var(--success))] transition-all duration-1000 ease-out"
                     style={{ width: `${projectCompletion}%` }}
                   />
@@ -256,7 +280,13 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
               <div className="text-center">
                 <ProgressRing
                   progress={Math.max(0, safeProfitMargin)}
-                  variant={safeProfitMargin > 15 ? "success" : safeProfitMargin > 5 ? "warning" : "danger"}
+                  variant={
+                    safeProfitMargin > 15
+                      ? "success"
+                      : safeProfitMargin > 5
+                        ? "warning"
+                        : "danger"
+                  }
                   size={100}
                   strokeWidth={6}
                 >
@@ -264,16 +294,16 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
                     <div className="text-lg font-bold text-foreground">
                       {safeProfitMargin.toFixed(1)}%
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Margen
-                    </div>
+                    <div className="text-xs text-muted-foreground">Margen</div>
                   </div>
                 </ProgressRing>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Ingresos</span>
+                  <span className="text-sm text-muted-foreground">
+                    Ingresos
+                  </span>
                   <span className="font-medium text-[hsl(var(--success))]">
                     {formatCompactCurrency(safeRevenue)}
                   </span>
@@ -286,10 +316,14 @@ export function EnhancedKPISection({ kpis, className }: EnhancedKPISectionProps)
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm font-medium">Utilidad Neta</span>
-                  <span className={cn(
-                    "font-bold",
-                    safeNetProfit > 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
-                  )}>
+                  <span
+                    className={cn(
+                      "font-bold",
+                      safeNetProfit > 0
+                        ? "text-[hsl(var(--success))]"
+                        : "text-[hsl(var(--destructive))]"
+                    )}
+                  >
                     {formatCompactCurrency(safeNetProfit)}
                   </span>
                 </div>

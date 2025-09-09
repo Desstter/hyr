@@ -3,20 +3,20 @@
 // Servicio completo para gestión de gastos y presupuestos
 // =====================================================
 
-import { apiClient } from './client';
-import type { 
-  Expense, 
-  CreateExpenseRequest, 
+import { apiClient } from "./client";
+import type {
+  Expense,
+  CreateExpenseRequest,
   UpdateExpenseRequest,
-  ApiListResponse 
-} from './types';
+  ApiListResponse,
+} from "./types";
 
 // =====================================================
 // CLASE DE SERVICIO EXPENSES
 // =====================================================
 
 export class ExpensesService {
-  private readonly basePath = '/expenses';
+  private readonly basePath = "/expenses";
 
   /**
    * Obtener todos los gastos con filtros opcionales
@@ -30,18 +30,18 @@ export class ExpensesService {
     offset?: number;
   }): Promise<ApiListResponse<Expense>> {
     const searchParams = new URLSearchParams();
-    
-    if (params?.projectId) searchParams.append('projectId', params.projectId);
-    if (params?.category) searchParams.append('category', params.category);
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.offset) searchParams.append('offset', params.offset.toString());
-    
-    const url = searchParams.toString() 
+
+    if (params?.projectId) searchParams.append("projectId", params.projectId);
+    if (params?.category) searchParams.append("category", params.category);
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.offset) searchParams.append("offset", params.offset.toString());
+
+    const url = searchParams.toString()
       ? `${this.basePath}?${searchParams.toString()}`
       : this.basePath;
-      
+
     return apiClient.get<ApiListResponse<Expense>>(url);
   }
 
@@ -110,36 +110,41 @@ export class ExpensesService {
       startDate: params.startDate,
       endDate: params.endDate,
     });
-    
+
     if (params.projectId) {
-      searchParams.append('projectId', params.projectId);
+      searchParams.append("projectId", params.projectId);
     }
-    
+
     return apiClient.get(`${this.basePath}/summary?${searchParams.toString()}`);
   }
 
   /**
    * Obtener categorías de gastos disponibles
    */
-  async getCategories(): Promise<{
-    category: string;
-    subcategories: string[];
-    count: number;
-  }[]> {
+  async getCategories(): Promise<
+    {
+      category: string;
+      subcategories: string[];
+      count: number;
+    }[]
+  > {
     return apiClient.get(`${this.basePath}/categories`);
   }
 
   /**
    * Importar gastos desde archivo CSV/Excel
    */
-  async importExpenses(file: File, projectId?: string): Promise<{
+  async importExpenses(
+    file: File,
+    projectId?: string
+  ): Promise<{
     imported: number;
     errors: string[];
   }> {
     const formData = new FormData();
-    formData.append('file', file);
-    if (projectId) formData.append('projectId', projectId);
-    
+    formData.append("file", file);
+    if (projectId) formData.append("projectId", projectId);
+
     return apiClient.post(`${this.basePath}/import`, formData);
   }
 
@@ -153,16 +158,16 @@ export class ExpensesService {
     category?: string;
   }): Promise<Blob> {
     const searchParams = new URLSearchParams();
-    
-    if (params?.projectId) searchParams.append('projectId', params.projectId);
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    if (params?.category) searchParams.append('category', params.category);
-    
-    const url = searchParams.toString() 
+
+    if (params?.projectId) searchParams.append("projectId", params.projectId);
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+    if (params?.category) searchParams.append("category", params.category);
+
+    const url = searchParams.toString()
       ? `${this.basePath}/export/excel?${searchParams.toString()}`
       : `${this.basePath}/export/excel`;
-      
+
     // Usar fetch directamente para descargar archivos
     const response = await fetch(`http://localhost:3001/api${url}`);
     if (!response.ok) {
@@ -174,20 +179,27 @@ export class ExpensesService {
   /**
    * Buscar gastos por texto
    */
-  async search(query: string, filters?: {
-    projectId?: string;
-    category?: string;
-    minAmount?: number;
-    maxAmount?: number;
-  }): Promise<ApiListResponse<Expense>> {
+  async search(
+    query: string,
+    filters?: {
+      projectId?: string;
+      category?: string;
+      minAmount?: number;
+      maxAmount?: number;
+    }
+  ): Promise<ApiListResponse<Expense>> {
     const searchParams = new URLSearchParams({ query });
-    
-    if (filters?.projectId) searchParams.append('projectId', filters.projectId);
-    if (filters?.category) searchParams.append('category', filters.category);
-    if (filters?.minAmount) searchParams.append('minAmount', filters.minAmount.toString());
-    if (filters?.maxAmount) searchParams.append('maxAmount', filters.maxAmount.toString());
-    
-    return apiClient.get<ApiListResponse<Expense>>(`${this.basePath}/search?${searchParams.toString()}`);
+
+    if (filters?.projectId) searchParams.append("projectId", filters.projectId);
+    if (filters?.category) searchParams.append("category", filters.category);
+    if (filters?.minAmount)
+      searchParams.append("minAmount", filters.minAmount.toString());
+    if (filters?.maxAmount)
+      searchParams.append("maxAmount", filters.maxAmount.toString());
+
+    return apiClient.get<ApiListResponse<Expense>>(
+      `${this.basePath}/search?${searchParams.toString()}`
+    );
   }
 
   /**
@@ -200,7 +212,11 @@ export class ExpensesService {
   /**
    * Marcar gasto como pagado/no pagado
    */
-  async updatePaymentStatus(id: string, isPaid: boolean, paidDate?: string): Promise<Expense> {
+  async updatePaymentStatus(
+    id: string,
+    isPaid: boolean,
+    paidDate?: string
+  ): Promise<Expense> {
     return apiClient.patch<Expense>(`${this.basePath}/${id}/payment`, {
       isPaid,
       paidDate,
@@ -210,14 +226,22 @@ export class ExpensesService {
   /**
    * Duplicar gasto existente
    */
-  async duplicate(id: string, modifications?: Partial<CreateExpenseRequest>): Promise<Expense> {
-    return apiClient.post<Expense>(`${this.basePath}/${id}/duplicate`, modifications || {});
+  async duplicate(
+    id: string,
+    modifications?: Partial<CreateExpenseRequest>
+  ): Promise<Expense> {
+    return apiClient.post<Expense>(
+      `${this.basePath}/${id}/duplicate`,
+      modifications || {}
+    );
   }
 
   /**
    * Obtener estadísticas de gastos para dashboard
    */
-  async getStats(period: 'week' | 'month' | 'quarter' | 'year' = 'month'): Promise<{
+  async getStats(
+    period: "week" | "month" | "quarter" | "year" = "month"
+  ): Promise<{
     totalExpenses: number;
     averageExpense: number;
     largestExpense: number;
@@ -245,12 +269,12 @@ export const expensesService = new ExpensesService();
 // HOOKS PARA REACT (Opcional)
 // =====================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Hook para cargar lista de gastos
  */
-export function useExpenses(params?: Parameters<ExpensesService['list']>[0]) {
+export function useExpenses(params?: Parameters<ExpensesService["list"]>[0]) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -264,7 +288,7 @@ export function useExpenses(params?: Parameters<ExpensesService['list']>[0]) {
       setExpenses(result.data);
       setTotal(result.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando gastos');
+      setError(err instanceof Error ? err.message : "Error cargando gastos");
     } finally {
       setLoading(false);
     }
@@ -287,7 +311,9 @@ export function useExpenses(params?: Parameters<ExpensesService['list']>[0]) {
  * Hook para gastos de un proyecto específico
  */
 export function useProjectExpenses(projectId: string) {
-  const [data, setData] = useState<Awaited<ReturnType<ExpensesService['getByProject']>> | null>(null);
+  const [data, setData] = useState<Awaited<
+    ReturnType<ExpensesService["getByProject"]>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -298,7 +324,11 @@ export function useProjectExpenses(projectId: string) {
       const result = await expensesService.getByProject(projectId);
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando gastos del proyecto');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error cargando gastos del proyecto"
+      );
     } finally {
       setLoading(false);
     }
@@ -312,7 +342,13 @@ export function useProjectExpenses(projectId: string) {
 
   return {
     expenses: data?.expenses || [],
-    totals: data?.totals || { materials: 0, labor: 0, equipment: 0, overhead: 0, total: 0 },
+    totals: data?.totals || {
+      materials: 0,
+      labor: 0,
+      equipment: 0,
+      overhead: 0,
+      total: 0,
+    },
     loading,
     error,
     reload: loadData,
@@ -322,8 +358,12 @@ export function useProjectExpenses(projectId: string) {
 /**
  * Hook para estadísticas de gastos
  */
-export function useExpensesStats(period: 'week' | 'month' | 'quarter' | 'year' = 'month') {
-  const [stats, setStats] = useState<Awaited<ReturnType<ExpensesService['getStats']>> | null>(null);
+export function useExpensesStats(
+  period: "week" | "month" | "quarter" | "year" = "month"
+) {
+  const [stats, setStats] = useState<Awaited<
+    ReturnType<ExpensesService["getStats"]>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -334,7 +374,9 @@ export function useExpensesStats(period: 'week' | 'month' | 'quarter' | 'year' =
       const result = await expensesService.getStats(period);
       setStats(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando estadísticas');
+      setError(
+        err instanceof Error ? err.message : "Error cargando estadísticas"
+      );
     } finally {
       setLoading(false);
     }

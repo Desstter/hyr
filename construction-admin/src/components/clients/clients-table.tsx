@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,33 +8,40 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { api, handleApiError } from '@/lib/api';
-import type { Client } from '@/lib/api';
-import { formatCurrency, formatDate } from '@/lib/finance';
-import { useTranslations } from '@/lib/i18n';
-import { Search, Edit, Trash2, Eye, Building2, Users, DollarSign, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { api, handleApiError } from "@/lib/api";
+import type { Client } from "@/lib/api";
+import { formatCurrency } from "@/lib/finance";
+import { useTranslations } from "@/lib/i18n";
+import {
+  Search,
+  Edit,
+  Trash2,
+  Building2,
+  Users,
+  DollarSign,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface ClientsTableProps {
   onEditClient?: (client: Client) => void;
 }
 
 export function ClientsTable({ onEditClient }: ClientsTableProps) {
-  const t = useTranslations('es');
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const t = useTranslations("es");
+  const [searchQuery, setSearchQuery] = useState("");
+
   // State for API data
   const [clients, setClients] = useState<Client[]>([]);
-  const [clientStats, setClientStats] = useState<Record<string, any>>({});
+  const [clientStats, setClientStats] = useState<Record<string, { projects: number; totalValue: number }>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  
+
   // Load data from API
   useEffect(() => {
     loadData();
@@ -44,15 +51,17 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Load clients
-      const clientsResult = await api.clients.list({ search: searchQuery || undefined });
+      const clientsResult = await api.clients.list({
+        search: searchQuery || undefined,
+      });
       const clientsData = clientsResult.data;
-      
+
       setClients(clientsData);
-      
+
       // Load stats for each client in parallel
-      const statsPromises = clientsData.map(async (client) => {
+      const statsPromises = clientsData.map(async client => {
         try {
           const stats = await api.clients.getClientStats(client.id);
           return { [client.id]: stats };
@@ -61,16 +70,18 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
           return { [client.id]: null };
         }
       });
-      
+
       const statsResults = await Promise.all(statsPromises);
-      const statsMap = statsResults.reduce((acc, stat) => ({ ...acc, ...stat }), {});
+      const statsMap = statsResults.reduce(
+        (acc, stat) => ({ ...acc, ...stat }),
+        {}
+      );
       setClientStats(statsMap);
-      
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      console.error('Error loading clients data:', err);
-      toast.error('Error cargando clientes: ' + errorMessage);
+      console.error("Error loading clients data:", err);
+      toast.error("Error cargando clientes: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -78,7 +89,11 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
 
   const handleDeleteClient = async (client: Client) => {
     // Confirmación del usuario
-    if (!confirm(`${t.clients.deleteConfirmation}\n\n"${client.name}"\n\nEsta acción no se puede deshacer.`)) {
+    if (
+      !confirm(
+        `${t.clients.deleteConfirmation}\n\n"${client.name}"\n\nEsta acción no se puede deshacer.`
+      )
+    ) {
       return;
     }
 
@@ -86,15 +101,15 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
       setDeleting(client.id);
       await api.clients.delete(client.id);
       toast.success(`Cliente "${client.name}" eliminado exitosamente`);
-      
+
       // Recargar datos para actualizar la lista
       await loadData();
     } catch (err) {
       const errorMessage = handleApiError(err);
-      console.error('Error deleting client:', err);
-      
+      console.error("Error deleting client:", err);
+
       // Mostrar mensaje de error específico
-      if (errorMessage.includes('proyectos asociados')) {
+      if (errorMessage.includes("proyectos asociados")) {
         toast.error(t.clients.deleteError);
       } else {
         toast.error(`Error eliminando cliente: ${errorMessage}`);
@@ -103,20 +118,24 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
       setDeleting(null);
     }
   };
-  
+
   // Filter clients
-  const filteredClients = (clients || []).filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (client.contact_name && client.contact_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredClients = (clients || []).filter(
+    client =>
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.contact_name &&
+        client.contact_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Calculate global statistics
   const totalClients = clients.length;
-  const clientsWithProjects = Object.values(clientStats).filter(stats => 
-    stats && (stats.active_projects > 0 || stats.completed_projects > 0)
+  const clientsWithProjects = Object.values(clientStats).filter(
+    stats =>
+      stats && (stats.active_projects > 0 || stats.completed_projects > 0)
   ).length;
-  const totalRevenue = Object.values(clientStats).reduce((sum, stats) => 
-    sum + (stats?.total_revenue || 0), 0
+  const totalRevenue = Object.values(clientStats).reduce(
+    (sum, stats) => sum + (stats?.total_revenue || 0),
+    0
   );
 
   // Loading state
@@ -125,7 +144,7 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
       <div className="space-y-4">
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="h-20 bg-gray-100 animate-pulse rounded" />
@@ -133,7 +152,7 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
             </Card>
           ))}
         </div>
-        
+
         {/* Table Skeleton */}
         <div className="flex items-center space-x-2">
           <div className="h-10 bg-gray-100 animate-pulse rounded-md flex-1 max-w-sm" />
@@ -180,7 +199,9 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                 <p className="text-sm font-medium text-muted-foreground">
                   {t.clients.totalClients}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{totalClients}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalClients}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -196,7 +217,9 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                 <p className="text-sm font-medium text-muted-foreground">
                   {t.clients.activeClients}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{clientsWithProjects}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {clientsWithProjects}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -212,7 +235,9 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                 <p className="text-sm font-medium text-muted-foreground">
                   {t.clients.totalRevenue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalRevenue)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -226,7 +251,7 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
           <Input
             placeholder={t.clients.searchPlaceholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -247,11 +272,13 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredClients.map((client) => {
+            {filteredClients.map(client => {
               const stats = clientStats[client.id];
-              const totalProjects = (stats?.active_projects || 0) + (stats?.completed_projects || 0);
+              const totalProjects =
+                (stats?.active_projects || 0) +
+                (stats?.completed_projects || 0);
               const revenue = stats?.total_revenue || 0;
-              
+
               return (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">
@@ -264,9 +291,9 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{client.contact_name || '-'}</TableCell>
-                  <TableCell>{client.phone || '-'}</TableCell>
-                  <TableCell>{client.email || '-'}</TableCell>
+                  <TableCell>{client.contact_name || "-"}</TableCell>
+                  <TableCell>{client.phone || "-"}</TableCell>
+                  <TableCell>{client.email || "-"}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
                       <span className="font-medium">{totalProjects}</span>
@@ -278,19 +305,21 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-medium">{formatCurrency(revenue)}</span>
+                    <span className="font-medium">
+                      {formatCurrency(revenue)}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => onEditClient?.(client)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteClient(client)}
                         disabled={deleting === client.id}
@@ -310,10 +339,12 @@ export function ClientsTable({ onEditClient }: ClientsTableProps) {
           </TableBody>
         </Table>
       </div>
-      
+
       {filteredClients.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          {searchQuery ? 'No se encontraron clientes con esos criterios' : 'No hay clientes registrados'}
+          {searchQuery
+            ? "No se encontraron clientes con esos criterios"
+            : "No hay clientes registrados"}
         </div>
       )}
     </div>

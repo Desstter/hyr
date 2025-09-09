@@ -1,25 +1,30 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/components/ui/use-toast';
-import { 
-  FileSpreadsheet, 
-  Download, 
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import {
+  FileSpreadsheet,
+  Download,
   Calendar,
   Loader2,
   CheckCircle,
   AlertCircle,
   Users,
   DollarSign,
-  FileText
-} from 'lucide-react';
-import { personnelService, pilaService, useGeneratePILA, usePILASubmissions } from '@/lib/api';
-import type { PILAEmployee, PILASubmission } from '@/lib/api/pila';
+  FileText,
+} from "lucide-react";
+import {
+  personnelService,
+  pilaService,
+  useGeneratePILA,
+  usePILASubmissions,
+} from "@/lib/api";
+import type { PILAEmployee, PILASubmission } from "@/lib/api/pila";
 
 interface Employee {
   id: string;
@@ -32,36 +37,42 @@ interface Employee {
   status: string;
 }
 
-
 export default function PILAPage() {
   const [period, setPeriod] = useState(() => {
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
-    return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+    return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
   });
-  
+
   // Helper function to calculate employee salary
   const getEmployeeSalary = (employee: Employee): number => {
-    return Number(employee.monthly_salary) || (Number(employee.hourly_rate) || 0) * 192;
+    return (
+      Number(employee.monthly_salary) ||
+      (Number(employee.hourly_rate) || 0) * 192
+    );
   };
-  
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [submission, setSubmission] = useState<PILASubmission | null>(null);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
-  
+
   // Usar hooks personalizados
   const { generatePILA, generating } = useGeneratePILA();
-  const { submissions: recentSubmissions, loading: loadingSubmissions, loadSubmissions } = usePILASubmissions();
+  const {
+    submissions: recentSubmissions,
+    loading: loadingSubmissions,
+    loadSubmissions,
+  } = usePILASubmissions();
 
   useEffect(() => {
     loadEmployees();
     loadSubmissions({ limit: 5 });
-  }, [loadSubmissions]);
+  }, []); // Empty dependency array since we only want this to run on mount
 
   const loadEmployees = async () => {
     try {
-      const personnel = await personnelService.getAll({ status: 'active' });
-      
+      const personnel = await personnelService.getAll({ status: "active" });
+
       // Map Personnel to Employee interface
       const mappedEmployees: Employee[] = personnel.map(person => ({
         id: person.id,
@@ -71,25 +82,24 @@ export default function PILAPage() {
         department: person.department,
         monthly_salary: person.monthly_salary,
         hourly_rate: person.hourly_rate,
-        status: person.status
+        status: person.status,
       }));
-      
+
       setEmployees(mappedEmployees);
     } catch (error) {
-      console.error('Error loading employees:', error);
+      console.error("Error loading employees:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los empleados",
         variant: "destructive",
       });
-      
+
       // Set empty array on error
       setEmployees([]);
     } finally {
       setLoadingEmployees(false);
     }
   };
-
 
   const handleGeneratePILA = async () => {
     if (!period) {
@@ -116,17 +126,17 @@ export default function PILAPage() {
         document_number: emp.document_number,
         name: emp.name,
         salary: getEmployeeSalary(emp),
-        position: emp.position
+        position: emp.position,
       }));
 
       const result = await generatePILA(period, pilaEmployees);
       setSubmission(result);
-      
+
       // Refrescar la lista de submissions
       loadSubmissions({ limit: 5 });
     } catch (error) {
       // El hook useGeneratePILA ya maneja los errores
-      console.error('Error in handleGeneratePILA:', error);
+      console.error("Error in handleGeneratePILA:", error);
     }
   };
 
@@ -135,18 +145,20 @@ export default function PILAPage() {
       await pilaService.downloadPILA(period);
     } catch (error) {
       // El servicio ya maneja los errores y muestra toasts
-      console.error('Error in handleDownloadCSV:', error);
+      console.error("Error in handleDownloadCSV:", error);
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status.toUpperCase()) {
-      case 'GENERADO':
+      case "GENERADO":
         return <Badge className="bg-green-100 text-green-800">Generado</Badge>;
-      case 'ENVIADO':
+      case "ENVIADO":
         return <Badge className="bg-blue-100 text-blue-800">Enviado</Badge>;
-      case 'PROCESADO':
-        return <Badge className="bg-purple-100 text-purple-800">Procesado</Badge>;
+      case "PROCESADO":
+        return (
+          <Badge className="bg-purple-100 text-purple-800">Procesado</Badge>
+        );
       default:
         return <Badge className="bg-gray-100 text-gray-800">Pendiente</Badge>;
     }
@@ -181,11 +193,12 @@ export default function PILAPage() {
                 id="period"
                 type="month"
                 value={period}
-                onChange={(e) => setPeriod(e.target.value)}
+                onChange={e => setPeriod(e.target.value)}
                 required
               />
               <p className="text-xs text-gray-500">
-                PILA se debe presentar los primeros 10 días hábiles del mes siguiente
+                PILA se debe presentar los primeros 10 días hábiles del mes
+                siguiente
               </p>
             </div>
 
@@ -195,12 +208,15 @@ export default function PILAPage() {
                 Empleados activos: {employees.length}
               </p>
               <p className="text-sm text-blue-800">
-                Total salarios: ${employees.reduce((sum, emp) => sum + getEmployeeSalary(emp), 0).toLocaleString('es-CO')}
+                Total salarios: $
+                {employees
+                  .reduce((sum, emp) => sum + getEmployeeSalary(emp), 0)
+                  .toLocaleString("es-CO")}
               </p>
             </div>
 
-            <Button 
-              onClick={handleGeneratePILA} 
+            <Button
+              onClick={handleGeneratePILA}
               disabled={generating || !period}
               className="w-full"
             >
@@ -232,20 +248,22 @@ export default function PILAPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <Users className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-                  <p className="text-2xl font-bold">{submission.employee_count}</p>
+                  <p className="text-2xl font-bold">
+                    {submission.employee_count}
+                  </p>
                   <p className="text-sm text-gray-600">Empleados</p>
                 </div>
                 <div className="text-center">
                   <DollarSign className="h-8 w-8 mx-auto text-green-500 mb-2" />
                   <p className="text-lg font-bold">
-                    ${submission.total_salary.toLocaleString('es-CO')}
+                    ${submission.total_salary.toLocaleString("es-CO")}
                   </p>
                   <p className="text-sm text-gray-600">Total Salarios</p>
                 </div>
                 <div className="text-center">
                   <FileText className="h-8 w-8 mx-auto text-purple-500 mb-2" />
                   <p className="text-lg font-bold">
-                    ${submission.total_contributions.toLocaleString('es-CO')}
+                    ${submission.total_contributions.toLocaleString("es-CO")}
                   </p>
                   <p className="text-sm text-gray-600">Total Aportes</p>
                 </div>
@@ -259,19 +277,19 @@ export default function PILAPage() {
                 <div>
                   <Label className="text-sm text-gray-600">Salud (8.5%)</Label>
                   <p className="text-lg font-semibold text-blue-600">
-                    ${submission.total_health.toLocaleString('es-CO')}
+                    ${submission.total_health.toLocaleString("es-CO")}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600">Pensión (12%)</Label>
                   <p className="text-lg font-semibold text-green-600">
-                    ${submission.total_pension.toLocaleString('es-CO')}
+                    ${submission.total_pension.toLocaleString("es-CO")}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600">ARL (6.96%)</Label>
                   <p className="text-lg font-semibold text-orange-600">
-                    ${submission.total_arl.toLocaleString('es-CO')}
+                    ${submission.total_arl.toLocaleString("es-CO")}
                   </p>
                 </div>
               </div>
@@ -306,15 +324,21 @@ export default function PILAPage() {
                 </div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {employees.map((employee) => {
+                  {employees.map(employee => {
                     const salary = getEmployeeSalary(employee);
                     const healthContribution = Math.round(salary * 0.085);
                     const pensionContribution = Math.round(salary * 0.12);
                     const arlContribution = Math.round(salary * 0.0696);
-                    const totalContributions = healthContribution + pensionContribution + arlContribution;
+                    const totalContributions =
+                      healthContribution +
+                      pensionContribution +
+                      arlContribution;
 
                     return (
-                      <div key={employee.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div
+                        key={employee.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
                         <div className="flex-1">
                           <h4 className="font-medium">{employee.name}</h4>
                           <p className="text-sm text-gray-600">
@@ -323,10 +347,11 @@ export default function PILAPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">
-                            ${salary.toLocaleString('es-CO')}
+                            ${salary.toLocaleString("es-CO")}
                           </p>
                           <p className="text-sm text-blue-600">
-                            Aportes: ${totalContributions.toLocaleString('es-CO')}
+                            Aportes: $
+                            {totalContributions.toLocaleString("es-CO")}
                           </p>
                         </div>
                       </div>
@@ -347,22 +372,26 @@ export default function PILAPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentSubmissions.map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between p-3 border rounded-lg">
+              {recentSubmissions.map(submission => (
+                <div
+                  key={submission.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
                     <FileSpreadsheet className="h-8 w-8 text-green-500" />
                     <div>
                       <h4 className="font-medium">PILA {submission.period}</h4>
                       <p className="text-sm text-gray-600">
-                        {submission.employee_count} empleados • 
-                        ${submission.total_contributions.toLocaleString('es-CO')} aportes
+                        {submission.employee_count} empleados • $
+                        {submission.total_contributions.toLocaleString("es-CO")}{" "}
+                        aportes
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(submission.status)}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleDownloadCSV(submission.period)}
                     >
@@ -379,12 +408,22 @@ export default function PILAPage() {
       {/* Información Legal */}
       <Card className="border-yellow-200 bg-yellow-50">
         <CardContent className="p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">📋 Información PILA</h4>
+          <h4 className="font-medium text-yellow-800 mb-2">
+            📋 Información PILA
+          </h4>
           <ul className="text-yellow-700 text-sm space-y-1">
-            <li>• PILA debe presentarse los primeros 10 días hábiles del mes siguiente</li>
-            <li>• Incluye aportes a salud (8.5%), pensión (12%) y ARL (6.96% Clase V)</li>
+            <li>
+              • PILA debe presentarse los primeros 10 días hábiles del mes
+              siguiente
+            </li>
+            <li>
+              • Incluye aportes a salud (8.5%), pensión (12%) y ARL (6.96% Clase
+              V)
+            </li>
             <li>• El archivo CSV debe subirse al sitio web de la UGPP</li>
-            <li>• Los valores se calculan sobre el salario base más auxilios</li>
+            <li>
+              • Los valores se calculan sobre el salario base más auxilios
+            </li>
           </ul>
         </CardContent>
       </Card>

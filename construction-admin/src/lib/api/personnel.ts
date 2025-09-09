@@ -3,14 +3,14 @@
 // Servicios para gestión de empleados y nómina
 // =====================================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   Personnel,
   CreatePersonnelRequest,
   TimeEntry,
   CreateTimeEntryRequest,
   EmployeeProductivity,
-} from './types';
+} from "./types";
 
 interface PersonnelAssignment {
   id: string;
@@ -21,7 +21,7 @@ interface PersonnelAssignment {
 }
 
 export class PersonnelService {
-  private endpoint = '/personnel';
+  private endpoint = "/personnel";
 
   // =====================================================
   // CRUD EMPLEADOS
@@ -67,15 +67,23 @@ export class PersonnelService {
   /**
    * Actualizar empleado
    */
-  async update(id: string, data: Partial<CreatePersonnelRequest>): Promise<Personnel> {
+  async update(
+    id: string,
+    data: Partial<CreatePersonnelRequest>
+  ): Promise<Personnel> {
     return apiClient.put<Personnel>(`${this.endpoint}/${id}`, data);
   }
 
   /**
    * Cambiar estado del empleado
    */
-  async updateStatus(id: string, status: 'active' | 'inactive' | 'terminated'): Promise<Personnel> {
-    return apiClient.put<Personnel>(`${this.endpoint}/${id}/status`, { status });
+  async updateStatus(
+    id: string,
+    status: "active" | "inactive" | "terminated"
+  ): Promise<Personnel> {
+    return apiClient.put<Personnel>(`${this.endpoint}/${id}/status`, {
+      status,
+    });
   }
 
   /**
@@ -93,25 +101,34 @@ export class PersonnelService {
   /**
    * Obtener horas trabajadas de un empleado
    */
-  async getTimeEntries(personnelId: string, filters?: {
-    startDate?: string;
-    endDate?: string;
-    projectId?: string;
-  }): Promise<TimeEntry[]> {
-    return apiClient.get<TimeEntry[]>(`${this.endpoint}/${personnelId}/time-entries`, filters);
+  async getTimeEntries(
+    personnelId: string,
+    filters?: {
+      startDate?: string;
+      endDate?: string;
+      projectId?: string;
+    }
+  ): Promise<TimeEntry[]> {
+    return apiClient.get<TimeEntry[]>(
+      `${this.endpoint}/${personnelId}/time-entries`,
+      filters
+    );
   }
 
   /**
    * Registrar horas trabajadas
    */
   async createTimeEntry(data: CreateTimeEntryRequest): Promise<TimeEntry> {
-    return apiClient.post<TimeEntry>('/time-entries', data);
+    return apiClient.post<TimeEntry>("/time-entries", data);
   }
 
   /**
    * Actualizar registro de horas
    */
-  async updateTimeEntry(id: string, data: Partial<CreateTimeEntryRequest>): Promise<TimeEntry> {
+  async updateTimeEntry(
+    id: string,
+    data: Partial<CreateTimeEntryRequest>
+  ): Promise<TimeEntry> {
     return apiClient.put<TimeEntry>(`/time-entries/${id}`, data);
   }
 
@@ -134,16 +151,22 @@ export class PersonnelService {
     year?: number;
     department?: string;
   }): Promise<EmployeeProductivity[]> {
-    return apiClient.get<EmployeeProductivity[]>('/reports/employee-productivity', filters);
+    return apiClient.get<EmployeeProductivity[]>(
+      "/reports/employee-productivity",
+      filters
+    );
   }
 
   /**
    * Obtener resumen de horas por empleado
    */
-  async getHoursSummary(personnelId: string, filters?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{
+  async getHoursSummary(
+    personnelId: string,
+    filters?: {
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<{
     totalHours: number;
     overtimeHours: number;
     regularHours: number;
@@ -157,14 +180,17 @@ export class PersonnelService {
       totalPay: number;
       averageHoursPerDay: number;
     };
-    return apiClient.get<HoursSummary>(`${this.endpoint}/${personnelId}/hours-summary`, filters);
+    return apiClient.get<HoursSummary>(
+      `${this.endpoint}/${personnelId}/hours-summary`,
+      filters
+    );
   }
 
   /**
    * Obtener empleados activos
    */
   async getActivePersonnel(): Promise<Personnel[]> {
-    return this.getAll({ status: 'active' });
+    return this.getAll({ status: "active" });
   }
 
   /**
@@ -188,14 +214,16 @@ export class PersonnelService {
   /**
    * Obtener asignaciones de un empleado
    */
-  async getAssignments(personnelId: string): Promise<{
-    id: string;
-    project_id: string;
-    project_name: string;
-    role?: string;
-    hours_per_day?: number;
-    is_primary?: boolean;
-  }[]> {
+  async getAssignments(personnelId: string): Promise<
+    {
+      id: string;
+      project_id: string;
+      project_name: string;
+      role?: string;
+      hours_per_day?: number;
+      is_primary?: boolean;
+    }[]
+  > {
     type Assignment = {
       id: string;
       project_id: string;
@@ -204,48 +232,63 @@ export class PersonnelService {
       hours_per_day?: number;
       is_primary?: boolean;
     };
-    return apiClient.get<Assignment[]>(`${this.endpoint}/${personnelId}/assignments`);
+    return apiClient.get<Assignment[]>(
+      `${this.endpoint}/${personnelId}/assignments`
+    );
   }
 
   /**
    * Asignar empleado a proyecto
    */
-  async assignToProject(personnelId: string, data: {
-    project_id: string;
-    role?: string;
-    hours_per_day?: number;
-    is_primary?: boolean;
-  }): Promise<{ success: boolean; assignment_id: string }> {
+  async assignToProject(
+    personnelId: string,
+    data: {
+      project_id: string;
+      role?: string;
+      hours_per_day?: number;
+      is_primary?: boolean;
+    }
+  ): Promise<{ success: boolean; assignment_id: string }> {
     type AssignmentResponse = { success: boolean; assignment_id: string };
-    return apiClient.post<AssignmentResponse>(`${this.endpoint}/${personnelId}/assign`, data);
+    return apiClient.post<AssignmentResponse>(
+      `${this.endpoint}/${personnelId}/assign`,
+      data
+    );
   }
 
   /**
    * Desasignar empleado de proyecto
    */
-  async unassignFromProject(personnelId: string, projectId: string): Promise<{ success: boolean; message: string }> {
+  async unassignFromProject(
+    personnelId: string,
+    projectId: string
+  ): Promise<{ success: boolean; message: string }> {
     type UnassignResponse = { success: boolean; message: string };
-    return apiClient.delete<UnassignResponse>(`${this.endpoint}/${personnelId}/unassign/${projectId}`);
+    return apiClient.delete<UnassignResponse>(
+      `${this.endpoint}/${personnelId}/unassign/${projectId}`
+    );
   }
 
   /**
    * Obtener disponibilidad de personal
    */
-  async getAvailability(): Promise<{
-    personnel_id: string;
-    personnel_name: string;
-    availability_status: 'available' | 'busy' | 'overloaded';
-    current_projects: number;
-    total_hours_week: number;
-  }[]> {
+  async getAvailability(): Promise<
+    {
+      personnel_id: string;
+      personnel_name: string;
+      availability_status: "available" | "busy" | "overloaded";
+      current_projects: number;
+      total_hours_week: number;
+    }[]
+  > {
     type Availability = {
       personnel_id: string;
       personnel_name: string;
-      availability_status: 'available' | 'busy' | 'overloaded';
+      availability_status: "available" | "busy" | "overloaded";
       current_projects: number;
       total_hours_week: number;
     };
-    return apiClient.get<Availability[]>('/assignments/availability');
+    return apiClient.get<Availability[]>("/assignments/availability");
   }
 
   /**
@@ -259,20 +302,24 @@ export class PersonnelService {
     assignments: PersonnelAssignment[];
   }> {
     const assignments = await this.getAssignments(personnelId);
-    const total_hours_per_day = assignments.reduce((sum, a) => sum + (a.expected_hours_per_day || 0), 0);
+    const total_hours_per_day = assignments.reduce(
+      (sum, a) => sum + (a.expected_hours_per_day || 0),
+      0
+    );
     const total_projects = assignments.length;
-    
-    let availability_status = 'disponible';
-    if (total_hours_per_day > 8) availability_status = 'sobrecargado';
-    else if (total_hours_per_day >= 8) availability_status = 'ocupado';
-    else if (total_hours_per_day > 6) availability_status = 'parcialmente_ocupado';
-    
+
+    let availability_status = "disponible";
+    if (total_hours_per_day > 8) availability_status = "sobrecargado";
+    else if (total_hours_per_day >= 8) availability_status = "ocupado";
+    else if (total_hours_per_day > 6)
+      availability_status = "parcialmente_ocupado";
+
     return {
       total_projects,
       total_hours_per_day,
       availability_status,
       can_take_more_work: total_hours_per_day < 8,
-      assignments
+      assignments,
     };
   }
 
@@ -316,46 +363,63 @@ export class PersonnelService {
   /**
    * Crear empleado con retry automático
    */
-  async createWithRetry(data: CreatePersonnelRequest, maxRetries: number = 2): Promise<Personnel> {
+  async createWithRetry(
+    data: CreatePersonnelRequest,
+    maxRetries: number = 2
+  ): Promise<Personnel> {
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await this.create(data);
       } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`Create personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message);
-        
+        console.warn(
+          `Create personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`,
+          lastError.message
+        );
+
         if (attempt < maxRetries) {
           // Esperar antes de reintentar (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          await new Promise(resolve =>
+            setTimeout(resolve, Math.pow(2, attempt) * 1000)
+          );
         }
       }
     }
-    
+
     throw lastError;
   }
 
   /**
    * Actualizar empleado con retry automático
    */
-  async updateWithRetry(id: string, data: Partial<CreatePersonnelRequest>, maxRetries: number = 2): Promise<Personnel> {
+  async updateWithRetry(
+    id: string,
+    data: Partial<CreatePersonnelRequest>,
+    maxRetries: number = 2
+  ): Promise<Personnel> {
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await this.update(id, data);
       } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`Update personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message);
-        
+        console.warn(
+          `Update personnel attempt ${attempt + 1}/${maxRetries + 1} failed:`,
+          lastError.message
+        );
+
         if (attempt < maxRetries) {
           // Esperar antes de reintentar (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          await new Promise(resolve =>
+            setTimeout(resolve, Math.pow(2, attempt) * 1000)
+          );
         }
       }
     }
-    
+
     throw lastError;
   }
 
@@ -369,39 +433,46 @@ export class PersonnelService {
   }): Promise<Personnel[]> {
     try {
       const personnel = await this.getAll(filters);
-      
+
       // Cache simple en localStorage para emergencias
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('personnel_cache', JSON.stringify({
-          data: personnel,
-          timestamp: Date.now(),
-          filters
-        }));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "personnel_cache",
+          JSON.stringify({
+            data: personnel,
+            timestamp: Date.now(),
+            filters,
+          })
+        );
       }
-      
+
       return personnel;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error loading personnel, attempting fallback:', errorMessage);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        "Error loading personnel, attempting fallback:",
+        errorMessage
+      );
+
       // Intentar cargar desde cache si es reciente (menos de 5 minutos)
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         try {
-          const cache = localStorage.getItem('personnel_cache');
+          const cache = localStorage.getItem("personnel_cache");
           if (cache) {
             const { data, timestamp } = JSON.parse(cache);
             const isRecent = Date.now() - timestamp < 5 * 60 * 1000; // 5 minutos
-            
+
             if (isRecent && data) {
-              console.info('Using cached personnel data as fallback');
+              console.info("Using cached personnel data as fallback");
               return data;
             }
           }
         } catch (cacheError) {
-          console.error('Cache fallback failed:', cacheError);
+          console.error("Cache fallback failed:", cacheError);
         }
       }
-      
+
       // Si no hay cache disponible, re-throw el error original
       throw error;
     }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface ProgressRingProps {
   progress: number;
@@ -7,7 +7,7 @@ interface ProgressRingProps {
   strokeWidth?: number;
   className?: string;
   children?: React.ReactNode;
-  variant?: 'primary' | 'success' | 'warning' | 'danger';
+  variant?: "primary" | "success" | "warning" | "danger";
   showPercentage?: boolean;
 }
 
@@ -17,7 +17,7 @@ export function ProgressRing({
   strokeWidth = 8,
   className,
   children,
-  variant = 'primary',
+  variant = "primary",
   showPercentage = true,
 }: ProgressRingProps) {
   const normalizedRadius = (size - strokeWidth) / 2;
@@ -27,29 +27,29 @@ export function ProgressRing({
 
   const getVariantColors = () => {
     switch (variant) {
-      case 'success':
+      case "success":
         return {
-          bg: 'stroke-[hsl(var(--success))]/20',
-          fg: 'stroke-[hsl(var(--success))]',
-          text: 'text-[hsl(var(--success))]'
+          bg: "stroke-[hsl(var(--success))]/20",
+          fg: "stroke-[hsl(var(--success))]",
+          text: "text-[hsl(var(--success))]",
         };
-      case 'warning':
+      case "warning":
         return {
-          bg: 'stroke-[hsl(var(--warning))]/20',
-          fg: 'stroke-[hsl(var(--warning))]',
-          text: 'text-[hsl(var(--warning))]'
+          bg: "stroke-[hsl(var(--warning))]/20",
+          fg: "stroke-[hsl(var(--warning))]",
+          text: "text-[hsl(var(--warning))]",
         };
-      case 'danger':
+      case "danger":
         return {
-          bg: 'stroke-[hsl(var(--destructive))]/20',
-          fg: 'stroke-[hsl(var(--destructive))]',
-          text: 'text-[hsl(var(--destructive))]'
+          bg: "stroke-[hsl(var(--destructive))]/20",
+          fg: "stroke-[hsl(var(--destructive))]",
+          text: "text-[hsl(var(--destructive))]",
         };
       default:
         return {
-          bg: 'stroke-primary/20',
-          fg: 'stroke-primary',
-          text: 'text-primary'
+          bg: "stroke-primary/20",
+          fg: "stroke-primary",
+          text: "text-primary",
         };
     }
   };
@@ -57,12 +57,13 @@ export function ProgressRing({
   const colors = getVariantColors();
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
-      <svg
-        height={size}
-        width={size}
-        className="transform -rotate-90"
-      >
+    <div
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        className
+      )}
+    >
+      <svg height={size} width={size} className="transform -rotate-90">
         {/* Background circle */}
         <circle
           stroke="currentColor"
@@ -73,7 +74,7 @@ export function ProgressRing({
           cy={size / 2}
           className={colors.bg}
         />
-        
+
         {/* Progress circle */}
         <circle
           stroke="currentColor"
@@ -87,20 +88,21 @@ export function ProgressRing({
           cy={size / 2}
           className={cn(colors.fg, "transition-all duration-1000 ease-out")}
           style={{
-            filter: 'drop-shadow(0 0 6px currentColor)',
+            filter: "drop-shadow(0 0 6px currentColor)",
           }}
         />
       </svg>
-      
+
       {/* Center content */}
       <div className="absolute inset-0 flex items-center justify-center">
-        {children || (showPercentage && (
-          <div className="text-center">
-            <div className={cn("text-2xl font-bold", colors.text)}>
-              {Math.round(progress)}%
+        {children ||
+          (showPercentage && (
+            <div className="text-center">
+              <div className={cn("text-2xl font-bold", colors.text)}>
+                {Math.round(progress)}%
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
@@ -111,7 +113,7 @@ interface ProgressRingCardProps {
   progress: number;
   value?: string | number;
   subtitle?: string;
-  variant?: 'primary' | 'success' | 'warning' | 'danger';
+  variant?: "primary" | "success" | "warning" | "danger";
   className?: string;
 }
 
@@ -120,7 +122,7 @@ export function ProgressRingCard({
   progress,
   value,
   subtitle,
-  variant = 'primary',
+  variant = "primary",
   className,
 }: ProgressRingCardProps) {
   return (
@@ -128,7 +130,7 @@ export function ProgressRingCard({
       <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
         {title}
       </h3>
-      
+
       <div className="flex flex-col items-center">
         <ProgressRing
           progress={progress}
@@ -139,20 +141,16 @@ export function ProgressRingCard({
         >
           <div className="text-center">
             {value && (
-              <div className="text-lg font-bold text-foreground">
-                {value}
-              </div>
+              <div className="text-lg font-bold text-foreground">{value}</div>
             )}
             <div className="text-xs text-muted-foreground">
               {Math.round(progress)}%
             </div>
           </div>
         </ProgressRing>
-        
+
         {subtitle && (
-          <p className="text-sm text-muted-foreground mt-3">
-            {subtitle}
-          </p>
+          <p className="text-sm text-muted-foreground mt-3">{subtitle}</p>
         )}
       </div>
     </div>

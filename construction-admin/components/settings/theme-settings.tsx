@@ -1,25 +1,31 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTranslations } from '@/lib/i18n';
-import { toast } from 'sonner';
-import { Moon, Sun, Globe } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTranslations } from "@/lib/i18n";
+import { toast } from "sonner";
+import { Moon, Sun, Globe } from "lucide-react";
 
 export function ThemeSettings() {
-  const t = useTranslations('es');
-  const [theme, setTheme] = useState('light');
-  const [language, setLanguage] = useState('es');
+  const t = useTranslations("es");
+  const [theme, setTheme] = useState("light");
+  const [language, setLanguage] = useState("es");
 
   const handleSaveTheme = () => {
-    toast.success('Configuración de tema guardada');
+    toast.success("Configuración de tema guardada");
   };
 
   const handleSaveLanguage = () => {
-    toast.success('Idioma actualizado');
+    toast.success("Idioma actualizado");
   };
 
   return (
@@ -57,9 +63,7 @@ export function ThemeSettings() {
           </div>
 
           <div className="pt-4">
-            <Button onClick={handleSaveTheme}>
-              {t.common.save}
-            </Button>
+            <Button onClick={handleSaveTheme}>{t.common.save}</Button>
           </div>
         </CardContent>
       </Card>
@@ -90,9 +94,7 @@ export function ThemeSettings() {
           </div>
 
           <div className="pt-4">
-            <Button onClick={handleSaveLanguage}>
-              {t.common.save}
-            </Button>
+            <Button onClick={handleSaveLanguage}>{t.common.save}</Button>
           </div>
         </CardContent>
       </Card>

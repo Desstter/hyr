@@ -1,20 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarView } from '@/components/calendar/calendar-view';
-import { UpcomingPayments } from '@/components/calendar/upcoming-payments';
-import { PaymentReminderDialog } from '@/components/calendar/payment-reminder-dialog';
-import { Plus, Calendar, List } from 'lucide-react';
-import type { CalendarEvent } from '@/lib/api/types';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarView } from "@/components/calendar/calendar-view";
+import { UpcomingPayments } from "@/components/calendar/upcoming-payments";
+import { PaymentReminderDialog } from "@/components/calendar/payment-reminder-dialog";
+import { Plus, Calendar, List } from "lucide-react";
+import type { CalendarEvent } from "@/lib/api/types";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function CalendarPage() {
   const [showReminderDialog, setShowReminderDialog] = useState(false);
-  const [editingReminder, setEditingReminder] = useState<CalendarEvent | undefined>();
-  const [activeTab, setActiveTab] = useState('calendar');
+  const [editingReminder, setEditingReminder] = useState<
+    CalendarEvent | undefined
+  >();
+  const [activeTab, setActiveTab] = useState("calendar");
 
   const handleEditReminder = (reminder: CalendarEvent) => {
     setEditingReminder(reminder);
@@ -22,13 +24,19 @@ export default function CalendarPage() {
   };
 
   const handleDeleteReminder = async (reminder: CalendarEvent) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este recordatorio?')) {
+    if (
+      window.confirm("¿Estás seguro de que deseas eliminar este recordatorio?")
+    ) {
       try {
         await api.calendar.deleteEvent(reminder.id);
-        toast.success('Recordatorio eliminado');
+        toast.success("Recordatorio eliminado");
       } catch (error) {
-        console.error('Error deleting reminder:', error);
-        toast.error(error instanceof Error ? error.message : 'Error al eliminar el recordatorio');
+        console.error("Error deleting reminder:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Error al eliminar el recordatorio"
+        );
       }
     }
   };
@@ -79,7 +87,7 @@ export default function CalendarPage() {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6">
-          <UpcomingPayments 
+          <UpcomingPayments
             onEditReminder={handleEditReminder}
             onDeleteReminder={handleDeleteReminder}
           />

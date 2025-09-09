@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ClientsTable } from '@/components/clients/clients-table';
-import type { Client } from '@/lib/api';
-import { ClientDialog } from '@/components/clients/client-dialog';
-import { useTranslations } from '@/lib/i18n';
-import { Plus, Building2 } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ClientsTable } from "@/components/clients/clients-table";
+import type { Client } from "@/lib/api";
+import { ClientDialog } from "@/components/clients/client-dialog";
+import { useTranslations } from "@/lib/i18n";
+import { Plus, Building2 } from "lucide-react";
 
 export default function ClientsPage() {
-  const t = useTranslations('es');
+  const t = useTranslations("es");
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | undefined>();
 
@@ -32,9 +32,9 @@ export default function ClientsPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
-          <Button 
+          <Button
             onClick={() => {
               setEditingClient(undefined);
               setShowClientDialog(true);
@@ -50,8 +50,8 @@ export default function ClientsPage() {
       {/* Main Content */}
       <div className="space-y-6">
         {/* Clients Table */}
-        <ClientsTable 
-          onEditClient={(client) => {
+        <ClientsTable
+          onEditClient={client => {
             setEditingClient(client);
             setShowClientDialog(true);
           }}

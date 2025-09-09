@@ -1,40 +1,42 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calculator, Save } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Calculator, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useTranslations } from '@/lib/i18n';
-import { formatCurrency } from '@/lib/finance';
-import { generateId } from '@/lib/utils';
-import { clientsService } from '@/lib/api/clients';
-import { simulatorService, useTemplates, CostTemplate } from '@/lib/api/simulator';
-import type { Client } from '@/lib/api/types';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useTranslations } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/finance";
+import { generateId } from "@/lib/utils";
+import { clientsService } from "@/lib/api/clients";
+import {
+  useTemplates,
+  CostTemplate,
+} from "@/lib/api/simulator";
+import type { Client } from "@/lib/api/types";
+import { toast } from "sonner";
 
 // Updated interfaces to match API structure
 interface CostEstimateItem {
   id: string;
   name: string;
-  type: 'material' | 'labor' | 'equipment' | 'overhead';
+  type: "material" | "labor" | "equipment" | "overhead";
   unit: string;
   unitCost: number;
   quantity: number;
@@ -52,7 +54,7 @@ interface CostEstimate {
   profitMargin: number;
   totalBeforeMargin: number;
   total: number;
-  currency: 'COP' | 'USD';
+  currency: "COP" | "USD";
   notes?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -72,32 +74,34 @@ interface EstimateFormData {
   templateId?: string;
   profitMargin: number;
   notes?: string;
-  currency: 'COP' | 'USD';
+  currency: "COP" | "USD";
   items: CostEstimateItem[];
 }
 
-export function CostSimulatorDialog({ 
-  open, 
-  onOpenChange, 
-  onSuccess, 
-  estimate, 
-  template 
+export function CostSimulatorDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  estimate,
+  template,
 }: CostSimulatorDialogProps) {
-  const t = useTranslations('es');
-  
+  const t = useTranslations("es");
+
   // Load data from API
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const { templates, loading: loadingTemplates } = useTemplates();
-  
+
   const [formData, setFormData] = useState<EstimateFormData>({
-    name: '',
+    name: "",
     profitMargin: 15,
-    currency: 'COP',
-    items: []
+    currency: "COP",
+    items: [],
   });
 
-  const [selectedTemplate, setSelectedTemplate] = useState<CostTemplate | undefined>();
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    CostTemplate | undefined
+  >();
   const [isEditing, setIsEditing] = useState(false);
 
   // Load clients
@@ -107,17 +111,20 @@ export function CostSimulatorDialog({
         setLoadingClients(true);
         const clientsData = await clientsService.getAll();
         // Handle both direct array response and {data: array} response
-        const clientsList = Array.isArray(clientsData) ? clientsData : 
-                           (Array.isArray(clientsData?.data) ? clientsData.data : []);
+        const clientsList = Array.isArray(clientsData)
+          ? clientsData
+          : Array.isArray(clientsData?.data)
+            ? clientsData.data
+            : [];
         setClients(clientsList);
       } catch (error) {
-        console.error('Error loading clients:', error);
+        console.error("Error loading clients:", error);
         setClients([]); // Ensure clients is always an array even on error
       } finally {
         setLoadingClients(false);
       }
     };
-    
+
     if (open) {
       loadClients();
     }
@@ -128,24 +135,30 @@ export function CostSimulatorDialog({
     return unitCost * quantity;
   };
 
-  const calculateEstimateTotal = (items: CostEstimateItem[], profitMargin: number) => {
+  const calculateEstimateTotal = (
+    items: CostEstimateItem[],
+    profitMargin: number
+  ) => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = subtotal * (1 + profitMargin / 100);
     return {
       subtotal,
       totalBeforeMargin: subtotal,
-      total
+      total,
     };
   };
 
-  const generateEstimateFromTemplate = (template: CostTemplate, margin: number): Partial<CostEstimate> => {
+  const generateEstimateFromTemplate = (
+    template: CostTemplate,
+    margin: number
+  ): Partial<CostEstimate> => {
     // This would need to be implemented based on the template structure
     // For now, return basic structure
     return {
       name: `Estimación basada en ${template.name}`,
       profitMargin: margin,
-      currency: 'COP' as const,
-      items: []
+      currency: "COP" as const,
+      items: [],
     };
   };
 
@@ -159,7 +172,7 @@ export function CostSimulatorDialog({
         profitMargin: estimate.profitMargin,
         notes: estimate.notes,
         currency: estimate.currency,
-        items: [...estimate.items]
+        items: [...estimate.items],
       });
       setIsEditing(true);
     } else if (template) {
@@ -169,16 +182,16 @@ export function CostSimulatorDialog({
         templateId: template.id,
         profitMargin: generatedEstimate.profitMargin,
         currency: generatedEstimate.currency,
-        items: [...generatedEstimate.items]
+        items: [...generatedEstimate.items],
       });
       setSelectedTemplate(template);
     } else {
       // Reset form for new estimate
       setFormData({
-        name: '',
+        name: "",
         profitMargin: 15,
-        currency: 'COP',
-        items: []
+        currency: "COP",
+        items: [],
       });
       setSelectedTemplate(undefined);
       setIsEditing(false);
@@ -186,27 +199,33 @@ export function CostSimulatorDialog({
   }, [estimate, template, open]);
 
   // Calculate totals
-  const calculation = calculateEstimateTotal(formData.items, formData.profitMargin);
+  const calculation = calculateEstimateTotal(
+    formData.items,
+    formData.profitMargin
+  );
 
   const handleTemplateChange = (templateId: string) => {
-    if (templateId === 'none') {
+    if (templateId === "none") {
       setFormData(prev => ({
         ...prev,
-        templateId: undefined
+        templateId: undefined,
       }));
       setSelectedTemplate(null);
       return;
     }
-    
+
     const template = templates?.find(t => t.id === templateId);
     if (template) {
-      const generatedEstimate = generateEstimateFromTemplate(template, formData.profitMargin);
+      const generatedEstimate = generateEstimateFromTemplate(
+        template,
+        formData.profitMargin
+      );
       setFormData(prev => ({
         ...prev,
         templateId: template.id,
         name: prev.name || generatedEstimate.name,
         items: [...generatedEstimate.items],
-        currency: template.currency
+        currency: template.currency,
       }));
       setSelectedTemplate(template);
     }
@@ -215,59 +234,65 @@ export function CostSimulatorDialog({
   const handleAddItem = () => {
     const newItem: CostEstimateItem = {
       id: generateId(),
-      name: '',
-      type: 'material',
-      unit: 'unidad',
+      name: "",
+      type: "material",
+      unit: "unidad",
       unitCost: 0,
       quantity: 1,
       total: 0,
-      description: ''
+      description: "",
     };
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, newItem]
+      items: [...prev.items, newItem],
     }));
   };
 
-  const handleUpdateItem = (index: number, updates: Partial<CostEstimateItem>) => {
+  const handleUpdateItem = (
+    index: number,
+    updates: Partial<CostEstimateItem>
+  ) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map((item, i) => {
         if (i === index) {
           const updatedItem = { ...item, ...updates };
           // Recalculate total if quantity or unitCost changed
-          if ('quantity' in updates || 'unitCost' in updates) {
-            updatedItem.total = calculateItemTotal(updatedItem.unitCost, updatedItem.quantity);
+          if ("quantity" in updates || "unitCost" in updates) {
+            updatedItem.total = calculateItemTotal(
+              updatedItem.unitCost,
+              updatedItem.quantity
+            );
           }
           return updatedItem;
         }
         return item;
-      })
+      }),
     }));
   };
 
   const handleRemoveItem = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index)
+      items: prev.items.filter((_, i) => i !== index),
     }));
   };
 
   const handleProfitMarginChange = (margin: number) => {
     setFormData(prev => ({
       ...prev,
-      profitMargin: margin
+      profitMargin: margin,
     }));
   };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast.error('El nombre de la cotización es requerido');
+      toast.error("El nombre de la cotización es requerido");
       return;
     }
 
     if (formData.items.length === 0) {
-      toast.error('Debe agregar al menos un elemento');
+      toast.error("Debe agregar al menos un elemento");
       return;
     }
 
@@ -287,28 +312,32 @@ export function CostSimulatorDialog({
         currency: formData.currency,
         notes: formData.notes,
         createdAt: isEditing && estimate ? estimate.createdAt : new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Save to localStorage for now
-      const storageKey = 'cost-estimates';
-      const existingEstimates = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      
+      const storageKey = "cost-estimates";
+      const existingEstimates = JSON.parse(
+        localStorage.getItem(storageKey) || "[]"
+      );
+
       if (isEditing && estimate) {
-        const index = existingEstimates.findIndex((e: CostEstimate) => e.id === estimate.id);
+        const index = existingEstimates.findIndex(
+          (e: CostEstimate) => e.id === estimate.id
+        );
         if (index > -1) {
           existingEstimates[index] = estimateData;
         }
-        toast.success('Cotización actualizada');
+        toast.success("Cotización actualizada");
       } else {
         existingEstimates.push(estimateData);
-        toast.success('Cotización creada');
+        toast.success("Cotización creada");
       }
-      
+
       localStorage.setItem(storageKey, JSON.stringify(existingEstimates));
       onSuccess();
     } catch (error) {
-      toast.error('Error al guardar la cotización');
+      toast.error("Error al guardar la cotización");
     }
   };
 
@@ -317,7 +346,7 @@ export function CostSimulatorDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Editar Cotización' : 'Nueva Cotización'}
+            {isEditing ? "Editar Cotización" : "Nueva Cotización"}
           </DialogTitle>
         </DialogHeader>
 
@@ -329,21 +358,29 @@ export function CostSimulatorDialog({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="Nombre de la cotización"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="client">Cliente</Label>
-              <Select value={formData.clientId || 'none'} onValueChange={(value) => 
-                setFormData(prev => ({ ...prev, clientId: value === 'none' ? undefined : value }))
-              }>
+              <Select
+                value={formData.clientId || "none"}
+                onValueChange={value =>
+                  setFormData(prev => ({
+                    ...prev,
+                    clientId: value === "none" ? undefined : value,
+                  }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin cliente</SelectItem>
-                  {clients?.map((client) => (
+                  {clients?.map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
                     </SelectItem>
@@ -357,16 +394,20 @@ export function CostSimulatorDialog({
           {!isEditing && (
             <div className="space-y-2">
               <Label htmlFor="template">Seleccionar Plantilla</Label>
-              <Select value={formData.templateId || 'none'} onValueChange={handleTemplateChange}>
+              <Select
+                value={formData.templateId || "none"}
+                onValueChange={handleTemplateChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar plantilla (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin plantilla</SelectItem>
-                  {templates?.map((template) => {
-                    const totalItems = Object.keys(template.categories?.materials || {}).length + 
-                                     Object.keys(template.categories?.labor || {}).length + 
-                                     Object.keys(template.categories?.equipment || {}).length;
+                  {templates?.map(template => {
+                    const totalItems =
+                      Object.keys(template.categories?.materials || {}).length +
+                      Object.keys(template.categories?.labor || {}).length +
+                      Object.keys(template.categories?.equipment || {}).length;
                     return (
                       <SelectItem key={template.id} value={template.id}>
                         {template.name} - {totalItems} elementos
@@ -381,7 +422,9 @@ export function CostSimulatorDialog({
           {/* Items */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Elementos de la Cotización</CardTitle>
+              <CardTitle className="text-lg">
+                Elementos de la Cotización
+              </CardTitle>
               <Button onClick={handleAddItem} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Agregar Elemento
@@ -406,19 +449,30 @@ export function CostSimulatorDialog({
 
                   {/* Items */}
                   {formData.items.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-12 gap-2 items-center"
+                    >
                       <div className="col-span-3">
                         <Input
                           value={item.name}
-                          onChange={(e) => handleUpdateItem(index, { name: e.target.value })}
+                          onChange={e =>
+                            handleUpdateItem(index, { name: e.target.value })
+                          }
                           placeholder="Nombre del elemento"
                           size="sm"
                         />
                       </div>
                       <div className="col-span-2">
-                        <Select 
-                          value={item.type} 
-                          onValueChange={(value: 'material' | 'labor' | 'equipment' | 'overhead') => handleUpdateItem(index, { type: value })}
+                        <Select
+                          value={item.type}
+                          onValueChange={(
+                            value:
+                              | "material"
+                              | "labor"
+                              | "equipment"
+                              | "overhead"
+                          ) => handleUpdateItem(index, { type: value })}
                         >
                           <SelectTrigger size="sm">
                             <SelectValue />
@@ -427,7 +481,9 @@ export function CostSimulatorDialog({
                             <SelectItem value="material">Material</SelectItem>
                             <SelectItem value="labor">Mano de obra</SelectItem>
                             <SelectItem value="equipment">Equipos</SelectItem>
-                            <SelectItem value="overhead">Gastos generales</SelectItem>
+                            <SelectItem value="overhead">
+                              Gastos generales
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -435,7 +491,11 @@ export function CostSimulatorDialog({
                         <Input
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => handleUpdateItem(index, { quantity: parseFloat(e.target.value) || 0 })}
+                          onChange={e =>
+                            handleUpdateItem(index, {
+                              quantity: parseFloat(e.target.value) || 0,
+                            })
+                          }
                           min="0"
                           step="0.01"
                           size="sm"
@@ -444,7 +504,9 @@ export function CostSimulatorDialog({
                       <div className="col-span-1">
                         <Input
                           value={item.unit}
-                          onChange={(e) => handleUpdateItem(index, { unit: e.target.value })}
+                          onChange={e =>
+                            handleUpdateItem(index, { unit: e.target.value })
+                          }
                           placeholder="m²"
                           size="sm"
                         />
@@ -453,7 +515,11 @@ export function CostSimulatorDialog({
                         <Input
                           type="number"
                           value={item.unitCost}
-                          onChange={(e) => handleUpdateItem(index, { unitCost: parseFloat(e.target.value) || 0 })}
+                          onChange={e =>
+                            handleUpdateItem(index, {
+                              unitCost: parseFloat(e.target.value) || 0,
+                            })
+                          }
                           min="0"
                           step="0.01"
                           size="sm"
@@ -488,7 +554,9 @@ export function CostSimulatorDialog({
                   id="profitMargin"
                   type="number"
                   value={formData.profitMargin}
-                  onChange={(e) => handleProfitMarginChange(parseFloat(e.target.value) || 0)}
+                  onChange={e =>
+                    handleProfitMarginChange(parseFloat(e.target.value) || 0)
+                  }
                   min="0"
                   max="100"
                   step="0.1"
@@ -498,14 +566,16 @@ export function CostSimulatorDialog({
                 <Label htmlFor="notes">Notas</Label>
                 <Textarea
                   id="notes"
-                  value={formData.notes || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  value={formData.notes || ""}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, notes: e.target.value }))
+                  }
                   placeholder="Notas adicionales..."
                   rows={3}
                 />
               </div>
             </div>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -516,10 +586,14 @@ export function CostSimulatorDialog({
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">{formatCurrency(calculation.subtotal)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(calculation.subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Margen ({formData.profitMargin}%):</span>
+                  <span className="text-gray-600">
+                    Margen ({formData.profitMargin}%):
+                  </span>
                   <span className="font-medium">
                     {formatCurrency(calculation.total - calculation.subtotal)}
                   </span>
@@ -527,7 +601,9 @@ export function CostSimulatorDialog({
                 <Separator />
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-primary">{formatCurrency(calculation.total)}</span>
+                  <span className="font-bold text-primary">
+                    {formatCurrency(calculation.total)}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -540,7 +616,7 @@ export function CostSimulatorDialog({
             </Button>
             <Button onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
-              {isEditing ? 'Actualizar Cotización' : 'Crear Cotización'}
+              {isEditing ? "Actualizar Cotización" : "Crear Cotización"}
             </Button>
           </div>
         </div>

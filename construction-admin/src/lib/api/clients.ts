@@ -3,11 +3,11 @@
 // Servicios para gestión de clientes
 // =====================================================
 
-import { apiClient } from './client';
-import type { Client, Project } from './types';
+import { apiClient } from "./client";
+import type { Client, Project } from "./types";
 
 export class ClientsService {
-  private endpoint = '/clients';
+  private endpoint = "/clients";
 
   // =====================================================
   // CRUD CLIENTES
@@ -16,20 +16,19 @@ export class ClientsService {
   /**
    * Obtener todos los clientes
    */
-  async getAll(filters?: {
-    search?: string;
-  }): Promise<Client[]> {
-    const response = await apiClient.get<{data: Client[]} | Client[]>(this.endpoint, filters);
+  async getAll(filters?: { search?: string }): Promise<Client[]> {
+    const response = await apiClient.get<{ data: Client[] } | Client[]>(
+      this.endpoint,
+      filters
+    );
     // Handle both {data: array} and direct array responses
-    return Array.isArray(response) ? response : (response.data || []);
+    return Array.isArray(response) ? response : response.data || [];
   }
 
   /**
    * Alias para getAll - mantiene compatibilidad con componentes existentes
    */
-  async list(filters?: {
-    search?: string;
-  }): Promise<{ data: Client[] }> {
+  async list(filters?: { search?: string }): Promise<{ data: Client[] }> {
     const clients = await this.getAll(filters);
     return { data: clients };
   }
@@ -57,13 +56,16 @@ export class ClientsService {
   /**
    * Actualizar cliente
    */
-  async update(id: string, data: Partial<{
-    name: string;
-    contact_name?: string;
-    phone?: string;
-    email?: string;
-    address?: string;
-  }>): Promise<Client> {
+  async update(
+    id: string,
+    data: Partial<{
+      name: string;
+      contact_name?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+    }>
+  ): Promise<Client> {
     return apiClient.put<Client>(`${this.endpoint}/${id}`, data);
   }
 

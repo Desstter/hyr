@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,23 +17,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { api, handleApiError } from '@/lib/api';
-import type { BudgetItem, BudgetItemCategory } from '@/lib/api/types';
-import { toast } from 'sonner';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { api, handleApiError } from "@/lib/api";
+import type { BudgetItem, BudgetItemCategory } from "@/lib/api/types";
+import { toast } from "sonner";
 
 const budgetItemSchema = z.object({
-  category: z.enum(['materials', 'labor', 'equipment', 'overhead'] as const, {
-    required_error: 'La categoría es requerida'
+  category: z.enum(["materials", "labor", "equipment", "overhead"] as const, {
+    required_error: "La categoría es requerida",
   }),
-  description: z.string().min(1, 'La descripción es requerida'),
-  quantity: z.number().min(0, 'La cantidad debe ser mayor o igual a 0'),
-  unit_cost: z.number().min(0, 'El costo unitario debe ser mayor or igual a 0'),
-  currency: z.enum(['COP', 'USD', 'EUR'] as const).default('COP'),
+  description: z.string().min(1, "La descripción es requerida"),
+  quantity: z.number().min(0, "La cantidad debe ser mayor o igual a 0"),
+  unit_cost: z.number().min(0, "El costo unitario debe ser mayor or igual a 0"),
+  currency: z.enum(["COP", "USD", "EUR"] as const).default("COP"),
 });
 
 type BudgetItemFormData = z.infer<typeof budgetItemSchema>;
@@ -46,23 +52,23 @@ interface BudgetItemDialogProps {
   onSuccess?: () => void;
 }
 
-export function BudgetItemDialog({ 
-  open, 
-  onOpenChange, 
-  projectId, 
-  budgetItem, 
-  onSuccess 
+export function BudgetItemDialog({
+  open,
+  onOpenChange,
+  projectId,
+  budgetItem,
+  onSuccess,
 }: BudgetItemDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<BudgetItemFormData>({
     resolver: zodResolver(budgetItemSchema),
     defaultValues: {
-      category: budgetItem?.category || 'materials',
-      description: budgetItem?.description || '',
+      category: budgetItem?.category || "materials",
+      description: budgetItem?.description || "",
       quantity: budgetItem?.quantity || 1,
       unit_cost: budgetItem?.unit_cost || 0,
-      currency: budgetItem?.currency || 'COP',
+      currency: budgetItem?.currency || "COP",
     },
   });
 
@@ -75,23 +81,23 @@ export function BudgetItemDialog({
           ...data,
           project_id: projectId,
         });
-        toast.success('Partida actualizada exitosamente');
+        toast.success("Partida actualizada exitosamente");
       } else {
         // Crear nuevo item
         await api.budgetItems.create({
           project_id: projectId,
           ...data,
         });
-        toast.success('Partida creada exitosamente');
+        toast.success("Partida creada exitosamente");
       }
-      
+
       onOpenChange(false);
       onSuccess?.();
       form.reset();
     } catch (error) {
-      console.error('Error saving budget item:', error);
+      console.error("Error saving budget item:", error);
       const errorMessage = handleApiError(error);
-      toast.error('Error al guardar la partida: ' + errorMessage);
+      toast.error("Error al guardar la partida: " + errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -99,10 +105,10 @@ export function BudgetItemDialog({
 
   const getCategoryLabel = (category: BudgetItemCategory) => {
     const labels = {
-      materials: 'Materiales',
-      labor: 'Mano de obra',
-      equipment: 'Equipos/Herramientas',
-      overhead: 'Gastos Generales',
+      materials: "Materiales",
+      labor: "Mano de obra",
+      equipment: "Equipos/Herramientas",
+      overhead: "Gastos Generales",
     };
     return labels[category];
   };
@@ -112,10 +118,12 @@ export function BudgetItemDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {budgetItem ? 'Editar Partida de Presupuesto' : 'Nueva Partida de Presupuesto'}
+            {budgetItem
+              ? "Editar Partida de Presupuesto"
+              : "Nueva Partida de Presupuesto"}
           </DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Category */}
@@ -132,10 +140,18 @@ export function BudgetItemDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="materials">{getCategoryLabel('materials')}</SelectItem>
-                      <SelectItem value="labor">{getCategoryLabel('labor')}</SelectItem>
-                      <SelectItem value="equipment">{getCategoryLabel('equipment')}</SelectItem>
-                      <SelectItem value="overhead">{getCategoryLabel('overhead')}</SelectItem>
+                      <SelectItem value="materials">
+                        {getCategoryLabel("materials")}
+                      </SelectItem>
+                      <SelectItem value="labor">
+                        {getCategoryLabel("labor")}
+                      </SelectItem>
+                      <SelectItem value="equipment">
+                        {getCategoryLabel("equipment")}
+                      </SelectItem>
+                      <SelectItem value="overhead">
+                        {getCategoryLabel("overhead")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -151,8 +167,8 @@ export function BudgetItemDialog({
                 <FormItem>
                   <FormLabel>Descripción *</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
+                    <Textarea
+                      {...field}
                       placeholder="Descripción de la partida"
                       rows={2}
                     />
@@ -176,7 +192,9 @@ export function BudgetItemDialog({
                         min="0"
                         step="0.01"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={e =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -197,7 +215,9 @@ export function BudgetItemDialog({
                         min="0"
                         step="0.01"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={e =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -211,10 +231,14 @@ export function BudgetItemDialog({
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total:</span>
                 <span className="text-lg font-semibold">
-                  ${(form.watch('quantity') * form.watch('unit_cost')).toLocaleString('es-CO', {
+                  $
+                  {(
+                    form.watch("quantity") * form.watch("unit_cost")
+                  ).toLocaleString("es-CO", {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
-                  })} COP
+                  })}{" "}
+                  COP
                 </span>
               </div>
             </div>
@@ -229,7 +253,11 @@ export function BudgetItemDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Guardando...' : (budgetItem ? 'Actualizar' : 'Crear')}
+                {isLoading
+                  ? "Guardando..."
+                  : budgetItem
+                    ? "Actualizar"
+                    : "Crear"}
               </Button>
             </div>
           </form>

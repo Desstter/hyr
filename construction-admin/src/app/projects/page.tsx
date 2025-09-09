@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { EnhancedProjectsTable } from '@/components/projects/enhanced-projects-table';
-import type { Project } from '@/lib/api';
-import { ProjectDialog } from '@/components/projects/project-dialog';
-import { useTranslations } from '@/lib/i18n';
-import { Plus, Zap, TrendingUp } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { EnhancedProjectsTable } from "@/components/projects/enhanced-projects-table";
+import type { Project } from "@/lib/api";
+import { ProjectDialog } from "@/components/projects/project-dialog";
+import { useTranslations } from "@/lib/i18n";
+import { Plus, Zap, TrendingUp } from "lucide-react";
 
 export default function ProjectsPage() {
-  const t = useTranslations('es');
+  const _t = useTranslations("es");
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>();
 
@@ -38,9 +38,9 @@ export default function ProjectsPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <Button 
+          <Button
             onClick={() => setShowProjectDialog(true)}
             size="lg"
             className="shadow-lg hover:shadow-xl transition-all duration-200"
@@ -52,12 +52,12 @@ export default function ProjectsPage() {
       </div>
 
       {/* Enhanced Projects Table */}
-      <EnhancedProjectsTable 
-        onEditProject={(project) => {
+      <EnhancedProjectsTable
+        onEditProject={project => {
           setEditingProject(project);
           setShowProjectDialog(true);
         }}
-        onViewProject={(project) => {
+        onViewProject={project => {
           // Navigate to project detail page
           window.location.href = `/projects/${project.id}`;
         }}
@@ -66,7 +66,7 @@ export default function ProjectsPage() {
       {/* Project Dialog */}
       <ProjectDialog
         open={showProjectDialog}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setShowProjectDialog(open);
           if (!open) setEditingProject(undefined);
         }}

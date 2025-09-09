@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/components/ui/use-toast';
-import { Loader2, Save, Building, FileText, Settings } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
+import { Loader2, Save, Building, FileText, Settings } from "lucide-react";
 
 interface CompanySettings {
   id?: string;
@@ -37,26 +43,26 @@ interface CompanySettings {
 
 export default function CompanySettingsPage() {
   const [settings, setSettings] = useState<CompanySettings>({
-    company_name: 'HYR CONSTRUCTORA & SOLDADURA S.A.S.',
-    nit: '900123456',
-    dv: '7',
-    ciiu: '4100',
-    address: 'Calle 123 #45-67, Bogotá D.C.',
-    phone: '+57 1 234 5678',
-    email: 'info@hyrconstructora.com',
+    company_name: "HYR CONSTRUCTORA & SOLDADURA S.A.S.",
+    nit: "900123456",
+    dv: "7",
+    ciiu: "4100",
+    address: "Calle 123 #45-67, Bogotá D.C.",
+    phone: "+57 1 234 5678",
+    email: "info@hyrconstructora.com",
     dian_invoice_resolution: {
-      number: '18760000001',
-      date: '2024-01-01',
-      prefix: 'SETT',
+      number: "18760000001",
+      date: "2024-01-01",
+      prefix: "SETT",
       from: 1,
       to: 5000,
-      valid_until: '2025-12-31'
+      valid_until: "2025-12-31",
     },
     dian_payroll_resolution: {
-      number: '000000000042',
-      date: '2024-01-01',
-      valid_until: '2025-12-31'
-    }
+      number: "000000000042",
+      date: "2024-01-01",
+      valid_until: "2025-12-31",
+    },
   });
 
   const [loading, setLoading] = useState(true);
@@ -70,13 +76,12 @@ export default function CompanySettingsPage() {
     try {
       // Simular carga de configuración existente
       // En implementación real: const response = await fetch('/api/settings/company');
-      
+
       setTimeout(() => {
         setLoading(false);
       }, 1000);
-      
     } catch (error) {
-      console.error('Error cargando configuración:', error);
+      console.error("Error cargando configuración:", error);
       toast({
         title: "Error",
         description: "No se pudo cargar la configuración empresarial",
@@ -89,25 +94,32 @@ export default function CompanySettingsPage() {
   const handleInputChange = (field: string, value: string) => {
     setSettings(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleResolutionChange = (type: 'invoice' | 'payroll', field: string, value: string | number) => {
-    const resolutionKey = type === 'invoice' ? 'dian_invoice_resolution' : 'dian_payroll_resolution';
-    
+  const handleResolutionChange = (
+    type: "invoice" | "payroll",
+    field: string,
+    value: string | number
+  ) => {
+    const resolutionKey =
+      type === "invoice"
+        ? "dian_invoice_resolution"
+        : "dian_payroll_resolution";
+
     setSettings(prev => ({
       ...prev,
       [resolutionKey]: {
         ...prev[resolutionKey],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
   const handleSave = async () => {
     setSaving(true);
-    
+
     try {
       // Validaciones básicas
       if (!settings.company_name || !settings.nit || !settings.ciiu) {
@@ -121,7 +133,7 @@ export default function CompanySettingsPage() {
       }
 
       // Simular guardado
-      // En implementación real: 
+      // En implementación real:
       // const response = await fetch('/api/settings/company', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
@@ -131,13 +143,13 @@ export default function CompanySettingsPage() {
       setTimeout(() => {
         toast({
           title: "Configuración guardada",
-          description: "La configuración empresarial se ha actualizado exitosamente",
+          description:
+            "La configuración empresarial se ha actualizado exitosamente",
         });
         setSaving(false);
       }, 1000);
-      
     } catch (error) {
-      console.error('Error guardando configuración:', error);
+      console.error("Error guardando configuración:", error);
       toast({
         title: "Error",
         description: "No se pudo guardar la configuración",
@@ -161,8 +173,12 @@ export default function CompanySettingsPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Configuración Empresarial</h1>
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          {saving ? 'Guardando...' : 'Guardar Configuración'}
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          {saving ? "Guardando..." : "Guardar Configuración"}
         </Button>
       </div>
 
@@ -195,7 +211,9 @@ export default function CompanySettingsPage() {
                   <Input
                     id="company_name"
                     value={settings.company_name}
-                    onChange={(e) => handleInputChange('company_name', e.target.value)}
+                    onChange={e =>
+                      handleInputChange("company_name", e.target.value)
+                    }
                     placeholder="Nombre completo de la empresa"
                   />
                 </div>
@@ -206,7 +224,7 @@ export default function CompanySettingsPage() {
                     <Input
                       id="nit"
                       value={settings.nit}
-                      onChange={(e) => handleInputChange('nit', e.target.value)}
+                      onChange={e => handleInputChange("nit", e.target.value)}
                       placeholder="900123456"
                     />
                   </div>
@@ -215,7 +233,7 @@ export default function CompanySettingsPage() {
                     <Input
                       id="dv"
                       value={settings.dv}
-                      onChange={(e) => handleInputChange('dv', e.target.value)}
+                      onChange={e => handleInputChange("dv", e.target.value)}
                       placeholder="7"
                       maxLength={1}
                     />
@@ -224,15 +242,26 @@ export default function CompanySettingsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="ciiu">Código CIIU *</Label>
-                  <Select value={settings.ciiu} onValueChange={(value) => handleInputChange('ciiu', value)}>
+                  <Select
+                    value={settings.ciiu}
+                    onValueChange={value => handleInputChange("ciiu", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="4100">4100 - Construcción de edificios</SelectItem>
-                      <SelectItem value="4290">4290 - Construcción de otras obras de ingeniería civil</SelectItem>
-                      <SelectItem value="2592">2592 - Fabricación de productos metálicos</SelectItem>
-                      <SelectItem value="4321">4321 - Instalaciones eléctricas</SelectItem>
+                      <SelectItem value="4100">
+                        4100 - Construcción de edificios
+                      </SelectItem>
+                      <SelectItem value="4290">
+                        4290 - Construcción de otras obras de ingeniería civil
+                      </SelectItem>
+                      <SelectItem value="2592">
+                        2592 - Fabricación de productos metálicos
+                      </SelectItem>
+                      <SelectItem value="4321">
+                        4321 - Instalaciones eléctricas
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -243,7 +272,7 @@ export default function CompanySettingsPage() {
                     id="email"
                     type="email"
                     value={settings.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={e => handleInputChange("email", e.target.value)}
                     placeholder="contacto@empresa.com"
                   />
                 </div>
@@ -253,7 +282,7 @@ export default function CompanySettingsPage() {
                   <Input
                     id="phone"
                     value={settings.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={e => handleInputChange("phone", e.target.value)}
                     placeholder="+57 1 234 5678"
                   />
                 </div>
@@ -264,7 +293,7 @@ export default function CompanySettingsPage() {
                 <Textarea
                   id="address"
                   value={settings.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onChange={e => handleInputChange("address", e.target.value)}
                   placeholder="Dirección completa de la empresa"
                   rows={3}
                 />
@@ -282,22 +311,34 @@ export default function CompanySettingsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="invoice_resolution_number">Número de Resolución</Label>
+                  <Label htmlFor="invoice_resolution_number">
+                    Número de Resolución
+                  </Label>
                   <Input
                     id="invoice_resolution_number"
                     value={settings.dian_invoice_resolution.number}
-                    onChange={(e) => handleResolutionChange('invoice', 'number', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "invoice",
+                        "number",
+                        e.target.value
+                      )
+                    }
                     placeholder="18760000001"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="invoice_resolution_date">Fecha de Resolución</Label>
+                  <Label htmlFor="invoice_resolution_date">
+                    Fecha de Resolución
+                  </Label>
                   <Input
                     id="invoice_resolution_date"
                     type="date"
                     value={settings.dian_invoice_resolution.date}
-                    onChange={(e) => handleResolutionChange('invoice', 'date', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange("invoice", "date", e.target.value)
+                    }
                   />
                 </div>
 
@@ -306,7 +347,13 @@ export default function CompanySettingsPage() {
                   <Input
                     id="invoice_prefix"
                     value={settings.dian_invoice_resolution.prefix}
-                    onChange={(e) => handleResolutionChange('invoice', 'prefix', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "invoice",
+                        "prefix",
+                        e.target.value
+                      )
+                    }
                     placeholder="SETT"
                     maxLength={4}
                   />
@@ -318,7 +365,13 @@ export default function CompanySettingsPage() {
                     id="invoice_valid_until"
                     type="date"
                     value={settings.dian_invoice_resolution.valid_until}
-                    onChange={(e) => handleResolutionChange('invoice', 'valid_until', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "invoice",
+                        "valid_until",
+                        e.target.value
+                      )
+                    }
                   />
                 </div>
 
@@ -328,7 +381,13 @@ export default function CompanySettingsPage() {
                     id="invoice_from"
                     type="number"
                     value={settings.dian_invoice_resolution.from}
-                    onChange={(e) => handleResolutionChange('invoice', 'from', parseInt(e.target.value))}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "invoice",
+                        "from",
+                        parseInt(e.target.value)
+                      )
+                    }
                     placeholder="1"
                   />
                 </div>
@@ -339,16 +398,30 @@ export default function CompanySettingsPage() {
                     id="invoice_to"
                     type="number"
                     value={settings.dian_invoice_resolution.to}
-                    onChange={(e) => handleResolutionChange('invoice', 'to', parseInt(e.target.value))}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "invoice",
+                        "to",
+                        parseInt(e.target.value)
+                      )
+                    }
                     placeholder="5000"
                   />
                 </div>
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Numeración Actual</h4>
+                <h4 className="font-medium text-blue-900 mb-2">
+                  Numeración Actual
+                </h4>
                 <p className="text-blue-800 text-sm">
-                  {settings.dian_invoice_resolution.prefix}{String(settings.dian_invoice_resolution.from).padStart(6, '0')} - {settings.dian_invoice_resolution.prefix}{String(settings.dian_invoice_resolution.to).padStart(6, '0')}
+                  {settings.dian_invoice_resolution.prefix}
+                  {String(settings.dian_invoice_resolution.from).padStart(
+                    6,
+                    "0"
+                  )}{" "}
+                  - {settings.dian_invoice_resolution.prefix}
+                  {String(settings.dian_invoice_resolution.to).padStart(6, "0")}
                 </p>
               </div>
             </CardContent>
@@ -364,22 +437,34 @@ export default function CompanySettingsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="payroll_resolution_number">Número de Resolución</Label>
+                  <Label htmlFor="payroll_resolution_number">
+                    Número de Resolución
+                  </Label>
                   <Input
                     id="payroll_resolution_number"
                     value={settings.dian_payroll_resolution.number}
-                    onChange={(e) => handleResolutionChange('payroll', 'number', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "payroll",
+                        "number",
+                        e.target.value
+                      )
+                    }
                     placeholder="000000000042"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="payroll_resolution_date">Fecha de Resolución</Label>
+                  <Label htmlFor="payroll_resolution_date">
+                    Fecha de Resolución
+                  </Label>
                   <Input
                     id="payroll_resolution_date"
                     type="date"
                     value={settings.dian_payroll_resolution.date}
-                    onChange={(e) => handleResolutionChange('payroll', 'date', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange("payroll", "date", e.target.value)
+                    }
                   />
                 </div>
 
@@ -389,15 +474,26 @@ export default function CompanySettingsPage() {
                     id="payroll_valid_until"
                     type="date"
                     value={settings.dian_payroll_resolution.valid_until}
-                    onChange={(e) => handleResolutionChange('payroll', 'valid_until', e.target.value)}
+                    onChange={e =>
+                      handleResolutionChange(
+                        "payroll",
+                        "valid_until",
+                        e.target.value
+                      )
+                    }
                   />
                 </div>
               </div>
 
               <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-medium text-green-900 mb-2">Estado de la Resolución</h4>
+                <h4 className="font-medium text-green-900 mb-2">
+                  Estado de la Resolución
+                </h4>
                 <p className="text-green-800 text-sm">
-                  Resolución habilitada para nómina electrónica hasta el {new Date(settings.dian_payroll_resolution.valid_until).toLocaleDateString('es-CO')}
+                  Resolución habilitada para nómina electrónica hasta el{" "}
+                  {new Date(
+                    settings.dian_payroll_resolution.valid_until
+                  ).toLocaleDateString("es-CO")}
                 </p>
               </div>
             </CardContent>
@@ -408,12 +504,23 @@ export default function CompanySettingsPage() {
       {/* Información de ayuda */}
       <Card className="border-yellow-200 bg-yellow-50">
         <CardContent className="p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">📋 Información Importante</h4>
+          <h4 className="font-medium text-yellow-800 mb-2">
+            📋 Información Importante
+          </h4>
           <ul className="text-yellow-700 text-sm space-y-1">
             <li>• Los campos marcados con (*) son obligatorios</li>
-            <li>• Las resoluciones DIAN deben estar vigentes para generar documentos</li>
-            <li>• El código CIIU debe corresponder a la actividad económica principal</li>
-            <li>• Esta información se usa para generar facturas y nómina electrónica</li>
+            <li>
+              • Las resoluciones DIAN deben estar vigentes para generar
+              documentos
+            </li>
+            <li>
+              • El código CIIU debe corresponder a la actividad económica
+              principal
+            </li>
+            <li>
+              • Esta información se usa para generar facturas y nómina
+              electrónica
+            </li>
           </ul>
         </CardContent>
       </Card>
