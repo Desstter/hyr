@@ -424,10 +424,10 @@ export async function generateAdvancedPDF(
     let yPosition = margin;
 
     // Colors for branding
-    const primaryColor = [245, 158, 11]; // Orange HYR
-    const darkGray = [55, 65, 81];
-    const lightGray = [156, 163, 175];
-    const white = [255, 255, 255];
+    const primaryColor: [number, number, number] = [245, 158, 11]; // Orange HYR
+    const darkGray: [number, number, number] = [55, 65, 81];
+    const lightGray: [number, number, number] = [156, 163, 175];
+    const white: [number, number, number] = [255, 255, 255];
 
     // HEADER - Company Branding
     doc.setFillColor(...primaryColor);

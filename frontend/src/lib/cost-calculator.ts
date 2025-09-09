@@ -78,7 +78,6 @@ export function createEstimateItemFromTemplate(
   quantity: number = 1
 ): Omit<CostEstimateItem, "id"> {
   return {
-    templateItemId: templateItem.id,
     name: templateItem.name,
     type: templateItem.type,
     unit: templateItem.unit,
@@ -111,11 +110,9 @@ export function generateEstimateFromTemplate(
 
   return {
     name: `Cotización - ${template.name}`,
-    templateId: template.id,
     items: items as CostEstimateItem[],
     subtotal: calculation.subtotal,
     profitMargin,
-    totalBeforeMargin: calculation.totalBeforeMargin,
     total: calculation.total,
     currency: template.currency,
   };
@@ -293,7 +290,7 @@ export function estimateProjectCostFromHistory(
   // Calculate average cost per unit
   const avgCostPerUnit =
     similarProjects.reduce((sum, project) => {
-      return sum + (project.spent || project.budget) / (project.size || 1);
+      return sum + (project.spent_total || project.budget_total) / 1; // Removed project.size as it doesn't exist in interface
     }, 0) / similarProjects.length;
 
   return avgCostPerUnit * projectSize;

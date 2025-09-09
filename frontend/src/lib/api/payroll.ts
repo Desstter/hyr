@@ -146,10 +146,16 @@ export class PayrollService {
   }> {
     return apiClient.get<{
       totalEmployees: number;
-      totalPayrollCost: number;
+      totalNetPay: number;
+      totalEmployerCost: number;
       totalDeductions: number;
       totalBenefits: number;
-      netPayroll: number;
+      byDepartment: Array<{
+        department: string;
+        employees: number;
+        totalCost: number;
+        avgSalary: number;
+      }>;
       payrollTax: {
         totalHealthEmployee: number;
         totalPensionEmployee: number;
@@ -237,15 +243,21 @@ export class PayrollService {
   }> {
     return apiClient.get<{
       periodo: string;
-      version: string;
+      formato: "PILA_2025";
+      compliance: {
+        fsp_included: boolean;
+        law_114_1_applied: boolean;
+        arl_by_worksite: boolean;
+      };
       empleados: Array<{
         documento: string;
         nombre: string;
-        tipoDocumento: string;
         salario: number;
         diasTrabajados: number;
+        ibc: number;
         salud: number;
         pension: number;
+        fsp?: number;
         arl: number;
         arlClass: string;
         parafiscales: number;
@@ -338,12 +350,13 @@ export class PayrollService {
     return apiClient.post<{
       empleado: {
         nombre: string;
-        documento: string;
         fechaIngreso: string;
         fechaSalida: string;
+        tiempoServicio: string;
       };
       prestaciones: {
         cesantias: number;
+        interesesCesantias: number;
         prima: number;
         vacaciones: number;
         total: number;
@@ -469,16 +482,31 @@ export class PayrollService {
       aportes: {
         salud: number;
         pension: number;
-        arl: number;
+        arl: Record<string, number>;
         cesantias: number;
         prima: number;
         vacaciones: number;
-        interesesCesantias: number;
       };
       parafiscales: {
-        sena: { rate: number; min_employees: number };
-        icbf: { rate: number; min_employees: number };
-        cajas: { rate: number; min_employees: number };
+        sena: number;
+        icbf: number;
+        cajas: number;
+      };
+      fsp: {
+        ranges: Array<{
+          min: number;
+          max: number;
+          rate: number;
+        }>;
+      };
+      law_114_1: {
+        enabled: boolean;
+        salud_employer_exempt: boolean;
+        parafiscales_exempt: boolean;
+        conditions: {
+          max_uvt_salary: number;
+          min_employees: number;
+        };
       };
       arlClasses: Record<
         string,
@@ -569,12 +597,14 @@ export class PayrollService {
     }>;
   }> {
     return apiClient.get<{
-      totalEmployees: number;
-      totalPayrollCost: number;
-      avgSalary: number;
-      payrollHistory: Array<{
+      totalProcessed: number;
+      totalCost: number;
+      averageSalary: number;
+      totalDeductions: number;
+      totalBenefits: number;
+      monthlyTrend: Array<{
         month: string;
-        cost: number;
+        totalCost: number;
         employees: number;
         avgSalary: number;
       }>;

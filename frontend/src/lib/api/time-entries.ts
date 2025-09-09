@@ -389,7 +389,7 @@ export const timeEntriesService = new TimeEntriesService();
 // HOOKS PARA REACT
 // =====================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * Hook para cargar registros de tiempo
@@ -402,7 +402,7 @@ export function useTimeEntries(
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  const loadTimeEntries = async () => {
+  const loadTimeEntries = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -418,11 +418,11 @@ export function useTimeEntries(
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   useEffect(() => {
     loadTimeEntries();
-  }, [JSON.stringify(params)]);
+  }, [loadTimeEntries]);
 
   return {
     timeEntries,
@@ -446,7 +446,7 @@ export function usePersonnelTimeEntries(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -462,13 +462,13 @@ export function usePersonnelTimeEntries(
     } finally {
       setLoading(false);
     }
-  };
+  }, [personnelId, params]);
 
   useEffect(() => {
     if (personnelId) {
       loadData();
     }
-  }, [personnelId, JSON.stringify(params)]);
+  }, [personnelId, loadData]);
 
   return {
     timeEntries: data?.timeEntries || [],
@@ -499,7 +499,7 @@ export function useProjectTimeEntries(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -512,13 +512,13 @@ export function useProjectTimeEntries(
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, params]);
 
   useEffect(() => {
     if (projectId) {
       loadData();
     }
-  }, [projectId, JSON.stringify(params)]);
+  }, [projectId, loadData]);
 
   return {
     timeEntries: data?.timeEntries || [],
@@ -550,7 +550,7 @@ export function useWeeklySummary(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -567,13 +567,13 @@ export function useWeeklySummary(
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, personnelId, projectId]);
 
   useEffect(() => {
     if (startDate) {
       loadData();
     }
-  }, [startDate, personnelId, projectId]);
+  }, [startDate, loadData]);
 
   return {
     weekDays: data?.weekDays || [],

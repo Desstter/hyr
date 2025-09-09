@@ -86,6 +86,9 @@ export class ComplianceService {
     const response = await apiClient.get<ApiResponse<ComplianceDashboardStats>>(
       `${this.baseUrl}/dashboard-stats`
     );
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
     return response.data;
   }
 
@@ -96,6 +99,9 @@ export class ComplianceService {
     const response = await apiClient.get<ApiResponse<InvoicesSummary>>(
       `${this.baseUrl}/invoices-summary`
     );
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
     return response.data;
   }
 
@@ -106,6 +112,9 @@ export class ComplianceService {
     const response = await apiClient.get<ApiResponse<ComplianceObligation[]>>(
       `${this.baseUrl}/upcoming-obligations`
     );
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
     return response.data;
   }
 }

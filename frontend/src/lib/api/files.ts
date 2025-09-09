@@ -82,7 +82,7 @@ class FilesService {
       const baseUrl =
         process.env.NODE_ENV === "development"
           ? "http://localhost:3001/api"
-          : (await import("../appConfig")).apiUrlSync();
+          : await (await import("../appConfig")).apiUrl("");
 
       const response = await fetch(
         `${baseUrl}/files/download/${type}/${filename}`,
@@ -327,7 +327,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  const loadFiles = async (options?: { limit?: number; offset?: number }) => {
+  const loadFiles = React.useCallback(async (options?: { limit?: number; offset?: number }) => {
     try {
       setLoading(true);
       setError(null);
@@ -339,7 +339,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [type]);
 
   const deleteFile = async (filename: string) => {
     try {
@@ -365,7 +365,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
     if (autoLoad) {
       loadFiles();
     }
-  }, [type, autoLoad]);
+  }, [loadFiles, autoLoad]);
 
   return {
     files,

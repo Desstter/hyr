@@ -56,7 +56,7 @@ export async function getAppConfig(): Promise<AppConfig> {
       };
     }
   }
-  return config;
+  return config!; // Non-null assertion since we always set fallback config in catch block
 }
 
 /**

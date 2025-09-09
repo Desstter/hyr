@@ -290,7 +290,7 @@ export class InvoicingService {
       }
 
       const response = await this.listInvoices(filters);
-      const invoices = response.data?.invoices || response.data || [];
+      const invoices = response.data || [];
 
       const stats = {
         total_count: invoices.length,

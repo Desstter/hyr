@@ -309,7 +309,7 @@ function TemplateCard({ template, onUse, t }: TemplateCardProps) {
 
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Elementos:</span>
-          <Badge variant="secondary">{template.items.length}</Badge>
+          <Badge variant="secondary">{(template.items || []).length}</Badge>
         </div>
 
         <div className="text-sm text-gray-600">
