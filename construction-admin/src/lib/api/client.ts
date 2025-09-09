@@ -4,7 +4,7 @@
 // SECURITY FIX: URLs hardcodeadas reemplazadas por configuración runtime
 // =====================================================
 
-import { getAppConfig, apiUrlSync, type AppConfig } from '../appConfig';
+import { getAppConfig, type AppConfig } from "../appConfig";
 
 // TYPE FIX: Replace any with proper type for error data
 export interface ApiErrorData {
@@ -15,9 +15,13 @@ export interface ApiErrorData {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: ApiErrorData) {
+  constructor(
+    public status: number,
+    message: string,
+    public data?: ApiErrorData
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -27,7 +31,7 @@ export class ApiClient {
 
   constructor() {
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
   }
 
@@ -46,11 +50,13 @@ export class ApiClient {
    */
   private getBaseUrl(): string {
     if (!this.config) {
-      throw new Error('ApiClient no inicializado. Llama a initialize() primero.');
+      throw new Error(
+        "ApiClient no inicializado. Llama a initialize() primero."
+      );
     }
-    
-    return process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:3001/api'
+
+    return process.env.NODE_ENV === "development"
+      ? "http://localhost:3001/api"
       : this.config.api.baseUrl;
   }
 
@@ -62,10 +68,10 @@ export class ApiClient {
     if (!this.config) {
       await this.initialize();
     }
-    
+
     const baseUrl = this.getBaseUrl();
     const url = `${baseUrl}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -82,11 +88,11 @@ export class ApiClient {
     while (retries <= maxRetries) {
       try {
         const response = await fetch(url, config);
-        
+
         if (!response.ok) {
           let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`;
           let errorData;
-          
+
           try {
             errorData = await response.json();
             if (errorData.error) {
@@ -97,7 +103,7 @@ export class ApiClient {
           } catch {
             // Si no se puede parsear JSON, usar mensaje por defecto
           }
-          
+
           throw new ApiError(response.status, errorMessage, errorData);
         }
 
@@ -112,41 +118,52 @@ export class ApiClient {
         if (error instanceof ApiError) {
           throw error;
         }
-        
+
         // Error de red o timeout - reintentar
-        if (retries < maxRetries && (
-          error instanceof Error && (
-            error.name === 'AbortError' || 
-            error.message.includes('fetch') ||
-            error.message.includes('network')
-          )
-        )) {
+        if (
+          retries < maxRetries &&
+          error instanceof Error &&
+          (error.name === "AbortError" ||
+            error.message.includes("fetch") ||
+            error.message.includes("network"))
+        ) {
           retries++;
-          console.warn(`API request failed (attempt ${retries}/${maxRetries + 1}):`, error.message);
+          console.warn(
+            `API request failed (attempt ${retries}/${maxRetries + 1}):`,
+            error.message
+          );
           // Esperar un poco antes de reintentar
           await new Promise(resolve => setTimeout(resolve, 1000 * retries));
           continue;
         }
-        
+
         // Error definitivo
-        const errorMessage = error instanceof Error ? error.message : 'Network error or unknown error';
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Network error or unknown error";
         throw new ApiError(
           0,
-          retries > 0 ? `${errorMessage} (after ${retries} retries)` : errorMessage
+          retries > 0
+            ? `${errorMessage} (after ${retries} retries)`
+            : errorMessage
         );
       }
     }
 
-    throw new ApiError(0, 'Max retries exceeded');
+    throw new ApiError(0, "Max retries exceeded");
   }
 
   // =====================================================
   // MÉTODOS HTTP BÁSICOS
   // =====================================================
 
-  async get<T>(endpoint: string, params?: Record<string, string | number | boolean | null | undefined>): Promise<T> {
+  async get<T>(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | null | undefined>
+  ): Promise<T> {
     let url = endpoint;
-    
+
     if (params) {
       const searchParams = new URLSearchParams();
       Object.keys(params).forEach(key => {
@@ -154,7 +171,7 @@ export class ApiClient {
           searchParams.append(key, String(params[key]));
         }
       });
-      
+
       const queryString = searchParams.toString();
       if (queryString) {
         url += `?${queryString}`;
@@ -162,34 +179,34 @@ export class ApiClient {
     }
 
     return this.makeRequest<T>(url, {
-      method: 'GET',
+      method: "GET",
     });
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.makeRequest<T>(endpoint, {
-      method: 'PATCH',
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async delete<T>(endpoint: string): Promise<T> {
     return this.makeRequest<T>(endpoint, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
@@ -200,14 +217,14 @@ export class ApiClient {
   setAuthToken(token: string) {
     this.defaultHeaders = {
       ...this.defaultHeaders,
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 
   removeAuthToken() {
     const headers: HeadersInit = {};
     Object.entries(this.defaultHeaders).forEach(([key, value]) => {
-      if (key !== 'Authorization') {
+      if (key !== "Authorization") {
         (headers as Record<string, string>)[key] = value as string;
       }
     });
@@ -234,12 +251,12 @@ export const handleApiError = (error: unknown): string => {
   if (error instanceof ApiError) {
     return error.message;
   }
-  
+
   if (error instanceof Error) {
     return error.message;
   }
-  
-  return 'Error desconocido';
+
+  return "Error desconocido";
 };
 
 // =====================================================

@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Star, 
+import { useState, useEffect } from "react";
+import {
+  FileText,
+  Star,
   Plus,
   Layers,
   Wrench,
   Home,
   Cog,
   Loader2,
-  AlertTriangle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTranslations } from '@/lib/i18n';
-import { getTemplates, CostTemplate } from '@/lib/api/simulator';
-import { formatCurrency } from '@/lib/finance';
-import { toast } from 'sonner';
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslations } from "@/lib/i18n";
+import { getTemplates, CostTemplate } from "@/lib/api/simulator";
+import { formatCurrency } from "@/lib/finance";
+import { toast } from "sonner";
 
 interface CostTemplatesListProps {
   onUseTemplate: (template?: CostTemplate) => void;
@@ -33,11 +33,11 @@ const categoryIcons = {
 };
 
 export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
-  const t = useTranslations('es');
+  const t = useTranslations("es");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<CostTemplate[]>([]);
-  
+
   // Cargar templates desde la API
   useEffect(() => {
     const loadTemplates = async () => {
@@ -47,10 +47,11 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
         const templatesData = await getTemplates();
         setTemplates(templatesData);
       } catch (err) {
-        console.error('Error loading cost templates:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Error al cargar templates';
+        console.error("Error loading cost templates:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al cargar templates";
         setError(errorMessage);
-        toast.error('Error cargando templates: ' + errorMessage);
+        toast.error("Error cargando templates: " + errorMessage);
       } finally {
         setLoading(false);
       }
@@ -60,29 +61,41 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
   }, []);
 
   // Group templates by category (necesitamos mapear a las categorías esperadas)
-  const templatesByCategory = templates.reduce((acc, template) => {
-    // Mapear los tipos de template a categorías para la UI
-    let category = 'custom_fabrication'; // default
-    
-    if (template.name.toLowerCase().includes('house') || template.name.toLowerCase().includes('casa')) {
-      category = 'residential_construction';
-    } else if (template.name.toLowerCase().includes('weld') || template.name.toLowerCase().includes('soldad')) {
-      category = 'structural_welding';
-    } else if (template.name.toLowerCase().includes('industrial') || template.name.toLowerCase().includes('repair')) {
-      category = 'industrial_repair';
-    }
-    
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(template);
-    return acc;
-  }, {} as Record<string, CostTemplate[]>);
+  const templatesByCategory = templates.reduce(
+    (acc, template) => {
+      // Mapear los tipos de template a categorías para la UI
+      let category = "custom_fabrication"; // default
+
+      if (
+        template.name.toLowerCase().includes("house") ||
+        template.name.toLowerCase().includes("casa")
+      ) {
+        category = "residential_construction";
+      } else if (
+        template.name.toLowerCase().includes("weld") ||
+        template.name.toLowerCase().includes("soldad")
+      ) {
+        category = "structural_welding";
+      } else if (
+        template.name.toLowerCase().includes("industrial") ||
+        template.name.toLowerCase().includes("repair")
+      ) {
+        category = "industrial_repair";
+      }
+
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(template);
+      return acc;
+    },
+    {} as Record<string, CostTemplate[]>
+  );
 
   const getEstimatedTotal = (template: CostTemplate) => {
     // Calculate estimated total based on template categories with default quantities
     let total = 0;
-    
+
     // Sumar todos los items de materiales, mano de obra y equipos
     Object.values(template.categories.materials).forEach(item => {
       total += item.cost_per_unit * 1; // cantidad por defecto = 1
@@ -93,7 +106,7 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
     Object.values(template.categories.equipment).forEach(item => {
       total += item.cost_per_unit * 1;
     });
-    
+
     return total;
   };
 
@@ -101,13 +114,13 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
     const materialsCount = Object.keys(template.categories.materials).length;
     const laborCount = Object.keys(template.categories.labor).length;
     const equipmentCount = Object.keys(template.categories.equipment).length;
-    
+
     const parts = [];
     if (materialsCount > 0) parts.push(`${materialsCount} Materiales`);
     if (laborCount > 0) parts.push(`${laborCount} Mano de obra`);
     if (equipmentCount > 0) parts.push(`${equipmentCount} Equipos`);
-    
-    return parts.join(', ') || 'Sin items';
+
+    return parts.join(", ") || "Sin items";
   };
 
   // Estados de loading y error
@@ -172,14 +185,18 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
             <TabsTrigger value="all">Todas</TabsTrigger>
             {Object.keys(templatesByCategory).map(category => (
               <TabsTrigger key={category} value={category}>
-                {t.simulator.categories[category as keyof typeof t.simulator.categories]}
+                {
+                  t.simulator.categories[
+                    category as keyof typeof t.simulator.categories
+                  ]
+                }
               </TabsTrigger>
             ))}
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {templates.map((template) => (
+              {templates.map(template => (
                 <TemplateCard
                   key={template.id}
                   template={template}
@@ -190,20 +207,26 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
             </div>
           </TabsContent>
 
-          {Object.entries(templatesByCategory).map(([category, categoryTemplates]) => (
-            <TabsContent key={category} value={category} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {categoryTemplates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    onUse={() => onUseTemplate(template)}
-                    t={t}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-          ))}
+          {Object.entries(templatesByCategory).map(
+            ([category, categoryTemplates]) => (
+              <TabsContent
+                key={category}
+                value={category}
+                className="space-y-4"
+              >
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {categoryTemplates.map(template => (
+                    <TemplateCard
+                      key={template.id}
+                      template={template}
+                      onUse={() => onUseTemplate(template)}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            )
+          )}
         </Tabs>
       )}
     </div>
@@ -213,27 +236,39 @@ export function CostTemplatesList({ onUseTemplate }: CostTemplatesListProps) {
 interface TemplateCardProps {
   template: CostTemplate;
   onUse: () => void;
-  t: any;
+  t: (key: string) => string;
 }
 
 function TemplateCard({ template, onUse, t }: TemplateCardProps) {
   const IconComponent = categoryIcons[template.category] || FileText;
-  const estimatedTotal = template.items.reduce((total, item) => total + (item.unitCost * 1), 0);
-  
+  const estimatedTotal = template.items.reduce(
+    (total, item) => total + item.unitCost * 1,
+    0
+  );
+
   const getItemTypeSummary = (template: CostTemplate) => {
-    const typeCounts = template.items.reduce((counts, item) => {
-      counts[item.type] = (counts[item.type] || 0) + 1;
-      return counts;
-    }, {} as Record<string, number>);
+    const typeCounts = template.items.reduce(
+      (counts, item) => {
+        counts[item.type] = (counts[item.type] || 0) + 1;
+        return counts;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(typeCounts)
-      .map(([type, count]) => `${count} ${t.simulator.itemTypes[type as keyof typeof t.simulator.itemTypes]}`)
+      .map(
+        ([type, count]) =>
+          `${count} ${t.simulator.itemTypes[type as keyof typeof t.simulator.itemTypes]}`
+      )
       .slice(0, 2) // Show only first 2 types
-      .join(', ');
+      .join(", ");
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onUse}>
+    <Card
+      className="hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onUse}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -251,34 +286,38 @@ function TemplateCard({ template, onUse, t }: TemplateCardProps) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline">
-            {t.simulator.categories[template.category as keyof typeof t.simulator.categories]}
+            {
+              t.simulator.categories[
+                template.category as keyof typeof t.simulator.categories
+              ]
+            }
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-3">
         {template.description && (
           <p className="text-sm text-gray-600 line-clamp-2">
             {template.description}
           </p>
         )}
-        
+
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Elementos:</span>
           <Badge variant="secondary">{template.items.length}</Badge>
         </div>
-        
+
         <div className="text-sm text-gray-600">
           <span className="block">{getItemTypeSummary(template)}</span>
         </div>
-        
+
         <div className="flex items-center justify-between pt-2 border-t">
           <span className="text-sm text-gray-600">Estimado:</span>
           <span className="font-bold text-primary">
             {formatCurrency(estimatedTotal)}
           </span>
         </div>
-        
+
         <Button className="w-full" size="sm">
           <FileText className="h-4 w-4 mr-2" />
           Usar Plantilla

@@ -1,13 +1,13 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  Users, 
-  FileSpreadsheet, 
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  FileText,
+  Users,
+  FileSpreadsheet,
   UserCheck,
   CheckCircle,
   AlertCircle,
@@ -15,17 +15,15 @@ import {
   Plus,
   Download,
   Eye,
-  RefreshCw
-} from 'lucide-react';
-import { 
-  useComplianceDashboard, 
-  useUpcomingObligations, 
-  getDianStatusBadge, 
-  getPriorityBadge, 
-  formatCurrency, 
-  formatPercentage 
-} from '@/lib/api/compliance';
-
+  RefreshCw,
+} from "lucide-react";
+import {
+  useComplianceDashboard,
+  useUpcomingObligations,
+  getDianStatusBadge,
+  formatCurrency,
+  formatPercentage,
+} from "@/lib/api/compliance";
 
 export default function CompliancePage() {
   const router = useRouter();
@@ -34,14 +32,15 @@ export default function CompliancePage() {
 
   const getStatusBadgeComponent = (status: string) => {
     const badge = getDianStatusBadge(status);
-    const colorClass = {
-      'green': 'bg-green-100 text-green-800',
-      'red': 'bg-red-100 text-red-800',
-      'yellow': 'bg-yellow-100 text-yellow-800',
-      'blue': 'bg-blue-100 text-blue-800',
-      'gray': 'bg-gray-100 text-gray-600'
-    }[badge.color] || 'bg-gray-100 text-gray-800';
-    
+    const colorClass =
+      {
+        green: "bg-green-100 text-green-800",
+        red: "bg-red-100 text-red-800",
+        yellow: "bg-yellow-100 text-yellow-800",
+        blue: "bg-blue-100 text-blue-800",
+        gray: "bg-gray-100 text-gray-600",
+      }[badge.color] || "bg-gray-100 text-gray-800";
+
     return <Badge className={colorClass}>{badge.text}</Badge>;
   };
 
@@ -68,9 +67,15 @@ export default function CompliancePage() {
         <Card className="border-red-200">
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-red-800 mb-2">Error al cargar datos</h3>
+            <h3 className="text-lg font-medium text-red-800 mb-2">
+              Error al cargar datos
+            </h3>
             <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={refetch} variant="outline" className="border-red-300">
+            <Button
+              onClick={refetch}
+              variant="outline"
+              className="border-red-300"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Reintentar
             </Button>
@@ -85,37 +90,48 @@ export default function CompliancePage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard de Cumplimiento</h1>
         <div className="flex items-center gap-4">
-          <Button onClick={refetch} variant="outline" size="sm" disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            onClick={refetch}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Actualizar
           </Button>
           <div className="text-sm text-gray-500">
-            Actualizado: {stats?.summary.last_updated ? 
-              new Date(stats.summary.last_updated).toLocaleString('es-CO') : 
-              'Cargando...'
-            }
+            Actualizado:{" "}
+            {stats?.summary.last_updated
+              ? new Date(stats.summary.last_updated).toLocaleString("es-CO")
+              : "Cargando..."}
           </div>
         </div>
       </div>
 
       {/* Tarjetas de estadísticas principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
         {/* Facturas Electrónicas */}
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Facturas Electrónicas</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Facturas Electrónicas
+            </CardTitle>
             <FileText className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.invoices.total || 0}</div>
+            <div className="text-2xl font-bold">
+              {stats?.invoices.total || 0}
+            </div>
             <p className="text-xs text-gray-600">
               {stats?.invoices.today || 0} emitidas hoy
             </p>
             <div className="flex items-center mt-2">
               <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
               <span className="text-xs text-green-600">
-                {formatPercentage(stats?.invoices.accepted_percentage || 0)} aceptadas
+                {formatPercentage(stats?.invoices.accepted_percentage || 0)}{" "}
+                aceptadas
               </span>
             </div>
           </CardContent>
@@ -124,21 +140,24 @@ export default function CompliancePage() {
         {/* Nómina Electrónica */}
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Nómina Electrónica</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Nómina Electrónica
+            </CardTitle>
             <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.payroll.total_employees || 0}</div>
+            <div className="text-2xl font-bold">
+              {stats?.payroll.total_employees || 0}
+            </div>
             <p className="text-xs text-gray-600">
-              Período: {stats?.payroll.current_period || 'N/A'}
+              Período: {stats?.payroll.current_period || "N/A"}
             </p>
             <div className="flex items-center mt-2">
               <Clock className="h-3 w-3 text-blue-500 mr-1" />
               <span className="text-xs text-blue-600">
-                {stats?.payroll.last_generated ? 
-                  `Generada: ${new Date(stats.payroll.last_generated).toLocaleDateString('es-CO')}` :
-                  'No generada'
-                }
+                {stats?.payroll.last_generated
+                  ? `Generada: ${new Date(stats.payroll.last_generated).toLocaleDateString("es-CO")}`
+                  : "No generada"}
               </span>
             </div>
           </CardContent>
@@ -152,16 +171,15 @@ export default function CompliancePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats?.pila.total_contributions ? 
-                formatCurrency(stats.pila.total_contributions) : 
-                formatCurrency(0)
-              }
+              {stats?.pila.total_contributions
+                ? formatCurrency(stats.pila.total_contributions)
+                : formatCurrency(0)}
             </div>
             <p className="text-xs text-gray-600">
-              Período: {stats?.pila.last_period || 'Ninguno'}
+              Período: {stats?.pila.last_period || "Ninguno"}
             </p>
             <div className="mt-2">
-              {getStatusBadgeComponent(stats?.pila.status || 'SIN_DATOS')}
+              {getStatusBadgeComponent(stats?.pila.status || "SIN_DATOS")}
             </div>
           </CardContent>
         </Card>
@@ -173,7 +191,9 @@ export default function CompliancePage() {
             <UserCheck className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.contractors.total || 0}</div>
+            <div className="text-2xl font-bold">
+              {stats?.contractors.total || 0}
+            </div>
             <p className="text-xs text-gray-600">
               {stats?.contractors.document_support_count || 0} doc. soporte
             </p>
@@ -183,11 +203,12 @@ export default function CompliancePage() {
               ) : (
                 <AlertCircle className="h-3 w-3 text-gray-400 mr-1" />
               )}
-              <span className={`text-xs ${stats?.contractors.total > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
-                {stats?.contractors.total > 0 ? 
-                  `${stats.contractors.not_obligated || 0} no obligados` :
-                  'Sin contratistas registrados'
-                }
+              <span
+                className={`text-xs ${stats?.contractors.total > 0 ? "text-orange-600" : "text-gray-500"}`}
+              >
+                {stats?.contractors.total > 0
+                  ? `${stats.contractors.not_obligated || 0} no obligados`
+                  : "Sin contratistas registrados"}
               </span>
             </div>
           </CardContent>
@@ -201,23 +222,24 @@ export default function CompliancePage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <Button 
-              className="flex items-center space-x-2 h-auto py-4" 
+            <Button
+              className="flex items-center space-x-2 h-auto py-4"
               variant="outline"
-              onClick={() => router.push('/invoicing/new')}
+              onClick={() => router.push("/invoicing/new")}
             >
               <Plus className="h-4 w-4" />
               <div className="text-left">
                 <div className="font-medium">Crear Factura</div>
-                <div className="text-xs text-gray-500">Nueva factura electrónica</div>
+                <div className="text-xs text-gray-500">
+                  Nueva factura electrónica
+                </div>
               </div>
             </Button>
 
-            <Button 
-              className="flex items-center space-x-2 h-auto py-4" 
+            <Button
+              className="flex items-center space-x-2 h-auto py-4"
               variant="outline"
-              onClick={() => router.push('/payroll/generate')}
+              onClick={() => router.push("/payroll/generate")}
             >
               <FileSpreadsheet className="h-4 w-4" />
               <div className="text-left">
@@ -226,10 +248,10 @@ export default function CompliancePage() {
               </div>
             </Button>
 
-            <Button 
-              className="flex items-center space-x-2 h-auto py-4" 
+            <Button
+              className="flex items-center space-x-2 h-auto py-4"
               variant="outline"
-              onClick={() => router.push('/pila')}
+              onClick={() => router.push("/pila")}
             >
               <Download className="h-4 w-4" />
               <div className="text-left">
@@ -238,10 +260,10 @@ export default function CompliancePage() {
               </div>
             </Button>
 
-            <Button 
-              className="flex items-center space-x-2 h-auto py-4" 
+            <Button
+              className="flex items-center space-x-2 h-auto py-4"
               variant="outline"
-              onClick={() => router.push('/contractors')}
+              onClick={() => router.push("/contractors")}
             >
               <UserCheck className="h-4 w-4" />
               <div className="text-left">
@@ -255,7 +277,6 @@ export default function CompliancePage() {
 
       {/* Resumen de estado DIAN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
@@ -269,8 +290,8 @@ export default function CompliancePage() {
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                 <span className="font-medium">
-                  {(stats?.invoices.status_breakdown?.ACEPTADO || 0) + 
-                   (stats?.invoices.status_breakdown?.ACEPTADO_SIMULADO || 0)}
+                  {(stats?.invoices.status_breakdown?.ACEPTADO || 0) +
+                    (stats?.invoices.status_breakdown?.ACEPTADO_SIMULADO || 0)}
                 </span>
               </div>
             </div>
@@ -279,8 +300,8 @@ export default function CompliancePage() {
               <div className="flex items-center">
                 <Clock className="h-4 w-4 text-yellow-500 mr-1" />
                 <span className="font-medium">
-                  {(stats?.invoices.status_breakdown?.ENVIADO || 0) + 
-                   (stats?.invoices.status_breakdown?.PENDIENTE || 0)}
+                  {(stats?.invoices.status_breakdown?.ENVIADO || 0) +
+                    (stats?.invoices.status_breakdown?.PENDIENTE || 0)}
                 </span>
               </div>
             </div>
@@ -289,8 +310,8 @@ export default function CompliancePage() {
               <div className="flex items-center">
                 <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
                 <span className="font-medium">
-                  {(stats?.invoices.status_breakdown?.RECHAZADO || 0) + 
-                   (stats?.invoices.status_breakdown?.RECHAZADO_SIMULADO || 0)}
+                  {(stats?.invoices.status_breakdown?.RECHAZADO || 0) +
+                    (stats?.invoices.status_breakdown?.RECHAZADO_SIMULADO || 0)}
                 </span>
               </div>
             </div>
@@ -308,18 +329,28 @@ export default function CompliancePage() {
             {obligationsLoading ? (
               <div className="text-center py-4">
                 <Clock className="h-6 w-6 mx-auto mb-2 animate-spin text-gray-400" />
-                <p className="text-sm text-gray-500">Cargando obligaciones...</p>
+                <p className="text-sm text-gray-500">
+                  Cargando obligaciones...
+                </p>
               </div>
             ) : obligations && obligations.length > 0 ? (
               obligations.slice(0, 3).map((obligation, index) => {
                 return (
-                  <div key={index} className="flex justify-between items-center">
+                  <div
+                    key={index}
+                    className="flex justify-between items-center"
+                  >
                     <span className="text-sm">{obligation.description}</span>
-                    <Badge variant="outline" className={`text-xs ${
-                      obligation.priority === 'high' ? 'border-red-300 text-red-700' :
-                      obligation.priority === 'medium' ? 'border-yellow-300 text-yellow-700' :
-                      'border-green-300 text-green-700'
-                    }`}>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${
+                        obligation.priority === "high"
+                          ? "border-red-300 text-red-700"
+                          : obligation.priority === "medium"
+                            ? "border-yellow-300 text-yellow-700"
+                            : "border-green-300 text-green-700"
+                      }`}
+                    >
                       {obligation.days_left} días
                     </Badge>
                   </div>
@@ -329,7 +360,9 @@ export default function CompliancePage() {
               <div className="text-center text-gray-500 py-4">
                 <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm">No hay obligaciones programadas</p>
-                <p className="text-xs text-gray-400">Configure empleados y proyectos para ver fechas importantes</p>
+                <p className="text-xs text-gray-400">
+                  Configure empleados y proyectos para ver fechas importantes
+                </p>
               </div>
             )}
           </CardContent>
@@ -345,7 +378,7 @@ export default function CompliancePage() {
               Configure datos empresariales y tablas tributarias
             </p>
           </div>
-          <Button onClick={() => router.push('/settings')}>
+          <Button onClick={() => router.push("/settings")}>
             <Eye className="h-4 w-4 mr-2" />
             Configurar
           </Button>

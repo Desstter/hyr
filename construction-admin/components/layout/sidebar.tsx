@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { useTranslations } from '@/lib/i18n';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useTranslations } from "@/lib/i18n";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -11,19 +11,19 @@ import {
   BarChart3,
   Settings,
   Construction,
-} from 'lucide-react';
+} from "lucide-react";
 
 const navigation = [
-  { name: 'dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'projects', href: '/projects', icon: FolderOpen },
-  { name: 'expenses', href: '/expenses', icon: Receipt },
-  { name: 'reports', href: '/reports', icon: BarChart3 },
-  { name: 'settings', href: '/settings', icon: Settings },
+  { name: "dashboard", href: "/", icon: LayoutDashboard },
+  { name: "projects", href: "/projects", icon: FolderOpen },
+  { name: "expenses", href: "/expenses", icon: Receipt },
+  { name: "reports", href: "/reports", icon: BarChart3 },
+  { name: "settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const t = useTranslations('es');
+  const t = useTranslations("es");
 
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
@@ -36,26 +36,26 @@ export function Sidebar() {
               HYR Admin
             </span>
           </div>
-          
+
           {/* Navigation */}
           <nav className="mt-8 flex-1 px-2 space-y-1">
-            {navigation.map((item) => {
+            {navigation.map(item => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? "bg-primary text-primary-foreground"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   )}
                 >
                   <item.icon
                     className={cn(
-                      'mr-3 flex-shrink-0 h-5 w-5',
-                      isActive ? 'text-primary-foreground' : 'text-gray-500'
+                      "mr-3 flex-shrink-0 h-5 w-5",
+                      isActive ? "text-primary-foreground" : "text-gray-500"
                     )}
                     aria-hidden="true"
                   />
@@ -65,7 +65,7 @@ export function Sidebar() {
             })}
           </nav>
         </div>
-        
+
         {/* Footer */}
         <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
           <div className="flex-shrink-0 w-full group block">

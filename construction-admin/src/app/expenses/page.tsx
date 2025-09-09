@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ExpensesTable } from '@/components/expenses/expenses-table';
-import { ExpenseDialog } from '@/components/expenses/expense-dialog';
-import { useTranslations } from '@/lib/i18n';
-import { Plus } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ExpensesTable } from "@/components/expenses/expenses-table";
+import { ExpenseDialog } from "@/components/expenses/expense-dialog";
+import { useTranslations } from "@/lib/i18n";
+import { Plus } from "lucide-react";
 
 export default function ExpensesPage() {
-  const t = useTranslations('es');
+  const t = useTranslations("es");
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   return (
@@ -31,7 +31,7 @@ export default function ExpensesPage() {
 
       {/* Expenses Table */}
       <ExpensesTable />
-      
+
       {/* Add Expense Dialog */}
       <ExpenseDialog
         open={showAddDialog}

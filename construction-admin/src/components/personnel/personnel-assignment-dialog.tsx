@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -27,7 +27,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   AlertTriangle,
   CheckCircle,
@@ -38,12 +38,12 @@ import {
   Loader2,
   Calendar,
   Briefcase,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { personnelService } from '@/lib/api/personnel';
-import { projectsService } from '@/lib/api/projects';
-import { usePersonnelAssignmentActions } from '@/lib/hooks/usePersonnelAssignments';
-import type { Personnel } from '@/lib/api/types';
+} from "lucide-react";
+import { toast } from "sonner";
+import { personnelService } from "@/lib/api/personnel";
+import { projectsService } from "@/lib/api/projects";
+import { usePersonnelAssignmentActions } from "@/lib/hooks/usePersonnelAssignments";
+import type { Personnel } from "@/lib/api/types";
 
 interface Assignment {
   assignment_id: string;
@@ -87,16 +87,20 @@ export function PersonnelAssignmentDialog({
   const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  
+
   // Form state for new assignment
   const [newAssignment, setNewAssignment] = useState({
-    project_id: '',
-    role: '',
+    project_id: "",
+    role: "",
     hours_per_day: 8,
     is_primary: false,
   });
-  
-  const { assignToProject, unassignFromProject, loading: actionLoading } = usePersonnelAssignmentActions();
+
+  const {
+    assignToProject,
+    unassignFromProject,
+    loading: actionLoading,
+  } = usePersonnelAssignmentActions();
 
   // Load assignments when dialog opens
   useEffect(() => {
@@ -108,14 +112,17 @@ export function PersonnelAssignmentDialog({
 
   const loadAssignments = async () => {
     if (!personnel?.id) return;
-    
+
     setAssignmentsLoading(true);
     try {
       const data = await personnelService.getAssignments(personnel.id);
       setAssignments(data);
     } catch (error: unknown) {
-      console.error('Error loading assignments:', error);
-      toast.error('Error al cargar asignaciones: ' + (error.message || 'Error desconocido'));
+      console.error("Error loading assignments:", error);
+      toast.error(
+        "Error al cargar asignaciones: " +
+          (error.message || "Error desconocido")
+      );
     } finally {
       setAssignmentsLoading(false);
     }
@@ -123,89 +130,105 @@ export function PersonnelAssignmentDialog({
 
   const loadAvailableProjects = async () => {
     try {
-      const response = await projectsService.list({ status: 'in_progress,planned' });
+      const response = await projectsService.list({
+        status: "in_progress,planned",
+      });
       const projects = Array.isArray(response.data) ? response.data : response;
       setAvailableProjects(projects);
     } catch (error: unknown) {
-      console.error('Error loading projects:', error);
+      console.error("Error loading projects:", error);
     }
   };
 
   const handleAssignToProject = async () => {
     if (!personnel?.id || !newAssignment.project_id) {
-      toast.error('Seleccione un proyecto');
+      toast.error("Seleccione un proyecto");
       return;
     }
 
     try {
       await assignToProject(personnel.id, {
         project_id: newAssignment.project_id,
-        role: newAssignment.role || personnel.position || 'trabajador',
+        role: newAssignment.role || personnel.position || "trabajador",
         hours_per_day: newAssignment.hours_per_day,
         is_primary: newAssignment.is_primary,
       });
 
-      toast.success('Empleado asignado exitosamente');
+      toast.success("Empleado asignado exitosamente");
       setShowAddForm(false);
       setNewAssignment({
-        project_id: '',
-        role: '',
+        project_id: "",
+        role: "",
         hours_per_day: 8,
         is_primary: false,
       });
-      
+
       loadAssignments();
       onSuccess?.();
     } catch (error: unknown) {
-      toast.error('Error al asignar empleado: ' + (error.message || 'Error desconocido'));
+      toast.error(
+        "Error al asignar empleado: " + (error.message || "Error desconocido")
+      );
     }
   };
 
   const handleUnassign = async (assignment: Assignment) => {
     if (!personnel?.id) return;
-    
+
     const confirmed = confirm(
       `¿Está seguro de desasignar a ${personnel.name} del proyecto "${assignment.project_name}"?`
     );
-    
+
     if (!confirmed) return;
 
     try {
       await unassignFromProject(personnel.id, assignment.project_id);
-      toast.success('Empleado desasignado exitosamente');
+      toast.success("Empleado desasignado exitosamente");
       loadAssignments();
       onSuccess?.();
     } catch (error: unknown) {
-      toast.error('Error al desasignar empleado: ' + (error.message || 'Error desconocido'));
+      toast.error(
+        "Error al desasignar empleado: " +
+          (error.message || "Error desconocido")
+      );
     }
   };
 
   // Calculate totals
   const totals = useMemo(() => {
-    const totalHours = assignments.reduce((sum, a) => sum + a.expected_hours_per_day, 0);
+    const totalHours = assignments.reduce(
+      (sum, a) => sum + a.expected_hours_per_day,
+      0
+    );
     const totalProjects = assignments.length;
-    const primaryProjects = assignments.filter(a => a.is_primary_project).length;
-    
-    let status = 'disponible';
-    if (totalHours > 8) status = 'sobrecargado';
-    else if (totalHours >= 8) status = 'ocupado';
-    else if (totalHours > 6) status = 'parcialmente_ocupado';
-    
+    const primaryProjects = assignments.filter(
+      a => a.is_primary_project
+    ).length;
+
+    let status = "disponible";
+    if (totalHours > 8) status = "sobrecargado";
+    else if (totalHours >= 8) status = "ocupado";
+    else if (totalHours > 6) status = "parcialmente_ocupado";
+
     return {
       totalHours,
       totalProjects,
       primaryProjects,
       status,
-      canTakeMore: totalHours < 8
+      canTakeMore: totalHours < 8,
     };
   }, [assignments]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'sobrecargado': return 'bg-red-100 text-red-800';
-      case 'ocupado': return 'bg-yellow-100 text-yellow-800';
-      case 'parcialmente_ocupado': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-green-100 text-green-800';
+      case "sobrecargado":
+        return "bg-red-100 text-red-800";
+      case "ocupado":
+        return "bg-yellow-100 text-yellow-800";
+      case "parcialmente_ocupado":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-green-100 text-green-800";
     }
   };
 
@@ -239,7 +262,8 @@ export function PersonnelAssignmentDialog({
               <CardContent>
                 <div className="text-2xl font-bold">{totals.totalProjects}</div>
                 <p className="text-xs text-gray-500">
-                  {totals.primaryProjects} principal{totals.primaryProjects !== 1 ? 'es' : ''}
+                  {totals.primaryProjects} principal
+                  {totals.primaryProjects !== 1 ? "es" : ""}
                 </p>
               </CardContent>
             </Card>
@@ -266,10 +290,13 @@ export function PersonnelAssignmentDialog({
               </CardHeader>
               <CardContent>
                 <Badge className={getStatusColor(totals.status)}>
-                  {totals.status === 'sobrecargado' ? 'Sobrecargado' :
-                   totals.status === 'ocupado' ? 'Ocupado' :
-                   totals.status === 'parcialmente_ocupado' ? 'Parcial' :
-                   'Disponible'}
+                  {totals.status === "sobrecargado"
+                    ? "Sobrecargado"
+                    : totals.status === "ocupado"
+                      ? "Ocupado"
+                      : totals.status === "parcialmente_ocupado"
+                        ? "Parcial"
+                        : "Disponible"}
                 </Badge>
               </CardContent>
             </Card>
@@ -283,7 +310,7 @@ export function PersonnelAssignmentDialog({
               </CardHeader>
               <CardContent>
                 <div className="text-lg font-medium">
-                  {totals.canTakeMore ? 'Disponible' : 'Completa'}
+                  {totals.canTakeMore ? "Disponible" : "Completa"}
                 </div>
                 <p className="text-xs text-gray-500">
                   {8 - totals.totalHours}h disponibles
@@ -296,9 +323,12 @@ export function PersonnelAssignmentDialog({
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Asignaciones Actuales</h3>
-              <Button 
+              <Button
                 onClick={() => setShowAddForm(!showAddForm)}
-                disabled={!totals.canTakeMore || availableProjectsForAssignment.length === 0}
+                disabled={
+                  !totals.canTakeMore ||
+                  availableProjectsForAssignment.length === 0
+                }
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -315,7 +345,9 @@ export function PersonnelAssignmentDialog({
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No hay asignaciones de proyectos</p>
-                <p className="text-sm">Este empleado está disponible para asignar</p>
+                <p className="text-sm">
+                  Este empleado está disponible para asignar
+                </p>
               </div>
             ) : (
               <Card>
@@ -333,28 +365,34 @@ export function PersonnelAssignmentDialog({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assignments.map((assignment) => (
+                      {assignments.map(assignment => (
                         <TableRow key={assignment.assignment_id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{assignment.project_name}</div>
+                              <div className="font-medium">
+                                {assignment.project_name}
+                              </div>
                               <Badge variant="outline" className="text-xs mt-1">
                                 {assignment.project_status}
                               </Badge>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {assignment.client_name || 'Sin cliente'}
+                            {assignment.client_name || "Sin cliente"}
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{assignment.role}</Badge>
                           </TableCell>
                           <TableCell>
-                            <span className="font-medium">{assignment.expected_hours_per_day}h</span>
+                            <span className="font-medium">
+                              {assignment.expected_hours_per_day}h
+                            </span>
                           </TableCell>
                           <TableCell>
                             {assignment.is_primary_project ? (
-                              <Badge className="bg-blue-100 text-blue-800">Principal</Badge>
+                              <Badge className="bg-blue-100 text-blue-800">
+                                Principal
+                              </Badge>
                             ) : (
                               <Badge variant="outline">Secundario</Badge>
                             )}
@@ -362,7 +400,9 @@ export function PersonnelAssignmentDialog({
                           <TableCell>
                             <div className="flex items-center text-sm text-gray-500">
                               <Calendar className="h-3 w-3 mr-1" />
-                              {new Date(assignment.start_date).toLocaleDateString('es-ES')}
+                              {new Date(
+                                assignment.start_date
+                              ).toLocaleDateString("es-ES")}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
@@ -399,17 +439,23 @@ export function PersonnelAssignmentDialog({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="project">Proyecto</Label>
-                    <Select 
-                      value={newAssignment.project_id} 
-                      onValueChange={(value) => setNewAssignment(prev => ({ ...prev, project_id: value }))}
+                    <Select
+                      value={newAssignment.project_id}
+                      onValueChange={value =>
+                        setNewAssignment(prev => ({
+                          ...prev,
+                          project_id: value,
+                        }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar proyecto" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableProjectsForAssignment.map((project) => (
+                        {availableProjectsForAssignment.map(project => (
                           <SelectItem key={project.id} value={project.id}>
-                            {project.name} {project.client_name && `- ${project.client_name}`}
+                            {project.name}{" "}
+                            {project.client_name && `- ${project.client_name}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -421,8 +467,15 @@ export function PersonnelAssignmentDialog({
                     <Input
                       id="role"
                       value={newAssignment.role}
-                      onChange={(e) => setNewAssignment(prev => ({ ...prev, role: e.target.value }))}
-                      placeholder={personnel?.position || 'ej. soldador, operario'}
+                      onChange={e =>
+                        setNewAssignment(prev => ({
+                          ...prev,
+                          role: e.target.value,
+                        }))
+                      }
+                      placeholder={
+                        personnel?.position || "ej. soldador, operario"
+                      }
                     />
                   </div>
 
@@ -434,7 +487,12 @@ export function PersonnelAssignmentDialog({
                       min="1"
                       max="8"
                       value={newAssignment.hours_per_day}
-                      onChange={(e) => setNewAssignment(prev => ({ ...prev, hours_per_day: parseInt(e.target.value) || 8 }))}
+                      onChange={e =>
+                        setNewAssignment(prev => ({
+                          ...prev,
+                          hours_per_day: parseInt(e.target.value) || 8,
+                        }))
+                      }
                     />
                   </div>
 
@@ -443,7 +501,12 @@ export function PersonnelAssignmentDialog({
                       type="checkbox"
                       id="primary"
                       checked={newAssignment.is_primary}
-                      onChange={(e) => setNewAssignment(prev => ({ ...prev, is_primary: e.target.checked }))}
+                      onChange={e =>
+                        setNewAssignment(prev => ({
+                          ...prev,
+                          is_primary: e.target.checked,
+                        }))
+                      }
                       className="rounded"
                     />
                     <Label htmlFor="primary">Proyecto Principal</Label>
@@ -451,8 +514,8 @@ export function PersonnelAssignmentDialog({
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button 
-                    onClick={handleAssignToProject} 
+                  <Button
+                    onClick={handleAssignToProject}
                     disabled={!newAssignment.project_id || actionLoading}
                   >
                     {actionLoading ? (
@@ -461,10 +524,13 @@ export function PersonnelAssignmentDialog({
                         Asignando...
                       </>
                     ) : (
-                      'Asignar a Proyecto'
+                      "Asignar a Proyecto"
                     )}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddForm(false)}
+                  >
                     Cancelar
                   </Button>
                 </div>

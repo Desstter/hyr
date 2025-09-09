@@ -44,22 +44,25 @@ The application includes comprehensive mock data representing a Colombian constr
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
 1. Navigate to the project directory
+
 ```bash
 cd construction-admin
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
 ```
@@ -69,27 +72,32 @@ npm run dev
 ## 📱 Page Structure
 
 ### Dashboard (`/`)
+
 - KPI cards showing active projects, revenue, costs, and forecasted profit
 - Top projects list with progress indicators
 - Monthly cashflow chart
 - Quick actions for common tasks
 
 ### Projects (`/projects`)
+
 - Comprehensive projects table with search and filtering
 - Project detail pages with budget tracking
 - Progress visualization and expense summaries
 
 ### Expenses (`/expenses`)
+
 - Filterable expense list by project, category, and date
 - Real-time expense totals and summaries
 - Category-based expense organization
 
 ### Reports (`/reports`)
+
 - Financial KPI summary cards
 - Interactive charts: Revenue vs Costs, Profit Evolution, Expense Distribution
 - Date range filtering for historical analysis
 
 ### Settings (`/settings`)
+
 - Business profile management
 - Theme and language preferences
 - Currency and locale settings
@@ -97,13 +105,16 @@ npm run dev
 ## 🎯 User Experience
 
 ### Target User
+
 Non-technical business owner of a construction and welding company who needs:
+
 - Clear, intuitive interface with minimal learning curve
 - Spanish-first labeling with familiar business terminology
 - Mobile accessibility for on-site project management
 - Quick access to financial overview and project status
 
 ### Key UX Principles
+
 - **Clarity**: Clear labels and intuitive navigation
 - **Speed**: Quick actions always accessible
 - **Mobility**: Responsive design for mobile use
@@ -112,6 +123,7 @@ Non-technical business owner of a construction and welding company who needs:
 ## 🌐 Internationalization
 
 The application supports Spanish (primary) and English with:
+
 - Complete interface translations
 - Date formatting localized for Colombian users
 - Currency formatting in Colombian Pesos (COP)
@@ -129,11 +141,13 @@ The application supports Spanish (primary) and English with:
 ## 🎨 Component Architecture
 
 ### Layout Components
+
 - `Sidebar`: Main navigation with responsive behavior
 - `TopBar`: Search, notifications, and user profile
 - `QuickActions`: Context-sensitive action buttons
 
 ### Feature Components
+
 - **Dashboard**: KPI cards, project lists, charts
 - **Projects**: Data tables, forms, detail views
 - **Expenses**: Filtering, categorization, summaries
@@ -151,6 +165,7 @@ The application supports Spanish (primary) and English with:
 ## 🤝 Contributing
 
 This is a Phase 1 UI-only implementation. Future contributions should focus on:
+
 1. Backend integration patterns
 2. Enhanced form validations
 3. Performance optimizations

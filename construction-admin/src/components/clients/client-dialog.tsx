@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,23 +11,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { api, handleApiError } from '@/lib/api';
-import type { Client } from '@/lib/api';
-import { useTranslations } from '@/lib/i18n';
-import { Loader2, Building2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { api, handleApiError } from "@/lib/api";
+import type { Client } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
+import { Loader2, Building2 } from "lucide-react";
+import { toast } from "sonner";
 
 // Esquema de validación
 const clientSchema = z.object({
-  name: z.string().min(1, 'El nombre de la empresa es obligatorio'),
+  name: z.string().min(1, "El nombre de la empresa es obligatorio"),
   contact_name: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email('Formato de email inválido').optional().or(z.literal('')),
+  email: z
+    .string()
+    .email("Formato de email inválido")
+    .optional()
+    .or(z.literal("")),
   address: z.string().optional(),
 });
 
@@ -46,7 +50,7 @@ export function ClientDialog({
   client,
   onClientSaved,
 }: ClientDialogProps) {
-  const t = useTranslations('es');
+  const t = useTranslations("es");
   const [loading, setLoading] = useState(false);
   const isEdit = !!client;
 
@@ -58,11 +62,11 @@ export function ClientDialog({
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      name: '',
-      contact_name: '',
-      phone: '',
-      email: '',
-      address: '',
+      name: "",
+      contact_name: "",
+      phone: "",
+      email: "",
+      address: "",
     },
   });
 
@@ -70,11 +74,11 @@ export function ClientDialog({
   useEffect(() => {
     if (open) {
       reset({
-        name: client?.name || '',
-        contact_name: client?.contact_name || '',
-        phone: client?.phone || '',
-        email: client?.email || '',
-        address: client?.address || '',
+        name: client?.name || "",
+        contact_name: client?.contact_name || "",
+        phone: client?.phone || "",
+        email: client?.email || "",
+        address: client?.address || "",
       });
     } else {
       reset();
@@ -105,8 +109,10 @@ export function ClientDialog({
       onClientSaved?.();
     } catch (err) {
       const errorMessage = handleApiError(err);
-      console.error('Error saving client:', err);
-      toast.error(`Error ${isEdit ? 'actualizando' : 'creando'} cliente: ${errorMessage}`);
+      console.error("Error saving client:", err);
+      toast.error(
+        `Error ${isEdit ? "actualizando" : "creando"} cliente: ${errorMessage}`
+      );
     } finally {
       setLoading(false);
     }
@@ -125,10 +131,9 @@ export function ClientDialog({
                 {isEdit ? t.clients.editClient : t.clients.newClient}
               </DialogTitle>
               <DialogDescription>
-                {isEdit 
+                {isEdit
                   ? `Modificar información del cliente "${client?.name}"`
-                  : 'Agregar un nuevo cliente al sistema'
-                }
+                  : "Agregar un nuevo cliente al sistema"}
               </DialogDescription>
             </div>
           </div>
@@ -143,9 +148,9 @@ export function ClientDialog({
               </Label>
               <Input
                 id="name"
-                {...register('name')}
+                {...register("name")}
                 placeholder="Ej: Constructora ABC S.A.S"
-                className={errors.name ? 'border-red-500' : ''}
+                className={errors.name ? "border-red-500" : ""}
               />
               {errors.name && (
                 <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -159,7 +164,7 @@ export function ClientDialog({
               </Label>
               <Input
                 id="contact_name"
-                {...register('contact_name')}
+                {...register("contact_name")}
                 placeholder="Ej: Juan Pérez"
               />
             </div>
@@ -172,7 +177,7 @@ export function ClientDialog({
                 </Label>
                 <Input
                   id="phone"
-                  {...register('phone')}
+                  {...register("phone")}
                   placeholder="Ej: +57 300 123-4567"
                 />
               </div>
@@ -184,9 +189,9 @@ export function ClientDialog({
                 <Input
                   id="email"
                   type="email"
-                  {...register('email')}
+                  {...register("email")}
                   placeholder="Ej: contacto@empresa.com"
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={errors.email ? "border-red-500" : ""}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -201,7 +206,7 @@ export function ClientDialog({
               </Label>
               <Textarea
                 id="address"
-                {...register('address')}
+                {...register("address")}
                 placeholder="Ej: Carrera 10 No. 20-30, Oficina 501, Bogotá, Colombia"
                 rows={3}
               />
@@ -217,18 +222,20 @@ export function ClientDialog({
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || isSubmitting}
               className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
             >
               {loading || isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEdit ? 'Actualizando...' : 'Creando...'}
+                  {isEdit ? "Actualizando..." : "Creando..."}
                 </>
+              ) : isEdit ? (
+                "Actualizar Cliente"
               ) : (
-                isEdit ? 'Actualizar Cliente' : 'Crear Cliente'
+                "Crear Cliente"
               )}
             </Button>
           </DialogFooter>

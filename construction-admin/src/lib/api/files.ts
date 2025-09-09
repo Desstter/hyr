@@ -3,9 +3,9 @@
 // Servicio para manejo universal de descargas de archivos
 // =====================================================
 
-import React, { useState } from 'react';
-import { apiClient } from './client';
-import { toast } from '@/components/ui/use-toast';
+import React, { useState } from "react";
+import { apiClient } from "./client";
+import { toast } from "@/components/ui/use-toast";
 
 // Tipos para el sistema de archivos
 export interface FileInfo {
@@ -34,24 +34,36 @@ export interface FileSystemInfo {
   success: boolean;
   data: {
     base_directory: string;
-    supported_types: Record<string, {
-      dir: string;
-      mimeType: string;
-      extension: string;
-    }>;
+    supported_types: Record<
+      string,
+      {
+        dir: string;
+        mimeType: string;
+        extension: string;
+      }
+    >;
     endpoints: Record<string, string>;
-    statistics: Record<string, {
-      count: number;
-      total_size: number;
-      directory: string;
-      error?: string;
-    }>;
+    statistics: Record<
+      string,
+      {
+        count: number;
+        total_size: number;
+        directory: string;
+        error?: string;
+      }
+    >;
     timestamp: string;
   };
 }
 
 // Tipos de archivos soportados
-export type FileType = 'pila' | 'payroll' | 'reports' | 'invoices' | 'certificates' | 'budgets';
+export type FileType =
+  | "pila"
+  | "payroll"
+  | "reports"
+  | "invoices"
+  | "certificates"
+  | "budgets";
 
 // =====================================================
 // SERVICIO DE ARCHIVOS
@@ -65,18 +77,22 @@ class FilesService {
     try {
       // Inicializar el cliente API si no está inicializado
       await apiClient.initialize();
-      
+
       // Obtener la URL base dinámicamente
-      const baseUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:3001/api'
-        : (await import('../appConfig')).apiUrlSync();
-      
-      const response = await fetch(`${baseUrl}/files/download/${type}/${filename}`, {
-        method: 'GET',
-        headers: {
-          'Accept': '*/*'
+      const baseUrl =
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:3001/api"
+          : (await import("../appConfig")).apiUrlSync();
+
+      const response = await fetch(
+        `${baseUrl}/files/download/${type}/${filename}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -85,27 +101,29 @@ class FilesService {
 
       // Obtener el blob del archivo
       const blob = await response.blob();
-      
+
       // Obtener nombre de archivo del header o usar el proporcionado
-      const contentDisposition = response.headers.get('Content-Disposition');
+      const contentDisposition = response.headers.get("Content-Disposition");
       let downloadFilename = filename;
-      
+
       if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).?\2|[^;\n]*)/.exec(contentDisposition);
+        const matches = /filename[^;=\n]*=((['"]).?\2|[^;\n]*)/.exec(
+          contentDisposition
+        );
         if (matches && matches[1]) {
-          downloadFilename = matches[1].replace(/['"]/g, '');
+          downloadFilename = matches[1].replace(/['"]/g, "");
         }
       }
 
       // Crear y ejecutar descarga
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = downloadFilename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Limpiar URL
       window.URL.revokeObjectURL(url);
 
@@ -113,10 +131,10 @@ class FilesService {
         title: "Descarga completada",
         description: `Archivo ${downloadFilename} descargado exitosamente`,
       });
-
     } catch (error: unknown) {
-      console.error('Error downloading file:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error descargando archivo';
+      console.error("Error downloading file:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Error descargando archivo";
       toast({
         title: "Error de descarga",
         description: errorMessage,
@@ -129,28 +147,35 @@ class FilesService {
   /**
    * Listar archivos por tipo
    */
-  async listFiles(type: FileType, options?: {
-    limit?: number;
-    offset?: number;
-  }): Promise<FileListResponse> {
+  async listFiles(
+    type: FileType,
+    options?: {
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<FileListResponse> {
     try {
       const searchParams = new URLSearchParams();
-      
-      if (options?.limit) searchParams.append('limit', options.limit.toString());
-      if (options?.offset) searchParams.append('offset', options.offset.toString());
+
+      if (options?.limit)
+        searchParams.append("limit", options.limit.toString());
+      if (options?.offset)
+        searchParams.append("offset", options.offset.toString());
 
       const response = await apiClient.get<FileListResponse>(
         `/files/list/${type}?${searchParams.toString()}`
       );
-      
+
       if (!response.success) {
-        throw new Error('Error obteniendo lista de archivos');
+        throw new Error("Error obteniendo lista de archivos");
       }
 
       return response;
     } catch (error: unknown) {
-      console.error('Error listing files:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error obteniendo archivos'));
+      console.error("Error listing files:", error);
+      throw new Error(
+        error instanceof Error ? error.message : "Error obteniendo archivos"
+      );
     }
   }
 
@@ -167,19 +192,19 @@ class FilesService {
       }>(`/files/${type}/${filename}`);
 
       if (!response.success) {
-        throw new Error(response.message || 'Error eliminando archivo');
+        throw new Error(response.message || "Error eliminando archivo");
       }
 
       toast({
         title: "Archivo eliminado",
         description: `${filename} eliminado exitosamente`,
       });
-
     } catch (error: unknown) {
-      console.error('Error deleting file:', error);
+      console.error("Error deleting file:", error);
       toast({
         title: "Error al eliminar",
-        description: (error instanceof Error ? error.message : 'Error eliminando archivo'),
+        description:
+          error instanceof Error ? error.message : "Error eliminando archivo",
         variant: "destructive",
       });
       throw error;
@@ -189,7 +214,10 @@ class FilesService {
   /**
    * Limpiar archivos antiguos
    */
-  async cleanupFiles(type: FileType, daysOld: number = 30): Promise<{
+  async cleanupFiles(
+    type: FileType,
+    daysOld: number = 30
+  ): Promise<{
     deleted_count: number;
     deleted_files: string[];
     cutoff_date: string;
@@ -205,7 +233,7 @@ class FilesService {
       }>(`/files/cleanup/${type}`, { days_old: daysOld });
 
       if (!response.success) {
-        throw new Error(response.message || 'Error en limpieza de archivos');
+        throw new Error(response.message || "Error en limpieza de archivos");
       }
 
       toast({
@@ -216,14 +244,14 @@ class FilesService {
       return {
         deleted_count: response.deleted_count,
         deleted_files: response.deleted_files,
-        cutoff_date: response.cutoff_date
+        cutoff_date: response.cutoff_date,
       };
-
     } catch (error: unknown) {
-      console.error('Error cleaning up files:', error);
+      console.error("Error cleaning up files:", error);
       toast({
         title: "Error en limpieza",
-        description: (error instanceof Error ? error.message : 'Error limpiando archivos'),
+        description:
+          error instanceof Error ? error.message : "Error limpiando archivos",
         variant: "destructive",
       });
       throw error;
@@ -235,23 +263,29 @@ class FilesService {
    */
   async getSystemInfo(): Promise<FileSystemInfo> {
     try {
-      const response = await apiClient.get<FileSystemInfo>('/files/info');
-      
+      const response = await apiClient.get<FileSystemInfo>("/files/info");
+
       if (!response.success) {
-        throw new Error('Error obteniendo información del sistema');
+        throw new Error("Error obteniendo información del sistema");
       }
 
       return response;
     } catch (error: unknown) {
-      console.error('Error getting system info:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error obteniendo información del sistema'));
+      console.error("Error getting system info:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Error obteniendo información del sistema"
+      );
     }
   }
 
   /**
    * Descargar múltiples archivos (como ZIP en el futuro)
    */
-  async downloadMultiple(files: { type: FileType; filename: string }[]): Promise<void> {
+  async downloadMultiple(
+    files: { type: FileType; filename: string }[]
+  ): Promise<void> {
     try {
       // Por ahora, descargar uno por uno
       for (const file of files) {
@@ -264,12 +298,12 @@ class FilesService {
         title: "Descargas completadas",
         description: `${files.length} archivos descargados`,
       });
-
     } catch (error: unknown) {
-      console.error('Error downloading multiple files:', error);
+      console.error("Error downloading multiple files:", error);
       toast({
         title: "Error en descargas múltiples",
-        description: (error instanceof Error ? error.message : 'Error descargando archivos'),
+        description:
+          error instanceof Error ? error.message : "Error descargando archivos",
         variant: "destructive",
       });
       throw error;
@@ -301,7 +335,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
       setFiles(response.data.files);
       setTotal(response.data.total);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -313,7 +347,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
       // Recargar lista después de eliminar
       await loadFiles();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
       throw err;
     }
   };
@@ -322,7 +356,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
     try {
       await filesService.downloadFile(type, filename);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
       throw err;
     }
   };
@@ -341,7 +375,7 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
     loadFiles,
     deleteFile,
     downloadFile,
-    refresh: () => loadFiles()
+    refresh: () => loadFiles(),
   };
 }
 
@@ -349,7 +383,9 @@ export function useFileList(type: FileType, autoLoad: boolean = true) {
  * Hook para información del sistema de archivos
  */
 export function useSystemInfo() {
-  const [systemInfo, setSystemInfo] = useState<FileSystemInfo['data'] | null>(null);
+  const [systemInfo, setSystemInfo] = useState<FileSystemInfo["data"] | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -360,7 +396,7 @@ export function useSystemInfo() {
       const response = await filesService.getSystemInfo();
       setSystemInfo(response.data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -374,7 +410,7 @@ export function useSystemInfo() {
     systemInfo,
     loading,
     error,
-    refresh: loadSystemInfo
+    refresh: loadSystemInfo,
   };
 }
 

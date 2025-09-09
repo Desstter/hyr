@@ -3,15 +3,14 @@
 // Servicios para nómina colombiana 2024
 // =====================================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   PayrollPeriod,
   PayrollDetail,
-  ProcessPayrollRequest,
-} from './types';
+} from "./types";
 
 export class PayrollService {
-  private endpoint = '/payroll';
+  private endpoint = "/payroll";
 
   // =====================================================
   // PERÍODOS DE NÓMINA
@@ -61,40 +60,57 @@ export class PayrollService {
    * Calcula toda la nómina colombiana con deducciones y aportes
    */
   async processPayroll(periodId: string): Promise<{ message: string }> {
-    return apiClient.post<{ message: string }>(`${this.endpoint}/periods/${periodId}/process`);
+    return apiClient.post<{ message: string }>(
+      `${this.endpoint}/periods/${periodId}/process`
+    );
   }
 
   /**
    * Procesar nómina con compliance 2025
    * Incluye FSP, Law 114-1, ARL por sitio de trabajo
    */
-  async processPayroll2025(periodId: string): Promise<{ 
-    message: string; 
+  async processPayroll2025(periodId: string): Promise<{
+    message: string;
     processed: number;
     totalCost: number;
     compliance2025: boolean;
   }> {
-    return apiClient.post<{ message: string; processed: number; totalCost: number; compliance2025: boolean; }>(`${this.endpoint}/periods/${periodId}/process-2025`);
+    return apiClient.post<{
+      message: string;
+      processed: number;
+      totalCost: number;
+      compliance2025: boolean;
+    }>(`${this.endpoint}/periods/${periodId}/process-2025`);
   }
 
   /**
    * Obtener detalles de nómina de un período
    */
   async getPayrollDetails(periodId: string): Promise<PayrollDetail[]> {
-    return apiClient.get<PayrollDetail[]>(`${this.endpoint}/periods/${periodId}/details`);
+    return apiClient.get<PayrollDetail[]>(
+      `${this.endpoint}/periods/${periodId}/details`
+    );
   }
 
   /**
    * Obtener detalle de nómina de un empleado específico
    */
-  async getEmployeePayrollDetail(periodId: string, personnelId: string): Promise<PayrollDetail> {
-    return apiClient.get<PayrollDetail>(`${this.endpoint}/periods/${periodId}/details/${personnelId}`);
+  async getEmployeePayrollDetail(
+    periodId: string,
+    personnelId: string
+  ): Promise<PayrollDetail> {
+    return apiClient.get<PayrollDetail>(
+      `${this.endpoint}/periods/${periodId}/details/${personnelId}`
+    );
   }
 
   /**
    * Actualizar detalle de nómina manualmente
    */
-  async updatePayrollDetail(id: string, data: Partial<PayrollDetail>): Promise<PayrollDetail> {
+  async updatePayrollDetail(
+    id: string,
+    data: Partial<PayrollDetail>
+  ): Promise<PayrollDetail> {
     return apiClient.put<PayrollDetail>(`${this.endpoint}/details/${id}`, data);
   }
 
@@ -128,7 +144,23 @@ export class PayrollService {
       totalCompensationFund: number;
     };
   }> {
-    return apiClient.get<{ totalEmployees: number; totalPayrollCost: number; totalDeductions: number; totalBenefits: number; netPayroll: number; payrollTax: { totalHealthEmployee: number; totalPensionEmployee: number; totalHealthEmployer: number; totalPensionEmployer: number; totalArl: number; totalSena: number; totalIcbf: number; totalCompensationFund: number; }; }>(`${this.endpoint}/periods/${periodId}/summary`);
+    return apiClient.get<{
+      totalEmployees: number;
+      totalPayrollCost: number;
+      totalDeductions: number;
+      totalBenefits: number;
+      netPayroll: number;
+      payrollTax: {
+        totalHealthEmployee: number;
+        totalPensionEmployee: number;
+        totalHealthEmployer: number;
+        totalPensionEmployer: number;
+        totalArl: number;
+        totalSena: number;
+        totalIcbf: number;
+        totalCompensationFund: number;
+      };
+    }>(`${this.endpoint}/periods/${periodId}/summary`);
   }
 
   /**
@@ -152,7 +184,20 @@ export class PayrollService {
       aportes: number;
     };
   }> {
-    return apiClient.get<{ periodo: string; empleados: Array<{ documento: string; nombre: string; salario: number; diasTrabajados: number; salud: number; pension: number; arl: number; parafiscales: number; }>; totales: { empleados: number; salarios: number; aportes: number; }; }>(`${this.endpoint}/periods/${periodId}/pila`);
+    return apiClient.get<{
+      periodo: string;
+      empleados: Array<{
+        documento: string;
+        nombre: string;
+        salario: number;
+        diasTrabajados: number;
+        salud: number;
+        pension: number;
+        arl: number;
+        parafiscales: number;
+      }>;
+      totales: { empleados: number; salarios: number; aportes: number };
+    }>(`${this.endpoint}/periods/${periodId}/pila`);
   }
 
   /**
@@ -161,7 +206,7 @@ export class PayrollService {
    */
   async getPILA2025Report(periodId: string): Promise<{
     periodo: string;
-    formato: 'PILA_2025';
+    formato: "PILA_2025";
     compliance: {
       fsp_included: boolean;
       law_114_1_applied: boolean;
@@ -190,13 +235,40 @@ export class PayrollService {
       ahorroLaw114_1: number;
     };
   }> {
-    return apiClient.get<{ periodo: string; version: string; empleados: Array<{ documento: string; nombre: string; tipoDocumento: string; salario: number; diasTrabajados: number; salud: number; pension: number; arl: number; arlClass: string; parafiscales: number; law_114_1_exempt?: boolean; centroTrabajo: string; }>; totales: { empleados: number; salarios: number; aportes: number; fspTotal: number; ahorroLaw114_1: number; }; }>(`${this.endpoint}/periods/${periodId}/pila-2025`);
+    return apiClient.get<{
+      periodo: string;
+      version: string;
+      empleados: Array<{
+        documento: string;
+        nombre: string;
+        tipoDocumento: string;
+        salario: number;
+        diasTrabajados: number;
+        salud: number;
+        pension: number;
+        arl: number;
+        arlClass: string;
+        parafiscales: number;
+        law_114_1_exempt?: boolean;
+        centroTrabajo: string;
+      }>;
+      totales: {
+        empleados: number;
+        salarios: number;
+        aportes: number;
+        fspTotal: number;
+        ahorroLaw114_1: number;
+      };
+    }>(`${this.endpoint}/periods/${periodId}/pila-2025`);
   }
 
   /**
    * Generar certificados laborales
    */
-  async generateLaborCertificate(personnelId: string, year: number): Promise<{
+  async generateLaborCertificate(
+    personnelId: string,
+    year: number
+  ): Promise<{
     empleado: {
       nombre: string;
       documento: string;
@@ -215,7 +287,25 @@ export class PayrollService {
       neto: number;
     }>;
   }> {
-    return apiClient.get<{ empleado: { nombre: string; documento: string; cargo: string; fechaIngreso: string; }; ingresos: { salarioTotal: number; prestaciones: number; deducciones: number; }; periodos: Array<{ mes: string; salario: number; deducciones: number; neto: number; }>; }>(`${this.endpoint}/certificates/${personnelId}/${year}`);
+    return apiClient.get<{
+      empleado: {
+        nombre: string;
+        documento: string;
+        cargo: string;
+        fechaIngreso: string;
+      };
+      ingresos: {
+        salarioTotal: number;
+        prestaciones: number;
+        deducciones: number;
+      };
+      periodos: Array<{
+        mes: string;
+        salario: number;
+        deducciones: number;
+        neto: number;
+      }>;
+    }>(`${this.endpoint}/certificates/${personnelId}/${year}`);
   }
 
   // =====================================================
@@ -225,7 +315,10 @@ export class PayrollService {
   /**
    * Calcular liquidación de prestaciones sociales
    */
-  async calculateSettlement(personnelId: string, endDate: string): Promise<{
+  async calculateSettlement(
+    personnelId: string,
+    endDate: string
+  ): Promise<{
     empleado: {
       nombre: string;
       fechaIngreso: string;
@@ -242,7 +335,22 @@ export class PayrollService {
     indemnizacion?: number;
     totalLiquidacion: number;
   }> {
-    return apiClient.post<{ empleado: { nombre: string; documento: string; fechaIngreso: string; fechaSalida: string; }; prestaciones: { cesantias: number; prima: number; vacaciones: number; total: number; }; indemnizacion?: number; totalLiquidacion: number; }>(`${this.endpoint}/settlement/${personnelId}`, { endDate });
+    return apiClient.post<{
+      empleado: {
+        nombre: string;
+        documento: string;
+        fechaIngreso: string;
+        fechaSalida: string;
+      };
+      prestaciones: {
+        cesantias: number;
+        prima: number;
+        vacaciones: number;
+        total: number;
+      };
+      indemnizacion?: number;
+      totalLiquidacion: number;
+    }>(`${this.endpoint}/settlement/${personnelId}`, { endDate });
   }
 
   // =====================================================
@@ -275,7 +383,21 @@ export class PayrollService {
     };
     riesgosARL: Record<string, number>;
   }> {
-    return apiClient.get<{ salarioMinimo: number; auxilioTransporte: number; deducciones: { salud: number; pension: number; solidaridad: number; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; }; parafiscales: { sena: number; icbf: number; cajas: number; }; riesgosARL: Record<string, number>; }>(`${this.endpoint}/config/colombia`);
+    return apiClient.get<{
+      salarioMinimo: number;
+      auxilioTransporte: number;
+      deducciones: { salud: number; pension: number; solidaridad: number };
+      aportes: {
+        salud: number;
+        pension: number;
+        arl: number;
+        cesantias: number;
+        prima: number;
+        vacaciones: number;
+      };
+      parafiscales: { sena: number; icbf: number; cajas: number };
+      riesgosARL: Record<string, number>;
+    }>(`${this.endpoint}/config/colombia`);
   }
 
   /**
@@ -320,13 +442,49 @@ export class PayrollService {
         min_employees: number;
       };
     };
-    arlClasses: Record<string, {
-      rate: number;
-      description: string;
-      workTypes: string[];
-    }>;
+    arlClasses: Record<
+      string,
+      {
+        rate: number;
+        description: string;
+        workTypes: string[];
+      }
+    >;
   }> {
-    return apiClient.get<{ year: number; version: string; salarioMinimo: number; auxilioTransporte: number; uvt: number; deducciones: { salud: number; pension: number; solidaridad: number; retencionFuente: { exempt_min: number; rate_brackets: Array<{ min: number; max: number; rate: number; }>; }; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; interesesCesantias: number; }; parafiscales: { sena: { rate: number; min_employees: number; }; icbf: { rate: number; min_employees: number; }; cajas: { rate: number; min_employees: number; }; }; arlClasses: Record<string, { rate: number; description: string; workTypes: string[]; }>; }>(`${this.endpoint}/config/2025`);
+    return apiClient.get<{
+      year: number;
+      version: string;
+      salarioMinimo: number;
+      auxilioTransporte: number;
+      uvt: number;
+      deducciones: {
+        salud: number;
+        pension: number;
+        solidaridad: number;
+        retencionFuente: {
+          exempt_min: number;
+          rate_brackets: Array<{ min: number; max: number; rate: number }>;
+        };
+      };
+      aportes: {
+        salud: number;
+        pension: number;
+        arl: number;
+        cesantias: number;
+        prima: number;
+        vacaciones: number;
+        interesesCesantias: number;
+      };
+      parafiscales: {
+        sena: { rate: number; min_employees: number };
+        icbf: { rate: number; min_employees: number };
+        cajas: { rate: number; min_employees: number };
+      };
+      arlClasses: Record<
+        string,
+        { rate: number; description: string; workTypes: string[] }
+      >;
+    }>(`${this.endpoint}/config/2025`);
   }
 
   /**
@@ -364,7 +522,24 @@ export class PayrollService {
     netoAPagar: number;
     costoTotalEmpleador: number;
   }> {
-    return apiClient.post<{ salarioBase: number; salarioRegular: number; salarioExtra: number; auxilioTransporte: number; deducciones: { salud: number; pension: number; solidaridad: number; }; aportes: { salud: number; pension: number; arl: number; cesantias: number; prima: number; vacaciones: number; }; parafiscales: { sena: number; icbf: number; cajas: number; }; netoAPagar: number; costoTotalEmpleador: number; }>(`${this.endpoint}/simulate`, data);
+    return apiClient.post<{
+      salarioBase: number;
+      salarioRegular: number;
+      salarioExtra: number;
+      auxilioTransporte: number;
+      deducciones: { salud: number; pension: number; solidaridad: number };
+      aportes: {
+        salud: number;
+        pension: number;
+        arl: number;
+        cesantias: number;
+        prima: number;
+        vacaciones: number;
+      };
+      parafiscales: { sena: number; icbf: number; cajas: number };
+      netoAPagar: number;
+      costoTotalEmpleador: number;
+    }>(`${this.endpoint}/simulate`, data);
   }
 
   // =====================================================
@@ -374,10 +549,7 @@ export class PayrollService {
   /**
    * Obtener estadísticas de nómina
    */
-  async getPayrollStats(filters?: {
-    year?: number;
-    month?: number;
-  }): Promise<{
+  async getPayrollStats(filters?: { year?: number; month?: number }): Promise<{
     totalProcessed: number;
     totalCost: number;
     averageSalary: number;
@@ -396,7 +568,23 @@ export class PayrollService {
       percentage: number;
     }>;
   }> {
-    return apiClient.get<{ totalEmployees: number; totalPayrollCost: number; avgSalary: number; payrollHistory: Array<{ month: string; cost: number; employees: number; avgSalary: number; }>; departmentCosts: Array<{ department: string; totalCost: number; employees: number; percentage: number; }>; }>(`${this.endpoint}/stats`, filters);
+    return apiClient.get<{
+      totalEmployees: number;
+      totalPayrollCost: number;
+      avgSalary: number;
+      payrollHistory: Array<{
+        month: string;
+        cost: number;
+        employees: number;
+        avgSalary: number;
+      }>;
+      departmentCosts: Array<{
+        department: string;
+        totalCost: number;
+        employees: number;
+        percentage: number;
+      }>;
+    }>(`${this.endpoint}/stats`, filters);
   }
 }
 

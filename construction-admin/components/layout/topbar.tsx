@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Menu, Bell, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Sidebar } from './sidebar';
+import { useState } from "react";
+import { Menu, Bell, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sidebar } from "./sidebar";
 
 export function TopBar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -36,7 +36,7 @@ export function TopBar() {
             <Input
               className={cn(
                 "h-full w-full border-0 bg-transparent pl-11 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm",
-                isSearchFocused && "ring-2 ring-primary"
+                isSearchFocused ? "ring-2 ring-primary" : ""
               )}
               placeholder="Buscar proyectos, gastos..."
               type="search"
@@ -45,7 +45,7 @@ export function TopBar() {
               onBlur={() => setIsSearchFocused(false)}
             />
           </div>
-          
+
           <div className="flex items-center gap-x-4 lg:gap-x-6">
             {/* Notifications */}
             <Button variant="ghost" size="sm" className="relative">
@@ -55,7 +55,10 @@ export function TopBar() {
             </Button>
 
             {/* Separator */}
-            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" aria-hidden="true" />
+            <div
+              className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10"
+              aria-hidden="true"
+            />
 
             {/* Profile dropdown placeholder for future */}
             <div className="flex items-center gap-x-2">
@@ -74,5 +77,5 @@ export function TopBar() {
 }
 
 function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }

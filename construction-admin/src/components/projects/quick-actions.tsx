@@ -1,16 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,25 +17,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { api } from '@/lib/api';
-import type { Project, ProjectStatus } from '@/lib/api';
-import { getProjectStatusLabel, getProjectStatusColor } from '@/lib/finance';
-import { 
+} from "@/components/ui/dropdown-menu";
+import { api } from "@/lib/api";
+import type { Project, ProjectStatus } from "@/lib/api";
+import { getProjectStatusLabel } from "@/lib/finance";
+import {
   MoreVertical,
   Clock,
   CheckCircle,
   Pause,
   Calendar,
-  TrendingUp,
   Archive,
   Eye,
   Edit,
   Trash2,
-  Loader2
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface QuickStatusUpdateProps {
   project: Project;
@@ -44,7 +41,11 @@ interface QuickStatusUpdateProps {
   disabled?: boolean;
 }
 
-export function QuickStatusUpdate({ project, onUpdate, disabled }: QuickStatusUpdateProps) {
+export function QuickStatusUpdate({
+  project,
+  onUpdate,
+  disabled,
+}: QuickStatusUpdateProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStatusChange = async (newStatus: ProjectStatus) => {
@@ -52,49 +53,57 @@ export function QuickStatusUpdate({ project, onUpdate, disabled }: QuickStatusUp
 
     setIsLoading(true);
     try {
-      const updatedProject = await api.projects.updateStatus(project.id, newStatus);
+      const updatedProject = await api.projects.updateStatus(
+        project.id,
+        newStatus
+      );
       toast.success(`Estado actualizado a ${getProjectStatusLabel(newStatus)}`);
       onUpdate?.(updatedProject);
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Error al actualizar el estado');
+      console.error("Error updating status:", error);
+      toast.error("Error al actualizar el estado");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const statusOptions: { value: ProjectStatus; label: string; icon: React.ReactNode; color: string }[] = [
-    { 
-      value: 'planned', 
-      label: 'Planificado', 
+  const statusOptions: {
+    value: ProjectStatus;
+    label: string;
+    icon: React.ReactNode;
+    color: string;
+  }[] = [
+    {
+      value: "planned",
+      label: "Planificado",
       icon: <Calendar className="h-3 w-3" />,
-      color: 'text-muted-foreground'
+      color: "text-muted-foreground",
     },
-    { 
-      value: 'in_progress', 
-      label: 'En Progreso', 
+    {
+      value: "in_progress",
+      label: "En Progreso",
       icon: <Clock className="h-3 w-3" />,
-      color: 'text-primary'
+      color: "text-primary",
     },
-    { 
-      value: 'on_hold', 
-      label: 'En Pausa', 
+    {
+      value: "on_hold",
+      label: "En Pausa",
       icon: <Pause className="h-3 w-3" />,
-      color: 'text-warning'
+      color: "text-warning",
     },
-    { 
-      value: 'completed', 
-      label: 'Completado', 
+    {
+      value: "completed",
+      label: "Completado",
       icon: <CheckCircle className="h-3 w-3" />,
-      color: 'text-success'
+      color: "text-success",
     },
   ];
 
   const currentStatus = statusOptions.find(s => s.value === project.status);
 
   return (
-    <Select 
-      value={project.status} 
+    <Select
+      value={project.status}
       onValueChange={handleStatusChange}
       disabled={isLoading || disabled}
     >
@@ -111,7 +120,7 @@ export function QuickStatusUpdate({ project, onUpdate, disabled }: QuickStatusUp
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {statusOptions.map((status) => (
+        {statusOptions.map(status => (
           <SelectItem key={status.value} value={status.value}>
             <div className="flex items-center gap-2">
               <span className={status.color}>{status.icon}</span>
@@ -130,7 +139,11 @@ interface QuickProgressUpdateProps {
   disabled?: boolean;
 }
 
-export function QuickProgressUpdate({ project, onUpdate, disabled }: QuickProgressUpdateProps) {
+export function QuickProgressUpdate({
+  project,
+  onUpdate,
+  disabled,
+}: QuickProgressUpdateProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [tempProgress, setTempProgress] = useState([project.progress || 0]);
 
@@ -140,35 +153,48 @@ export function QuickProgressUpdate({ project, onUpdate, disabled }: QuickProgre
 
     setIsLoading(true);
     try {
-      const updatedProject = await api.projects.updateProgress(project.id, newProgress);
+      const updatedProject = await api.projects.updateProgress(
+        project.id,
+        newProgress
+      );
       toast.success(`Progreso actualizado al ${newProgress}%`);
       onUpdate?.(updatedProject);
-      
+
       // Auto-update status based on progress
-      if (newProgress === 100 && project.status !== 'completed') {
+      if (newProgress === 100 && project.status !== "completed") {
         setTimeout(async () => {
           try {
-            const finalProject = await api.projects.updateStatus(project.id, 'completed');
-            toast.success('Estado cambiado automáticamente a Completado');
+            const finalProject = await api.projects.updateStatus(
+              project.id,
+              "completed"
+            );
+            toast.success("Estado cambiado automáticamente a Completado");
             onUpdate?.(finalProject);
           } catch (error) {
-            console.error('Error auto-updating status:', error);
+            console.error("Error auto-updating status:", error);
           }
         }, 1000);
-      } else if (newProgress > 0 && newProgress < 100 && project.status === 'planned') {
+      } else if (
+        newProgress > 0 &&
+        newProgress < 100 &&
+        project.status === "planned"
+      ) {
         setTimeout(async () => {
           try {
-            const progressProject = await api.projects.updateStatus(project.id, 'in_progress');
-            toast.success('Estado cambiado automáticamente a En Progreso');
+            const progressProject = await api.projects.updateStatus(
+              project.id,
+              "in_progress"
+            );
+            toast.success("Estado cambiado automáticamente a En Progreso");
             onUpdate?.(progressProject);
           } catch (error) {
-            console.error('Error auto-updating status:', error);
+            console.error("Error auto-updating status:", error);
           }
         }, 1000);
       }
     } catch (error) {
-      console.error('Error updating progress:', error);
-      toast.error('Error al actualizar el progreso');
+      console.error("Error updating progress:", error);
+      toast.error("Error al actualizar el progreso");
     } finally {
       setIsLoading(false);
     }
@@ -188,9 +214,7 @@ export function QuickProgressUpdate({ project, onUpdate, disabled }: QuickProgre
         <span className="text-xs text-muted-foreground">Progreso</span>
         <div className="flex items-center gap-1">
           {isLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-          <span className="text-xs font-medium">
-            {tempProgress[0]}%
-          </span>
+          <span className="text-xs font-medium">{tempProgress[0]}%</span>
         </div>
       </div>
       <Slider
@@ -214,23 +238,26 @@ interface ProjectActionsMenuProps {
   disabled?: boolean;
 }
 
-export function ProjectActionsMenu({ 
-  project, 
-  onEdit, 
-  onDelete, 
-  onView, 
-  disabled 
+export function ProjectActionsMenu({
+  project,
+  onEdit,
+  onDelete,
+  onView,
+  disabled,
 }: ProjectActionsMenuProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleArchive = async () => {
     setIsLoading(true);
     try {
-      const updatedProject = await api.projects.updateStatus(project.id, 'on_hold');
-      toast.success('Proyecto archivado');
+      const updatedProject = await api.projects.updateStatus(
+        project.id,
+        "on_hold"
+      );
+      toast.success("Proyecto archivado");
     } catch (error) {
-      console.error('Error archiving project:', error);
-      toast.error('Error al archivar el proyecto');
+      console.error("Error archiving project:", error);
+      toast.error("Error al archivar el proyecto");
     } finally {
       setIsLoading(false);
     }
@@ -239,9 +266,9 @@ export function ProjectActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="h-8 w-8 p-0"
           disabled={disabled}
         >
@@ -255,29 +282,29 @@ export function ProjectActionsMenu({
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem onClick={() => onView?.(project)}>
           <Eye className="h-4 w-4 mr-2" />
           Ver Detalles
         </DropdownMenuItem>
-        
+
         <DropdownMenuItem onClick={() => onEdit?.(project)}>
           <Edit className="h-4 w-4 mr-2" />
           Editar Proyecto
         </DropdownMenuItem>
-        
+
         <DropdownMenuSeparator />
-        
-        {project.status !== 'on_hold' && (
+
+        {project.status !== "on_hold" && (
           <DropdownMenuItem onClick={handleArchive} disabled={isLoading}>
             <Archive className="h-4 w-4 mr-2" />
             Archivar
           </DropdownMenuItem>
         )}
-        
+
         <DropdownMenuSeparator />
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => onDelete?.(project)}
           className="text-destructive focus:text-destructive"
         >

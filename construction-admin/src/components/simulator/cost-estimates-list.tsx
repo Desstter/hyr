@@ -1,82 +1,90 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Edit, 
-  Trash2, 
-  Copy, 
-  Download, 
+import { useState } from "react";
+import {
+  FileText,
+  Edit,
+  Trash2,
+  Copy,
+  Download,
   FolderOpen,
   Search,
   Filter,
   Plus,
   Loader2,
-  AlertTriangle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useTranslations } from '@/lib/i18n';
-import { formatCurrency } from '@/lib/finance';
-import { 
-  SavedEstimation, 
-  useSavedEstimations, 
-  duplicateEstimation, 
-  deleteEstimation, 
-  convertEstimationToProject 
-} from '@/lib/api/simulator';
-import { downloadAdvancedPDF } from '@/lib/pdf-generator';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { useTranslations } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/finance";
+import {
+  SavedEstimation,
+  useSavedEstimations,
+  duplicateEstimation,
+  deleteEstimation,
+  convertEstimationToProject,
+} from "@/lib/api/simulator";
+import { downloadAdvancedPDF } from "@/lib/pdf-generator";
+import { toast } from "sonner";
 
 interface CostEstimatesListProps {
   onNewEstimate: () => void;
   onEditEstimate?: (estimate: SavedEstimation) => void;
 }
 
-export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimatesListProps) {
-  const t = useTranslations('es');
-  const [searchTerm, setSearchTerm] = useState('');
-  
+export function CostEstimatesList({
+  onNewEstimate,
+  onEditEstimate,
+}: CostEstimatesListProps) {
+  const t = useTranslations("es");
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Usar el hook personalizado para cargar estimaciones
   const { estimations, loading, error, refetch } = useSavedEstimations();
 
   // Filter estimates based on search
-  const filteredEstimates = estimations.filter(estimate =>
-    estimate.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    estimate.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEstimates = estimations.filter(
+    estimate =>
+      estimate.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      estimate.notes?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getClientName = (clientName?: string) => {
-    return clientName || 'Sin cliente';
+    return clientName || "Sin cliente";
   };
 
   const handleDuplicate = async (estimate: SavedEstimation) => {
     try {
       await duplicateEstimation(estimate.id);
-      toast.success('Cotización duplicada exitosamente');
+      toast.success("Cotización duplicada exitosamente");
       refetch(); // Recargar la lista
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al duplicar cotización';
+      const errorMessage =
+        error instanceof Error ? error.message : "Error al duplicar cotización";
       toast.error(errorMessage);
     }
   };
 
   const handleDelete = async (estimate: SavedEstimation) => {
-    if (window.confirm('¿Estás seguro de eliminar esta cotización?')) {
+    if (window.confirm("¿Estás seguro de eliminar esta cotización?")) {
       try {
         await deleteEstimation(estimate.id);
-        toast.success('Cotización eliminada exitosamente');
+        toast.success("Cotización eliminada exitosamente");
         refetch(); // Recargar la lista
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Error al eliminar cotización';
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Error al eliminar cotización";
         toast.error(errorMessage);
       }
     }
@@ -89,17 +97,22 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
       const projectData = {
         estimation_id: estimate.id,
         project_name: estimate.project_name,
-        client_id: 'default-client-id', // TODO: Integrar con selección de cliente real
+        client_id: "default-client-id", // TODO: Integrar con selección de cliente real
         description: `Proyecto creado desde estimación: ${estimate.project_name}`,
-        start_date: new Date().toISOString().split('T')[0],
-        estimated_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        start_date: new Date().toISOString().split("T")[0],
+        estimated_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
       };
-      
+
       await convertEstimationToProject(projectData);
-      toast.success('Proyecto creado exitosamente desde estimación');
+      toast.success("Proyecto creado exitosamente desde estimación");
       refetch(); // Recargar la lista para mostrar el estado actualizado
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al convertir a proyecto';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al convertir a proyecto";
       toast.error(errorMessage);
     }
   };
@@ -107,24 +120,27 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
   const handleExportToPDF = async (estimate: SavedEstimation) => {
     try {
       const businessInfo = {
-        name: 'Constructora & Soldadura HYR',
-        contact: 'Santiago Hurtado',
-        email: 'contacto@hyrsoldadura.com',
-        phone: '+57 300 123 4567',
-        address: 'Bogotá, Colombia'
+        name: "Constructora & Soldadura HYR",
+        contact: "Santiago Hurtado",
+        email: "contacto@hyrsoldadura.com",
+        phone: "+57 300 123 4567",
+        address: "Bogotá, Colombia",
       };
 
       // Usar los datos de la estimación guardada con PDF profesional
       await downloadAdvancedPDF({
         estimate: estimate.estimation_data,
-        client: { name: estimate.client_name || 'Sin cliente' },
-        businessInfo
+        client: { name: estimate.client_name || "Sin cliente" },
+        businessInfo,
       });
-      
-      toast.success('PDF profesional generado exitosamente');
+
+      toast.success("PDF profesional generado exitosamente");
     } catch (error) {
-      console.error('Error generando PDF:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error al generar PDF profesional';
+      console.error("Error generando PDF:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al generar PDF profesional";
       toast.error(errorMessage);
     }
   };
@@ -146,7 +162,9 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
       <Card>
         <CardContent className="p-6 text-center">
           <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-          <p className="text-red-600 text-sm mb-2">Error cargando estimaciones</p>
+          <p className="text-red-600 text-sm mb-2">
+            Error cargando estimaciones
+          </p>
           <p className="text-gray-500 text-xs">{error}</p>
         </CardContent>
       </Card>
@@ -162,7 +180,7 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
           <Input
             placeholder="Buscar cotizaciones..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -181,7 +199,8 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
               {t.simulator.noEstimates}
             </h3>
             <p className="text-gray-500 text-center mb-4">
-              Crea tu primera cotización usando una plantilla o elementos personalizados
+              Crea tu primera cotización usando una plantilla o elementos
+              personalizados
             </p>
             <Button onClick={onNewEstimate}>
               <Plus className="h-4 w-4 mr-2" />
@@ -191,8 +210,11 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredEstimates.map((estimate) => (
-            <Card key={estimate.id} className="hover:shadow-md transition-shadow">
+          {filteredEstimates.map(estimate => (
+            <Card
+              key={estimate.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg font-semibold truncate">
@@ -201,29 +223,41 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <svg
+                          className="h-4 w-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                         </svg>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => onEditEstimate?.(estimate)}>
+                      <DropdownMenuItem
+                        onClick={() => onEditEstimate?.(estimate)}
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         {t.simulator.editEstimate}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(estimate)}>
+                      <DropdownMenuItem
+                        onClick={() => handleDuplicate(estimate)}
+                      >
                         <Copy className="h-4 w-4 mr-2" />
                         {t.simulator.duplicateEstimate}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleConvertToProject(estimate)}>
+                      <DropdownMenuItem
+                        onClick={() => handleConvertToProject(estimate)}
+                      >
                         <FolderOpen className="h-4 w-4 mr-2" />
                         {t.simulator.convertToProject}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExportToPDF(estimate)}>
+                      <DropdownMenuItem
+                        onClick={() => handleExportToPDF(estimate)}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         {t.simulator.exportToPDF}
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => handleDelete(estimate)}
                         className="text-red-600 hover:text-red-700"
                       >
@@ -237,27 +271,37 @@ export function CostEstimatesList({ onNewEstimate, onEditEstimate }: CostEstimat
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>Cliente:</span>
-                  <span className="font-medium">{getClientName(estimate.client_name)}</span>
+                  <span className="font-medium">
+                    {getClientName(estimate.client_name)}
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Total:</span>
                   <span className="text-lg font-bold text-primary">
-                    {formatCurrency(estimate.estimation_data.cost_breakdown.total)}
+                    {formatCurrency(
+                      estimate.estimation_data.cost_breakdown.total
+                    )}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Elementos:</span>
-                  <Badge variant="secondary">{estimate.estimation_data.items_detail.length}</Badge>
+                  <Badge variant="secondary">
+                    {estimate.estimation_data.items_detail.length}
+                  </Badge>
                 </div>
-                
+
                 <div className="text-xs text-gray-500">
-                  Creado: {new Date(estimate.created_at).toLocaleDateString('es-CO')}
+                  Creado:{" "}
+                  {new Date(estimate.created_at).toLocaleDateString("es-CO")}
                 </div>
-                
+
                 {estimate.notes && (
-                  <p className="text-sm text-gray-600 truncate" title={estimate.notes}>
+                  <p
+                    className="text-sm text-gray-600 truncate"
+                    title={estimate.notes}
+                  >
                     {estimate.notes}
                   </p>
                 )}

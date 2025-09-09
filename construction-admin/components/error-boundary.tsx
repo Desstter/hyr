@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -15,7 +15,10 @@ interface ErrorBoundaryState {
   error?: Error;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -26,7 +29,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    console.error("Error Boundary caught an error:", error, errorInfo);
   }
 
   render() {
@@ -47,7 +50,13 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-function DefaultErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+function DefaultErrorFallback({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
   return (
     <Card className="max-w-md mx-auto mt-8">
       <CardHeader>
@@ -58,9 +67,10 @@ function DefaultErrorFallback({ error, reset }: { error: Error; reset: () => voi
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Ha ocurrido un error inesperado. Por favor, intenta recargar la página.
+          Ha ocurrido un error inesperado. Por favor, intenta recargar la
+          página.
         </p>
-        
+
         <details className="text-xs">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
             Detalles del error
@@ -75,9 +85,9 @@ function DefaultErrorFallback({ error, reset }: { error: Error; reset: () => voi
             <RefreshCw className="h-4 w-4 mr-2" />
             Reintentar
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => window.location.reload()}
           >
             Recargar página

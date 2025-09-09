@@ -11,44 +11,44 @@
     --card-foreground: 220 15% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
-    
+
     /* Primary: Corporate Blue - Professional and trustworthy */
     --primary: 215 70% 48%;
     --primary-foreground: 0 0% 98%;
     --primary-hover: 215 70% 42%;
-    
+
     /* Secondary: Construction Orange - Industry specific */
     --secondary: 25 85% 60%;
     --secondary-foreground: 220 15% 15%;
     --secondary-hover: 25 85% 55%;
-    
+
     /* Success: Professional Green */
     --success: 145 65% 42%;
     --success-foreground: 0 0% 98%;
     --success-light: 145 45% 95%;
-    
+
     /* Warning: Alert Orange */
     --warning: 38 92% 55%;
     --warning-foreground: 220 15% 15%;
     --warning-light: 38 92% 95%;
-    
+
     /* Danger: Critical Red */
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
     --destructive-light: 0 75% 95%;
-    
+
     /* Neutral Grays - Professional workspace */
     --muted: 220 10% 96%;
     --muted-foreground: 220 8% 45%;
     --accent: 220 12% 94%;
     --accent-foreground: 220 15% 15%;
-    
+
     /* Interface Elements */
     --border: 220 13% 90%;
     --input: 220 13% 90%;
     --ring: 215 70% 48%;
     --radius: 0.75rem;
-    
+
     /* HYR Specific Colors */
     --construction-steel: 210 15% 25%;
     --construction-concrete: 40 8% 75%;
@@ -64,43 +64,43 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 15% 12%;
     --popover-foreground: 0 0% 95%;
-    
+
     /* Primary: Brighter blue for dark mode */
     --primary: 215 80% 58%;
     --primary-foreground: 220 15% 8%;
     --primary-hover: 215 80% 52%;
-    
+
     /* Secondary: Softer orange for dark mode */
     --secondary: 25 75% 55%;
     --secondary-foreground: 220 15% 8%;
     --secondary-hover: 25 75% 50%;
-    
+
     /* Success: Adjusted green for dark mode */
     --success: 145 60% 48%;
     --success-foreground: 0 0% 95%;
     --success-light: 145 60% 15%;
-    
+
     /* Warning: Adjusted orange for dark mode */
     --warning: 38 85% 60%;
     --warning-foreground: 220 15% 8%;
     --warning-light: 38 85% 15%;
-    
+
     /* Danger: Adjusted red for dark mode */
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 95%;
     --destructive-light: 0 70% 15%;
-    
+
     /* Neutral Grays - Dark workspace */
     --muted: 220 15% 18%;
     --muted-foreground: 220 8% 65%;
     --accent: 220 15% 20%;
     --accent-foreground: 0 0% 95%;
-    
+
     /* Interface Elements */
     --border: 220 15% 25%;
     --input: 220 15% 25%;
     --ring: 215 80% 58%;
-    
+
     /* HYR Specific Dark Colors */
     --construction-steel: 210 20% 75%;
     --construction-concrete: 40 15% 35%;
@@ -131,36 +131,46 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      "Segoe UI",
+      system-ui,
+      -apple-system,
+      sans-serif;
     font-feature-settings: "cv03", "cv04", "cv11";
   }
-  
+
   /* Improved typography for construction industry */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-medium tracking-tight;
     font-feature-settings: "cv03", "cv04", "cv11";
   }
-  
+
   /* Better focus states for accessibility */
   *:focus {
     @apply outline-none ring-2 ring-primary ring-offset-2;
   }
-  
+
   /* Custom scrollbars */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: hsl(var(--muted));
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 4px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
@@ -170,107 +180,122 @@
   /* HYR Corporate Components */
   .hyr-card {
     @apply bg-card text-card-foreground rounded-xl shadow-sm border;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06);
     transition: all 0.2s ease-in-out;
   }
-  
+
   .hyr-card:hover {
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 4px 12px 0 rgba(0, 0, 0, 0.15),
+      0 2px 4px 0 rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
   }
-  
+
   .hyr-card-elevated {
     @apply hyr-card;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
-  
+
   /* Enhanced KPI Cards */
   .kpi-card {
     @apply hyr-card p-6 relative overflow-hidden;
   }
-  
+
   .kpi-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)));
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--secondary))
+    );
   }
-  
+
   /* Status indicators */
   .status-active {
     @apply bg-success text-success-foreground;
     background: hsl(var(--success-light));
     color: hsl(var(--success));
   }
-  
+
   .status-warning {
     @apply bg-warning text-warning-foreground;
     background: hsl(var(--warning-light));
     color: hsl(var(--warning));
   }
-  
+
   .status-danger {
     @apply bg-destructive text-destructive-foreground;
     background: hsl(var(--destructive-light));
     color: hsl(var(--destructive));
   }
-  
+
   /* Enhanced buttons */
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
     background: hsl(var(--primary));
     transition: all 0.2s ease-in-out;
   }
-  
+
   .btn-primary:hover {
     background: hsl(var(--primary-hover));
     transform: translateY(-1px);
     box-shadow: 0 4px 12px 0 rgba(59, 130, 246, 0.3);
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/90;
     background: hsl(var(--secondary));
     transition: all 0.2s ease-in-out;
   }
-  
+
   .btn-secondary:hover {
     background: hsl(var(--secondary-hover));
     transform: translateY(-1px);
     box-shadow: 0 4px 12px 0 rgba(251, 146, 60, 0.3);
   }
-  
+
   /* Enhanced tables */
   .hyr-table {
     @apply w-full border-separate border-spacing-0 rounded-lg overflow-hidden;
     border: 1px solid hsl(var(--border));
   }
-  
+
   .hyr-table th {
     @apply bg-muted text-muted-foreground font-medium text-sm px-4 py-3 text-left;
     background: hsl(var(--muted));
   }
-  
+
   .hyr-table td {
     @apply px-4 py-3 border-t border-border;
     transition: background-color 0.15s ease-in-out;
   }
-  
+
   .hyr-table tr:hover td {
     @apply bg-muted/50;
   }
-  
+
   /* Loading states */
   .skeleton {
     @apply bg-muted animate-pulse rounded;
-    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted) / 0.5) 50%, hsl(var(--muted)) 75%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
     background-size: 200% 100%;
     animation: skeleton-loading 2s infinite;
   }
-  
+
   @keyframes skeleton-loading {
     0% {
       background-position: 200% 0;
@@ -279,12 +304,12 @@
       background-position: -200% 0;
     }
   }
-  
+
   /* Progress indicators */
   .progress-ring {
     transform: rotate(-90deg);
   }
-  
+
   .progress-ring-bar {
     fill: none;
     stroke: hsl(var(--primary));
@@ -292,23 +317,25 @@
     stroke-linecap: round;
     transition: stroke-dasharray 0.6s ease-in-out;
   }
-  
+
   /* Field/mobile optimizations */
   @media (max-width: 768px) {
     .hyr-card {
       @apply rounded-lg;
     }
-    
+
     .kpi-card {
       @apply p-4;
     }
-    
-    .btn-primary, .btn-secondary {
+
+    .btn-primary,
+    .btn-secondary {
       @apply min-h-12 px-6 text-base;
     }
 
     /* Touch-friendly improvements */
-    button, [role="button"] {
+    button,
+    [role="button"] {
       @apply min-h-11;
     }
 
@@ -323,7 +350,7 @@
     .hyr-card {
       @apply p-5;
     }
-    
+
     .kpi-card {
       @apply p-5;
     }
@@ -333,7 +360,9 @@
   @media (hover: none) and (pointer: coarse) {
     .hyr-card:hover {
       transform: none;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
 
     .btn-primary:hover,
@@ -353,18 +382,18 @@
     .ios-safe-area-top {
       padding-top: env(safe-area-inset-top);
     }
-    
+
     .ios-safe-area-bottom {
       padding-bottom: env(safe-area-inset-bottom);
     }
   }
-  
+
   /* High contrast mode styles */
   .high-contrast .hyr-card {
     @apply border-2;
     box-shadow: none;
   }
-  
+
   .high-contrast .btn-primary,
   .high-contrast .btn-secondary {
     @apply border-2 border-foreground;

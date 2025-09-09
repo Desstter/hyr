@@ -3,20 +3,20 @@
 // Servicio para gestión de registros de horas trabajadas
 // =====================================================
 
-import { apiClient } from './client';
-import type { 
-  TimeEntry, 
-  CreateTimeEntryRequest, 
+import { apiClient } from "./client";
+import type {
+  TimeEntry,
+  CreateTimeEntryRequest,
   UpdateTimeEntryRequest,
-  ApiListResponse 
-} from './types';
+  ApiListResponse,
+} from "./types";
 
 // =====================================================
 // CLASE DE SERVICIO TIME ENTRIES
 // =====================================================
 
 export class TimeEntriesService {
-  private readonly basePath = '/time-entries';
+  private readonly basePath = "/time-entries";
 
   /**
    * Obtener todos los registros de tiempo con filtros opcionales
@@ -30,18 +30,19 @@ export class TimeEntriesService {
     offset?: number;
   }): Promise<ApiListResponse<TimeEntry>> {
     const searchParams = new URLSearchParams();
-    
-    if (params?.personnelId) searchParams.append('personnelId', params.personnelId);
-    if (params?.projectId) searchParams.append('projectId', params.projectId);
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.offset) searchParams.append('offset', params.offset.toString());
-    
-    const url = searchParams.toString() 
+
+    if (params?.personnelId)
+      searchParams.append("personnelId", params.personnelId);
+    if (params?.projectId) searchParams.append("projectId", params.projectId);
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.offset) searchParams.append("offset", params.offset.toString());
+
+    const url = searchParams.toString()
       ? `${this.basePath}?${searchParams.toString()}`
       : this.basePath;
-      
+
     return apiClient.get<ApiListResponse<TimeEntry>>(url);
   }
 
@@ -62,7 +63,10 @@ export class TimeEntriesService {
   /**
    * Actualizar registro de tiempo existente
    */
-  async update(id: string, timeEntry: UpdateTimeEntryRequest): Promise<TimeEntry> {
+  async update(
+    id: string,
+    timeEntry: UpdateTimeEntryRequest
+  ): Promise<TimeEntry> {
     return apiClient.put<TimeEntry>(`${this.basePath}/${id}`, timeEntry);
   }
 
@@ -76,10 +80,13 @@ export class TimeEntriesService {
   /**
    * Obtener horas trabajadas por empleado
    */
-  async getByPersonnel(personnelId: string, params?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{
+  async getByPersonnel(
+    personnelId: string,
+    params?: {
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<{
     timeEntries: TimeEntry[];
     summary: {
       totalHours: number;
@@ -91,23 +98,26 @@ export class TimeEntriesService {
     };
   }> {
     const searchParams = new URLSearchParams();
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    
-    const url = searchParams.toString() 
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+
+    const url = searchParams.toString()
       ? `${this.basePath}/personnel/${personnelId}?${searchParams.toString()}`
       : `${this.basePath}/personnel/${personnelId}`;
-      
+
     return apiClient.get(url);
   }
 
   /**
    * Obtener horas trabajadas por proyecto
    */
-  async getByProject(projectId: string, params?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{
+  async getByProject(
+    projectId: string,
+    params?: {
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<{
     timeEntries: TimeEntry[];
     summary: {
       totalHours: number;
@@ -119,13 +129,13 @@ export class TimeEntriesService {
     };
   }> {
     const searchParams = new URLSearchParams();
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    
-    const url = searchParams.toString() 
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+
+    const url = searchParams.toString()
       ? `${this.basePath}/project/${projectId}?${searchParams.toString()}`
       : `${this.basePath}/project/${projectId}`;
-      
+
     return apiClient.get(url);
   }
 
@@ -186,10 +196,13 @@ export class TimeEntriesService {
     };
   }> {
     const searchParams = new URLSearchParams({ startDate: params.startDate });
-    if (params.personnelId) searchParams.append('personnelId', params.personnelId);
-    if (params.projectId) searchParams.append('projectId', params.projectId);
-    
-    return apiClient.get(`${this.basePath}/weekly-summary?${searchParams.toString()}`);
+    if (params.personnelId)
+      searchParams.append("personnelId", params.personnelId);
+    if (params.projectId) searchParams.append("projectId", params.projectId);
+
+    return apiClient.get(
+      `${this.basePath}/weekly-summary?${searchParams.toString()}`
+    );
   }
 
   /**
@@ -233,10 +246,13 @@ export class TimeEntriesService {
       year: params.year.toString(),
       month: params.month.toString(),
     });
-    if (params.personnelId) searchParams.append('personnelId', params.personnelId);
-    if (params.projectId) searchParams.append('projectId', params.projectId);
-    
-    return apiClient.get(`${this.basePath}/monthly-summary?${searchParams.toString()}`);
+    if (params.personnelId)
+      searchParams.append("personnelId", params.personnelId);
+    if (params.projectId) searchParams.append("projectId", params.projectId);
+
+    return apiClient.get(
+      `${this.basePath}/monthly-summary?${searchParams.toString()}`
+    );
   }
 
   /**
@@ -253,10 +269,14 @@ export class TimeEntriesService {
   /**
    * Duplicar registro de tiempo con nueva fecha
    */
-  async duplicate(id: string, newDate: string, modifications?: Partial<CreateTimeEntryRequest>): Promise<TimeEntry> {
+  async duplicate(
+    id: string,
+    newDate: string,
+    modifications?: Partial<CreateTimeEntryRequest>
+  ): Promise<TimeEntry> {
     return apiClient.post(`${this.basePath}/${id}/duplicate`, {
       newDate,
-      ...modifications
+      ...modifications,
     });
   }
 
@@ -266,7 +286,7 @@ export class TimeEntriesService {
   async getProductivityStats(params: {
     personnelId?: string;
     projectId?: string;
-    period: 'week' | 'month' | 'quarter' | 'year';
+    period: "week" | "month" | "quarter" | "year";
     startDate?: string;
   }): Promise<{
     averageHoursPerDay: number;
@@ -286,13 +306,16 @@ export class TimeEntriesService {
     }>;
   }> {
     const searchParams = new URLSearchParams({
-      period: params.period
+      period: params.period,
     });
-    if (params.personnelId) searchParams.append('personnelId', params.personnelId);
-    if (params.projectId) searchParams.append('projectId', params.projectId);
-    if (params.startDate) searchParams.append('startDate', params.startDate);
-    
-    return apiClient.get(`${this.basePath}/productivity-stats?${searchParams.toString()}`);
+    if (params.personnelId)
+      searchParams.append("personnelId", params.personnelId);
+    if (params.projectId) searchParams.append("projectId", params.projectId);
+    if (params.startDate) searchParams.append("startDate", params.startDate);
+
+    return apiClient.get(
+      `${this.basePath}/productivity-stats?${searchParams.toString()}`
+    );
   }
 
   /**
@@ -305,15 +328,16 @@ export class TimeEntriesService {
     endDate?: string;
   }): Promise<Blob> {
     const searchParams = new URLSearchParams();
-    if (params?.personnelId) searchParams.append('personnelId', params.personnelId);
-    if (params?.projectId) searchParams.append('projectId', params.projectId);
-    if (params?.startDate) searchParams.append('startDate', params.startDate);
-    if (params?.endDate) searchParams.append('endDate', params.endDate);
-    
-    const url = searchParams.toString() 
+    if (params?.personnelId)
+      searchParams.append("personnelId", params.personnelId);
+    if (params?.projectId) searchParams.append("projectId", params.projectId);
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+
+    const url = searchParams.toString()
       ? `${this.basePath}/export/excel?${searchParams.toString()}`
       : `${this.basePath}/export/excel`;
-      
+
     // Usar fetch directamente para descargar archivos
     const response = await fetch(`http://localhost:3001/api${url}`);
     if (!response.ok) {
@@ -336,7 +360,11 @@ export class TimeEntriesService {
   /**
    * Aprobar/rechazar registros de tiempo
    */
-  async updateApprovalStatus(ids: string[], status: 'approved' | 'rejected', notes?: string): Promise<{
+  async updateApprovalStatus(
+    ids: string[],
+    status: "approved" | "rejected",
+    notes?: string
+  ): Promise<{
     updated: number;
     errors: Array<{
       id: string;
@@ -346,7 +374,7 @@ export class TimeEntriesService {
     return apiClient.post(`${this.basePath}/approval`, {
       ids,
       status,
-      notes
+      notes,
     });
   }
 }
@@ -361,12 +389,14 @@ export const timeEntriesService = new TimeEntriesService();
 // HOOKS PARA REACT
 // =====================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Hook para cargar registros de tiempo
  */
-export function useTimeEntries(params?: Parameters<TimeEntriesService['list']>[0]) {
+export function useTimeEntries(
+  params?: Parameters<TimeEntriesService["list"]>[0]
+) {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -380,7 +410,11 @@ export function useTimeEntries(params?: Parameters<TimeEntriesService['list']>[0
       setTimeEntries(result.data);
       setTotal(result.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando registros de tiempo');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error cargando registros de tiempo"
+      );
     } finally {
       setLoading(false);
     }
@@ -402,8 +436,13 @@ export function useTimeEntries(params?: Parameters<TimeEntriesService['list']>[0
 /**
  * Hook para horas de un empleado específico
  */
-export function usePersonnelTimeEntries(personnelId: string, params?: { startDate?: string; endDate?: string }) {
-  const [data, setData] = useState<Awaited<ReturnType<TimeEntriesService['getByPersonnel']>> | null>(null);
+export function usePersonnelTimeEntries(
+  personnelId: string,
+  params?: { startDate?: string; endDate?: string }
+) {
+  const [data, setData] = useState<Awaited<
+    ReturnType<TimeEntriesService["getByPersonnel"]>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -411,10 +450,15 @@ export function usePersonnelTimeEntries(personnelId: string, params?: { startDat
     try {
       setLoading(true);
       setError(null);
-      const result = await timeEntriesService.getByPersonnel(personnelId, params);
+      const result = await timeEntriesService.getByPersonnel(
+        personnelId,
+        params
+      );
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando horas del empleado');
+      setError(
+        err instanceof Error ? err.message : "Error cargando horas del empleado"
+      );
     } finally {
       setLoading(false);
     }
@@ -428,7 +472,14 @@ export function usePersonnelTimeEntries(personnelId: string, params?: { startDat
 
   return {
     timeEntries: data?.timeEntries || [],
-    summary: data?.summary || { totalHours: 0, totalOvertimeHours: 0, totalPay: 0, daysWorked: 0, projectsWorked: 0, averageHoursPerDay: 0 },
+    summary: data?.summary || {
+      totalHours: 0,
+      totalOvertimeHours: 0,
+      totalPay: 0,
+      daysWorked: 0,
+      projectsWorked: 0,
+      averageHoursPerDay: 0,
+    },
     loading,
     error,
     reload: loadData,
@@ -438,8 +489,13 @@ export function usePersonnelTimeEntries(personnelId: string, params?: { startDat
 /**
  * Hook para horas de un proyecto específico
  */
-export function useProjectTimeEntries(projectId: string, params?: { startDate?: string; endDate?: string }) {
-  const [data, setData] = useState<Awaited<ReturnType<TimeEntriesService['getByProject']>> | null>(null);
+export function useProjectTimeEntries(
+  projectId: string,
+  params?: { startDate?: string; endDate?: string }
+) {
+  const [data, setData] = useState<Awaited<
+    ReturnType<TimeEntriesService["getByProject"]>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -450,7 +506,9 @@ export function useProjectTimeEntries(projectId: string, params?: { startDate?: 
       const result = await timeEntriesService.getByProject(projectId, params);
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando horas del proyecto');
+      setError(
+        err instanceof Error ? err.message : "Error cargando horas del proyecto"
+      );
     } finally {
       setLoading(false);
     }
@@ -464,7 +522,14 @@ export function useProjectTimeEntries(projectId: string, params?: { startDate?: 
 
   return {
     timeEntries: data?.timeEntries || [],
-    summary: data?.summary || { totalHours: 0, totalOvertimeHours: 0, totalCost: 0, employeesWorked: 0, totalDays: 0, averageHoursPerEmployee: 0 },
+    summary: data?.summary || {
+      totalHours: 0,
+      totalOvertimeHours: 0,
+      totalCost: 0,
+      employeesWorked: 0,
+      totalDays: 0,
+      averageHoursPerEmployee: 0,
+    },
     loading,
     error,
     reload: loadData,
@@ -474,8 +539,14 @@ export function useProjectTimeEntries(projectId: string, params?: { startDate?: 
 /**
  * Hook para resumen semanal
  */
-export function useWeeklySummary(startDate: string, personnelId?: string, projectId?: string) {
-  const [data, setData] = useState<Awaited<ReturnType<TimeEntriesService['getWeeklySummary']>> | null>(null);
+export function useWeeklySummary(
+  startDate: string,
+  personnelId?: string,
+  projectId?: string
+) {
+  const [data, setData] = useState<Awaited<
+    ReturnType<TimeEntriesService["getWeeklySummary"]>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -483,10 +554,16 @@ export function useWeeklySummary(startDate: string, personnelId?: string, projec
     try {
       setLoading(true);
       setError(null);
-      const result = await timeEntriesService.getWeeklySummary({ startDate, personnelId, projectId });
+      const result = await timeEntriesService.getWeeklySummary({
+        startDate,
+        personnelId,
+        projectId,
+      });
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando resumen semanal');
+      setError(
+        err instanceof Error ? err.message : "Error cargando resumen semanal"
+      );
     } finally {
       setLoading(false);
     }
@@ -500,7 +577,12 @@ export function useWeeklySummary(startDate: string, personnelId?: string, projec
 
   return {
     weekDays: data?.weekDays || [],
-    weekTotal: data?.weekTotal || { regularHours: 0, overtimeHours: 0, totalPay: 0, daysWorked: 0 },
+    weekTotal: data?.weekTotal || {
+      regularHours: 0,
+      overtimeHours: 0,
+      totalPay: 0,
+      daysWorked: 0,
+    },
     loading,
     error,
     reload: loadData,

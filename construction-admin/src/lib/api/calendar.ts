@@ -3,16 +3,16 @@
 // Servicios para gestión de eventos y recordatorios
 // =====================================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   CalendarEvent,
   CreateCalendarEventRequest,
   PayrollEvent,
   ProjectEvent,
-} from './types';
+} from "./types";
 
 export class CalendarService {
-  private endpoint = '/calendar';
+  private endpoint = "/calendar";
 
   // =====================================================
   // CRUD EVENTOS DE CALENDARIO
@@ -24,8 +24,8 @@ export class CalendarService {
   async getEvents(filters?: {
     start_date?: string;
     end_date?: string;
-    type?: 'payroll' | 'project' | 'reminder' | 'payment';
-    status?: 'pending' | 'completed' | 'overdue';
+    type?: "payroll" | "project" | "reminder" | "payment";
+    status?: "pending" | "completed" | "overdue";
   }): Promise<CalendarEvent[]> {
     return apiClient.get<CalendarEvent[]>(`${this.endpoint}/events`, filters);
   }
@@ -33,8 +33,14 @@ export class CalendarService {
   /**
    * Obtener eventos por mes
    */
-  async getEventsByMonth(year: number, month: number): Promise<CalendarEvent[]> {
-    return apiClient.get<CalendarEvent[]>(`${this.endpoint}/events/month`, { year, month });
+  async getEventsByMonth(
+    year: number,
+    month: number
+  ): Promise<CalendarEvent[]> {
+    return apiClient.get<CalendarEvent[]>(`${this.endpoint}/events/month`, {
+      year,
+      month,
+    });
   }
 
   /**
@@ -54,7 +60,10 @@ export class CalendarService {
   /**
    * Actualizar evento
    */
-  async updateEvent(id: string, data: Partial<CreateCalendarEventRequest>): Promise<CalendarEvent> {
+  async updateEvent(
+    id: string,
+    data: Partial<CreateCalendarEventRequest>
+  ): Promise<CalendarEvent> {
     return apiClient.put<CalendarEvent>(`${this.endpoint}/events/${id}`, data);
   }
 
@@ -69,7 +78,9 @@ export class CalendarService {
    * Marcar evento como completado
    */
   async markEventCompleted(id: string): Promise<CalendarEvent> {
-    return apiClient.patch<CalendarEvent>(`${this.endpoint}/events/${id}/complete`);
+    return apiClient.patch<CalendarEvent>(
+      `${this.endpoint}/events/${id}/complete`
+    );
   }
 
   // =====================================================
@@ -82,9 +93,12 @@ export class CalendarService {
   async getPayrollEvents(filters?: {
     year?: number;
     month?: number;
-    status?: 'pending' | 'processed' | 'paid';
+    status?: "pending" | "processed" | "paid";
   }): Promise<PayrollEvent[]> {
-    return apiClient.get<PayrollEvent[]>(`${this.endpoint}/payroll-events`, filters);
+    return apiClient.get<PayrollEvent[]>(
+      `${this.endpoint}/payroll-events`,
+      filters
+    );
   }
 
   /**
@@ -97,7 +111,10 @@ export class CalendarService {
     payment_date: string;
     notes?: string;
   }): Promise<PayrollEvent> {
-    return apiClient.post<PayrollEvent>(`${this.endpoint}/payroll-events`, data);
+    return apiClient.post<PayrollEvent>(
+      `${this.endpoint}/payroll-events`,
+      data
+    );
   }
 
   // =====================================================
@@ -111,9 +128,12 @@ export class CalendarService {
     project_id?: string;
     start_date?: string;
     end_date?: string;
-    type?: 'start' | 'milestone' | 'deadline' | 'completion';
+    type?: "start" | "milestone" | "deadline" | "completion";
   }): Promise<ProjectEvent[]> {
-    return apiClient.get<ProjectEvent[]>(`${this.endpoint}/project-events`, filters);
+    return apiClient.get<ProjectEvent[]>(
+      `${this.endpoint}/project-events`,
+      filters
+    );
   }
 
   /**
@@ -124,10 +144,13 @@ export class CalendarService {
     title: string;
     description?: string;
     event_date: string;
-    type: 'start' | 'milestone' | 'deadline' | 'completion';
-    priority?: 'low' | 'medium' | 'high';
+    type: "start" | "milestone" | "deadline" | "completion";
+    priority?: "low" | "medium" | "high";
   }): Promise<ProjectEvent> {
-    return apiClient.post<ProjectEvent>(`${this.endpoint}/project-events`, data);
+    return apiClient.post<ProjectEvent>(
+      `${this.endpoint}/project-events`,
+      data
+    );
   }
 
   // =====================================================
@@ -138,7 +161,10 @@ export class CalendarService {
    * Obtener recordatorios de pagos próximos
    */
   async getUpcomingPayments(days_ahead: number = 30): Promise<CalendarEvent[]> {
-    return apiClient.get<CalendarEvent[]>(`${this.endpoint}/upcoming-payments`, { days_ahead });
+    return apiClient.get<CalendarEvent[]>(
+      `${this.endpoint}/upcoming-payments`,
+      { days_ahead }
+    );
   }
 
   /**
@@ -149,11 +175,14 @@ export class CalendarService {
     description?: string;
     due_date: string;
     amount?: number;
-    category: 'tax' | 'insurance' | 'permit' | 'equipment' | 'other';
-    priority: 'low' | 'medium' | 'high';
-    recurrence?: 'none' | 'monthly' | 'quarterly' | 'yearly';
+    category: "tax" | "insurance" | "permit" | "equipment" | "other";
+    priority: "low" | "medium" | "high";
+    recurrence?: "none" | "monthly" | "quarterly" | "yearly";
   }): Promise<CalendarEvent> {
-    return apiClient.post<CalendarEvent>(`${this.endpoint}/payment-reminders`, data);
+    return apiClient.post<CalendarEvent>(
+      `${this.endpoint}/payment-reminders`,
+      data
+    );
   }
 
   // =====================================================
@@ -172,7 +201,15 @@ export class CalendarService {
     upcoming_deadlines: ProjectEvent[];
     pending_payments: CalendarEvent[];
   }> {
-    return apiClient.get<{ total_events: number; events_this_week: number; events_this_month: number; overdue_events: number; upcoming_payroll: PayrollEvent[]; upcoming_deadlines: ProjectEvent[]; pending_payments: CalendarEvent[]; }>(`${this.endpoint}/summary`);
+    return apiClient.get<{
+      total_events: number;
+      events_this_week: number;
+      events_this_month: number;
+      overdue_events: number;
+      upcoming_payroll: PayrollEvent[];
+      upcoming_deadlines: ProjectEvent[];
+      pending_payments: CalendarEvent[];
+    }>(`${this.endpoint}/summary`);
   }
 
   /**
@@ -184,7 +221,12 @@ export class CalendarService {
     overdue: CalendarEvent[];
     nextPayroll?: PayrollEvent;
   }> {
-    return apiClient.get<{ today: CalendarEvent[]; thisWeek: CalendarEvent[]; overdue: CalendarEvent[]; nextPayroll?: PayrollEvent; }>(`${this.endpoint}/dashboard`);
+    return apiClient.get<{
+      today: CalendarEvent[];
+      thisWeek: CalendarEvent[];
+      overdue: CalendarEvent[];
+      nextPayroll?: PayrollEvent;
+    }>(`${this.endpoint}/dashboard`);
   }
 
   // =====================================================
@@ -202,7 +244,9 @@ export class CalendarService {
    * Marcar notificación como vista
    */
   async markNotificationSeen(eventId: string): Promise<void> {
-    return apiClient.patch<void>(`${this.endpoint}/notifications/${eventId}/seen`);
+    return apiClient.patch<void>(
+      `${this.endpoint}/notifications/${eventId}/seen`
+    );
   }
 
   // =====================================================
@@ -218,18 +262,22 @@ export class CalendarService {
     types?: string[];
   }): Promise<Blob> {
     const params = new URLSearchParams();
-    if (filters?.start_date) params.append('start_date', filters.start_date);
-    if (filters?.end_date) params.append('end_date', filters.end_date);
-    if (filters?.types) filters.types.forEach(type => params.append('types[]', type));
-    
-    const response = await fetch(`${apiClient.baseURL}${this.endpoint}/export.ics?${params}`, {
-      headers: apiClient.getAuthHeaders(),
-    });
-    
+    if (filters?.start_date) params.append("start_date", filters.start_date);
+    if (filters?.end_date) params.append("end_date", filters.end_date);
+    if (filters?.types)
+      filters.types.forEach(type => params.append("types[]", type));
+
+    const response = await fetch(
+      `${apiClient.baseURL}${this.endpoint}/export.ics?${params}`,
+      {
+        headers: apiClient.getAuthHeaders(),
+      }
+    );
+
     if (!response.ok) {
-      throw new Error('Error al exportar calendario');
+      throw new Error("Error al exportar calendario");
     }
-    
+
     return response.blob();
   }
 
@@ -239,7 +287,7 @@ export class CalendarService {
   async generateEventsReport(period: {
     start_date: string;
     end_date: string;
-    format?: 'pdf' | 'excel';
+    format?: "pdf" | "excel";
   }): Promise<{
     total_events: number;
     events_by_type: Record<string, number>;
@@ -248,7 +296,14 @@ export class CalendarService {
     completion_rate: number;
     downloadUrl?: string;
   }> {
-    return apiClient.get<{ total_events: number; events_by_type: Record<string, number>; events_by_status: Record<string, number>; overdue_count: number; completion_rate: number; downloadUrl?: string; }>(`${this.endpoint}/reports/events`, period);
+    return apiClient.get<{
+      total_events: number;
+      events_by_type: Record<string, number>;
+      events_by_status: Record<string, number>;
+      overdue_count: number;
+      completion_rate: number;
+      downloadUrl?: string;
+    }>(`${this.endpoint}/reports/events`, period);
   }
 }
 

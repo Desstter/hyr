@@ -3,7 +3,7 @@
 // Servicios para gestión de configuraciones del sistema
 // =====================================================
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 // =====================================================
 // TIPOS DE DATOS
@@ -21,8 +21,8 @@ export interface BusinessProfile {
 }
 
 export interface ThemeSettings {
-  mode: 'light' | 'dark';
-  language: 'es' | 'en';
+  mode: "light" | "dark";
+  language: "es" | "en";
   dateFormat: string;
   timeFormat: string;
   primaryColor: string;
@@ -33,8 +33,8 @@ export interface AppPreferences {
   emailAlerts: boolean;
   autoBackup: boolean;
   defaultCurrency: string;
-  backupFrequency: 'daily' | 'weekly' | 'monthly';
-  reportLanguage: 'es' | 'en';
+  backupFrequency: "daily" | "weekly" | "monthly";
+  reportLanguage: "es" | "en";
 }
 
 export interface NotificationSettings {
@@ -76,7 +76,7 @@ export interface AllSettings {
 // =====================================================
 
 export class SettingsService {
-  private endpoint = '/settings';
+  private endpoint = "/settings";
 
   /**
    * Obtener todas las configuraciones
@@ -89,7 +89,9 @@ export class SettingsService {
    * Obtener configuraciones por categoría
    */
   async getByCategory(category: string): Promise<Record<string, unknown>> {
-    return apiClient.get<Record<string, unknown>>(`${this.endpoint}/category/${category}`);
+    return apiClient.get<Record<string, unknown>>(
+      `${this.endpoint}/category/${category}`
+    );
   }
 
   /**
@@ -102,35 +104,47 @@ export class SettingsService {
   /**
    * Actualizar configuración específica
    */
-  async update<T>(key: string, value: T, description?: string): Promise<{
-    success: boolean;
-    message: string;
-    data: Setting<T>;
-  }> {
-    return apiClient.put<Setting>(`${this.endpoint}/${key}`, { value, description });
-  }
-
-  /**
-   * Crear nueva configuración
-   */
-  async create<T>(
-    key: string, 
-    value: T, 
-    category: string = 'general', 
+  async update<T>(
+    key: string,
+    value: T,
     description?: string
   ): Promise<{
     success: boolean;
     message: string;
     data: Setting<T>;
   }> {
-    return apiClient.post<Setting>(`${this.endpoint}`, { key, value, category, description });
+    return apiClient.put<Setting>(`${this.endpoint}/${key}`, {
+      value,
+      description,
+    });
+  }
+
+  /**
+   * Crear nueva configuración
+   */
+  async create<T>(
+    key: string,
+    value: T,
+    category: string = "general",
+    description?: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: Setting<T>;
+  }> {
+    return apiClient.post<Setting>(`${this.endpoint}`, {
+      key,
+      value,
+      category,
+      description,
+    });
   }
 
   /**
    * Eliminar configuración
    */
   async delete(key: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete<{success: boolean}>(`${this.endpoint}/${key}`);
+    return apiClient.delete<{ success: boolean }>(`${this.endpoint}/${key}`);
   }
 
   /**
@@ -156,7 +170,9 @@ export class SettingsService {
     message: string;
     data: Setting;
   }> {
-    return apiClient.post<{success: boolean}>(`${this.endpoint}/reset/${key}`);
+    return apiClient.post<{ success: boolean }>(
+      `${this.endpoint}/reset/${key}`
+    );
   }
 
   // =====================================================
@@ -167,7 +183,7 @@ export class SettingsService {
    * Obtener perfil de empresa
    */
   async getBusinessProfile(): Promise<BusinessProfile> {
-    const result = await this.get<BusinessProfile>('business_profile');
+    const result = await this.get<BusinessProfile>("business_profile");
     return result.value;
   }
 
@@ -175,14 +191,14 @@ export class SettingsService {
    * Actualizar perfil de empresa
    */
   async updateBusinessProfile(profile: BusinessProfile): Promise<void> {
-    await this.update('business_profile', profile);
+    await this.update("business_profile", profile);
   }
 
   /**
    * Obtener configuraciones de tema
    */
   async getThemeSettings(): Promise<ThemeSettings> {
-    const result = await this.get<ThemeSettings>('theme_settings');
+    const result = await this.get<ThemeSettings>("theme_settings");
     return result.value;
   }
 
@@ -190,14 +206,14 @@ export class SettingsService {
    * Actualizar configuraciones de tema
    */
   async updateThemeSettings(settings: ThemeSettings): Promise<void> {
-    await this.update('theme_settings', settings);
+    await this.update("theme_settings", settings);
   }
 
   /**
    * Obtener preferencias de aplicación
    */
   async getAppPreferences(): Promise<AppPreferences> {
-    const result = await this.get<AppPreferences>('app_preferences');
+    const result = await this.get<AppPreferences>("app_preferences");
     return result.value;
   }
 
@@ -205,29 +221,33 @@ export class SettingsService {
    * Actualizar preferencias de aplicación
    */
   async updateAppPreferences(preferences: AppPreferences): Promise<void> {
-    await this.update('app_preferences', preferences);
+    await this.update("app_preferences", preferences);
   }
 
   /**
    * Obtener configuraciones de notificaciones
    */
   async getNotificationSettings(): Promise<NotificationSettings> {
-    const result = await this.get<NotificationSettings>('notification_settings');
+    const result = await this.get<NotificationSettings>(
+      "notification_settings"
+    );
     return result.value;
   }
 
   /**
    * Actualizar configuraciones de notificaciones
    */
-  async updateNotificationSettings(settings: NotificationSettings): Promise<void> {
-    await this.update('notification_settings', settings);
+  async updateNotificationSettings(
+    settings: NotificationSettings
+  ): Promise<void> {
+    await this.update("notification_settings", settings);
   }
 
   /**
    * Obtener configuraciones de nómina
    */
   async getPayrollSettings(): Promise<PayrollSettings> {
-    const result = await this.get<PayrollSettings>('payroll_settings');
+    const result = await this.get<PayrollSettings>("payroll_settings");
     return result.value;
   }
 
@@ -235,7 +255,7 @@ export class SettingsService {
    * Actualizar configuraciones de nómina
    */
   async updatePayrollSettings(settings: PayrollSettings): Promise<void> {
-    await this.update('payroll_settings', settings);
+    await this.update("payroll_settings", settings);
   }
 
   // =====================================================
@@ -248,7 +268,7 @@ export class SettingsService {
   async exportSettings(): Promise<Blob> {
     const settings = await this.getAll();
     const blob = new Blob([JSON.stringify(settings, null, 2)], {
-      type: 'application/json'
+      type: "application/json",
     });
     return blob;
   }
@@ -256,21 +276,26 @@ export class SettingsService {
   /**
    * Validar configuración de perfil de empresa
    */
-  validateBusinessProfile(profile: BusinessProfile): { isValid: boolean; errors: string[] } {
+  validateBusinessProfile(profile: BusinessProfile): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
-    if (!profile.name?.trim()) errors.push('El nombre de la empresa es requerido');
-    if (!profile.contact?.trim()) errors.push('La persona de contacto es requerida');
-    if (!profile.email?.trim()) errors.push('El email es requerido');
+    if (!profile.name?.trim())
+      errors.push("El nombre de la empresa es requerido");
+    if (!profile.contact?.trim())
+      errors.push("La persona de contacto es requerida");
+    if (!profile.email?.trim()) errors.push("El email es requerido");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
-      errors.push('El formato del email no es válido');
+      errors.push("El formato del email no es válido");
     }
-    if (!profile.phone?.trim()) errors.push('El teléfono es requerido');
-    if (!profile.address?.trim()) errors.push('La dirección es requerida');
+    if (!profile.phone?.trim()) errors.push("El teléfono es requerido");
+    if (!profile.address?.trim()) errors.push("La dirección es requerida");
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -279,19 +304,19 @@ export class SettingsService {
    */
   applyTheme(settings: ThemeSettings): void {
     const root = document.documentElement;
-    
+
     // Aplicar modo (light/dark)
-    root.setAttribute('data-theme', settings.mode);
-    
+    root.setAttribute("data-theme", settings.mode);
+
     // Aplicar color primario
     if (settings.primaryColor) {
-      root.style.setProperty('--primary-color', settings.primaryColor);
+      root.style.setProperty("--primary-color", settings.primaryColor);
     }
-    
+
     // Guardar en localStorage para persistencia
-    localStorage.setItem('hyr_theme_mode', settings.mode);
-    localStorage.setItem('hyr_theme_language', settings.language);
-    localStorage.setItem('hyr_theme_primary_color', settings.primaryColor);
+    localStorage.setItem("hyr_theme_mode", settings.mode);
+    localStorage.setItem("hyr_theme_language", settings.language);
+    localStorage.setItem("hyr_theme_primary_color", settings.primaryColor);
   }
 
   /**
@@ -299,9 +324,12 @@ export class SettingsService {
    */
   loadThemeFromStorage(): Partial<ThemeSettings> {
     return {
-      mode: (localStorage.getItem('hyr_theme_mode') as 'light' | 'dark') || 'light',
-      language: (localStorage.getItem('hyr_theme_language') as 'es' | 'en') || 'es',
-      primaryColor: localStorage.getItem('hyr_theme_primary_color') || '#3b82f6'
+      mode:
+        (localStorage.getItem("hyr_theme_mode") as "light" | "dark") || "light",
+      language:
+        (localStorage.getItem("hyr_theme_language") as "es" | "en") || "es",
+      primaryColor:
+        localStorage.getItem("hyr_theme_primary_color") || "#3b82f6",
     };
   }
 }

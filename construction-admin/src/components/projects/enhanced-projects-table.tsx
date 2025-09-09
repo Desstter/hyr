@@ -1,70 +1,78 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProgressRing } from '@/components/ui/progress-ring';
-import { 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProgressRing } from "@/components/ui/progress-ring";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { api, handleApiError } from '@/lib/api';
-import type { Project, Client } from '@/lib/api';
-import { formatCurrency, formatDate, getProjectStatusColor, getProjectStatusLabel } from '@/lib/finance';
-import { useTranslations } from '@/lib/i18n';
-import { 
-  Eye, 
-  Edit, 
-  Search, 
-  Filter,
-  MoreVertical,
+} from "@/components/ui/select";
+import { api, handleApiError } from "@/lib/api";
+import type { Project, Client } from "@/lib/api";
+import {
+  formatCurrency,
+  formatDate,
+  getProjectStatusLabel,
+} from "@/lib/finance";
+import { useTranslations } from "@/lib/i18n";
+import {
+  Eye,
+  Edit,
+  Search,
   Calendar,
   DollarSign,
   Users,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle,
   Clock,
   Pause,
-  Trash2
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { DeleteProjectDialog } from './delete-project-dialog';
-import { QuickStatusUpdate, QuickProgressUpdate, ProjectActionsMenu } from './quick-actions';
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { DeleteProjectDialog } from "./delete-project-dialog";
+import {
+  QuickStatusUpdate,
+  QuickProgressUpdate,
+  ProjectActionsMenu,
+} from "./quick-actions";
 
-type ViewMode = 'grid' | 'list';
-type StatusFilter = 'all' | 'planned' | 'in_progress' | 'on_hold' | 'completed';
+type ViewMode = "grid" | "list";
+type StatusFilter = "all" | "planned" | "in_progress" | "on_hold" | "completed";
 
 interface EnhancedProjectsTableProps {
   onEditProject?: (project: Project) => void;
   onViewProject?: (project: Project) => void;
 }
 
-export function EnhancedProjectsTable({ onEditProject, onViewProject }: EnhancedProjectsTableProps) {
-  const t = useTranslations('es');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'budget' | 'progress' | 'status'>('name');
-  
+export function EnhancedProjectsTable({
+  onEditProject,
+  onViewProject,
+}: EnhancedProjectsTableProps) {
+  const t = useTranslations("es");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<
+    "name" | "budget" | "progress" | "status"
+  >("name");
+
   // State for API data
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Delete dialog state
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
+
   // Client lookup map
   const clientMap = new Map(clients.map(c => [c.id, c.name]));
 
@@ -76,23 +84,29 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
     try {
       setLoading(true);
       setError(null);
-      
+
       const [projectsResult, clientsResult] = await Promise.all([
         api.projects.list(),
-        api.clients.list()
+        api.clients.list(),
       ]);
-      
-      const projectsData = Array.isArray(projectsResult) ? projectsResult : 
-                          (Array.isArray(projectsResult.data) ? projectsResult.data : []);
-      const clientsData = Array.isArray(clientsResult) ? clientsResult : 
-                         (Array.isArray(clientsResult.data) ? clientsResult.data : []);
-      
+
+      const projectsData = Array.isArray(projectsResult)
+        ? projectsResult
+        : Array.isArray(projectsResult.data)
+          ? projectsResult.data
+          : [];
+      const clientsData = Array.isArray(clientsResult)
+        ? clientsResult
+        : Array.isArray(clientsResult.data)
+          ? clientsResult.data
+          : [];
+
       setProjects(projectsData);
       setClients(clientsData);
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      toast.error('Error cargando proyectos: ' + errorMessage);
+      toast.error("Error cargando proyectos: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,7 +114,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
 
   // Handle project updates
   const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    setProjects(prev =>
+      prev.map(p => (p.id === updatedProject.id ? updatedProject : p))
+    );
   };
 
   // Handle project deletion
@@ -119,19 +135,23 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
   // Filter and sort projects
   const filteredAndSortedProjects = (projects || [])
     .filter(project => {
-      const clientName = project.client_id ? clientMap.get(project.client_id) || '' : '';
-      const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           clientName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      const clientName = project.client_id
+        ? clientMap.get(project.client_id) || ""
+        : "";
+      const matchesSearch =
+        project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        clientName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || project.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'budget':
+        case "budget":
           return (b.budget_total || 0) - (a.budget_total || 0);
-        case 'progress':
+        case "progress":
           return (b.progress || 0) - (a.progress || 0);
-        case 'status':
+        case "status":
           return a.status.localeCompare(b.status);
         default:
           return a.name.localeCompare(b.name);
@@ -140,11 +160,11 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="h-4 w-4" />;
-      case 'in_progress':
+      case "in_progress":
         return <Clock className="h-4 w-4" />;
-      case 'on_hold':
+      case "on_hold":
         return <Pause className="h-4 w-4" />;
       default:
         return <Calendar className="h-4 w-4" />;
@@ -152,44 +172,54 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
   };
 
   const getProgressVariant = (progress: number, budgetStatus: number) => {
-    if (budgetStatus > 100) return 'danger';
-    if (budgetStatus > 90) return 'warning';
-    if (progress > 75) return 'success';
-    return 'primary';
+    if (budgetStatus > 100) return "danger";
+    if (budgetStatus > 90) return "warning";
+    if (progress > 75) return "success";
+    return "primary";
   };
 
   const ProjectCard = ({ project }: { project: Project }) => {
-    const clientName = project.client_id ? clientMap.get(project.client_id) : 'Sin cliente';
-    const budgetUtilization = project.budget_total > 0 
-      ? (project.spent_total / project.budget_total) * 100 
-      : 0;
+    const clientName = project.client_id
+      ? clientMap.get(project.client_id)
+      : "Sin cliente";
+    const budgetUtilization =
+      project.budget_total > 0
+        ? (project.spent_total / project.budget_total) * 100
+        : 0;
     const isOverBudget = budgetUtilization > 100;
     const isAtRisk = budgetUtilization > 90 && project.progress < 90;
 
     return (
-      <Card className={cn(
-        "hyr-card hover:shadow-lg transition-all duration-300 hover:scale-[1.02]",
-        isOverBudget && "border-l-4 border-l-[hsl(var(--destructive))]",
-        isAtRisk && !isOverBudget && "border-l-4 border-l-[hsl(var(--warning))]"
-      )}>
+      <Card
+        className={cn(
+          "hyr-card hover:shadow-lg transition-all duration-300 hover:scale-[1.02]",
+          isOverBudget && "border-l-4 border-l-[hsl(var(--destructive))]",
+          isAtRisk &&
+            !isOverBudget &&
+            "border-l-4 border-l-[hsl(var(--warning))]"
+        )}
+      >
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <CardTitle className="text-lg font-semibold text-foreground mb-1 truncate">
                 {project.name}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {clientName}
-              </p>
+              <p className="text-sm text-muted-foreground">{clientName}</p>
             </div>
             <div className="flex items-center gap-2 ml-4">
-              <Badge 
-                variant={project.status === 'completed' ? 'default' : 'secondary'}
+              <Badge
+                variant={
+                  project.status === "completed" ? "default" : "secondary"
+                }
                 className={cn(
                   "text-xs",
-                  project.status === 'completed' && "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]",
-                  project.status === 'in_progress' && "bg-primary text-primary-foreground",
-                  project.status === 'on_hold' && "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]"
+                  project.status === "completed" &&
+                    "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]",
+                  project.status === "in_progress" &&
+                    "bg-primary text-primary-foreground",
+                  project.status === "on_hold" &&
+                    "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]"
                 )}
               >
                 <span className="flex items-center gap-1">
@@ -207,27 +237,35 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
             <div className="text-center">
               <ProgressRing
                 progress={project.progress || 0}
-                variant={getProgressVariant(project.progress || 0, budgetUtilization)}
+                variant={getProgressVariant(
+                  project.progress || 0,
+                  budgetUtilization
+                )}
                 size={80}
                 strokeWidth={4}
               />
               <p className="text-xs text-muted-foreground mt-2">Progreso</p>
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-muted-foreground">Presupuesto</span>
+                  <span className="text-xs text-muted-foreground">
+                    Presupuesto
+                  </span>
                   <span className="text-xs font-medium">
                     {budgetUtilization.toFixed(0)}%
                   </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className={cn(
                       "h-full transition-all duration-500",
-                      isOverBudget ? "bg-[hsl(var(--destructive))]" :
-                      isAtRisk ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--success))]"
+                      isOverBudget
+                        ? "bg-[hsl(var(--destructive))]"
+                        : isAtRisk
+                          ? "bg-[hsl(var(--warning))]"
+                          : "bg-[hsl(var(--success))]"
                     )}
                     style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
                   />
@@ -238,7 +276,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
                 <p className="text-lg font-bold text-foreground">
                   {formatCurrency(project.budget_total || 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">Presupuesto total</p>
+                <p className="text-xs text-muted-foreground">
+                  Presupuesto total
+                </p>
               </div>
             </div>
           </div>
@@ -259,7 +299,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-muted-foreground">
-                {project.estimated_end_date ? formatDate(new Date(project.estimated_end_date)) : 'N/A'}
+                {project.estimated_end_date
+                  ? formatDate(new Date(project.estimated_end_date))
+                  : "N/A"}
               </p>
               <p className="text-xs text-muted-foreground">Fin estimado</p>
             </div>
@@ -269,24 +311,27 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
           <div className="space-y-4 pt-4 border-t">
             {/* Quick Actions Row */}
             <div className="flex items-center justify-between gap-2">
-              <QuickStatusUpdate 
+              <QuickStatusUpdate
                 project={project}
                 onUpdate={handleProjectUpdate}
               />
-              <ProjectActionsMenu 
+              <ProjectActionsMenu
                 project={project}
                 onEdit={onEditProject}
                 onDelete={handleDeleteClick}
-                onView={(p) => onViewProject?.(p) || window.open(`/projects/${p.id}`, '_blank')}
+                onView={p =>
+                  onViewProject?.(p) ||
+                  window.open(`/projects/${p.id}`, "_blank")
+                }
               />
             </div>
-            
+
             {/* Progress Control */}
-            <QuickProgressUpdate 
+            <QuickProgressUpdate
               project={project}
               onUpdate={handleProjectUpdate}
             />
-            
+
             {/* Main Actions */}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="flex-1" asChild>
@@ -295,9 +340,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
                   Ver
                 </Link>
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 className="flex-1"
                 onClick={() => onEditProject?.(project)}
               >
@@ -309,18 +354,19 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
 
           {/* Risk Indicators */}
           {(isOverBudget || isAtRisk) && (
-            <div className={cn(
-              "flex items-center gap-2 p-3 rounded-lg text-sm",
-              isOverBudget 
-                ? "bg-[hsl(var(--destructive-light))] text-[hsl(var(--destructive))]"
-                : "bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]"
-            )}>
+            <div
+              className={cn(
+                "flex items-center gap-2 p-3 rounded-lg text-sm",
+                isOverBudget
+                  ? "bg-[hsl(var(--destructive-light))] text-[hsl(var(--destructive))]"
+                  : "bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))]"
+              )}
+            >
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs">
-                {isOverBudget 
-                  ? 'Proyecto sobre presupuesto' 
-                  : 'Proyecto en riesgo de sobrepresupuesto'
-                }
+                {isOverBudget
+                  ? "Proyecto sobre presupuesto"
+                  : "Proyecto en riesgo de sobrepresupuesto"}
               </span>
             </div>
           )}
@@ -352,7 +398,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-[hsl(var(--destructive))]" />
             <div>
-              <h3 className="font-semibold text-[hsl(var(--destructive))]">Error cargando proyectos</h3>
+              <h3 className="font-semibold text-[hsl(var(--destructive))]">
+                Error cargando proyectos
+              </h3>
               <p className="text-sm text-muted-foreground">{error}</p>
             </div>
             <Button onClick={loadData} size="sm" className="ml-auto">
@@ -374,12 +422,15 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
             <Input
               placeholder="Buscar proyectos..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
-          
-          <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(value: StatusFilter) => setStatusFilter(value)}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
@@ -394,7 +445,10 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+          <Select
+            value={sortBy}
+            onValueChange={(value: "name" | "budget" | "progress" | "status") => setSortBy(value)}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
@@ -411,7 +465,7 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
       {/* Projects Grid */}
       {filteredAndSortedProjects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredAndSortedProjects.map((project) => (
+          {filteredAndSortedProjects.map(project => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
@@ -425,10 +479,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
               No se encontraron proyectos
             </h3>
             <p className="text-muted-foreground">
-              {searchQuery || statusFilter !== 'all' 
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Aún no hay proyectos registrados'
-              }
+              {searchQuery || statusFilter !== "all"
+                ? "Intenta ajustar los filtros de búsqueda"
+                : "Aún no hay proyectos registrados"}
             </p>
           </CardContent>
         </Card>
@@ -441,7 +494,9 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Proyectos</p>
-                <p className="text-2xl font-bold text-foreground">{projects.length}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {projects.length}
+                </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Users className="h-5 w-5 text-primary" />
@@ -456,7 +511,7 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
               <div>
                 <p className="text-sm text-muted-foreground">En Progreso</p>
                 <p className="text-2xl font-bold text-primary">
-                  {projects.filter(p => p.status === 'in_progress').length}
+                  {projects.filter(p => p.status === "in_progress").length}
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -472,7 +527,7 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
               <div>
                 <p className="text-sm text-muted-foreground">Completados</p>
                 <p className="text-2xl font-bold text-[hsl(var(--success))]">
-                  {projects.filter(p => p.status === 'completed').length}
+                  {projects.filter(p => p.status === "completed").length}
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-[hsl(var(--success))]/10 flex items-center justify-center">
@@ -486,9 +541,13 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Presupuesto Total</p>
+                <p className="text-sm text-muted-foreground">
+                  Presupuesto Total
+                </p>
                 <p className="text-xl font-bold text-foreground">
-                  {formatCurrency(projects.reduce((sum, p) => sum + (p.budget_total || 0), 0))}
+                  {formatCurrency(
+                    projects.reduce((sum, p) => sum + (p.budget_total || 0), 0)
+                  )}
                 </p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center">
@@ -498,12 +557,12 @@ export function EnhancedProjectsTable({ onEditProject, onViewProject }: Enhanced
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <DeleteProjectDialog
         project={deleteProject}
         open={showDeleteDialog}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setShowDeleteDialog(open);
           if (!open) setDeleteProject(null);
         }}

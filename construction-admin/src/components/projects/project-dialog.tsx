@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,32 +17,60 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { api } from '@/lib/api';
-import type { Project, ProjectStatus, Client, CreateProjectRequest } from '@/lib/api/types';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { Loader2, Calculator } from 'lucide-react';
-import { formatCurrency, safeNumber } from '@/lib/finance';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { api } from "@/lib/api";
+import type {
+  Project,
+  ProjectStatus,
+  Client,
+  CreateProjectRequest,
+} from "@/lib/api/types";
+import { toast } from "sonner";
+import { Loader2, Calculator } from "lucide-react";
+import { formatCurrency, safeNumber } from "@/lib/finance";
 
 const projectSchema = z.object({
-  name: z.string().min(1, 'El nombre del proyecto es requerido'),
+  name: z.string().min(1, "El nombre del proyecto es requerido"),
   client_id: z.string().optional(),
   clientName: z.string().optional(),
-  status: z.enum(['planned', 'in_progress', 'on_hold', 'completed'] as const, {
-    required_error: 'El estado es requerido'
+  status: z.enum(["planned", "in_progress", "on_hold", "completed"] as const, {
+    required_error: "El estado es requerido",
   }),
   // Presupuesto detallado
-  budget_materials: z.number().min(0, 'El presupuesto de materiales debe ser mayor o igual a 0').default(0),
-  budget_labor: z.number().min(0, 'El presupuesto de mano de obra debe ser mayor o igual a 0').default(0),
-  budget_equipment: z.number().min(0, 'El presupuesto de equipos debe ser mayor o igual a 0').default(0),
-  budget_overhead: z.number().min(0, 'El presupuesto de gastos generales debe ser mayor o igual a 0').default(0),
+  budget_materials: z
+    .number()
+    .min(0, "El presupuesto de materiales debe ser mayor o igual a 0")
+    .default(0),
+  budget_labor: z
+    .number()
+    .min(0, "El presupuesto de mano de obra debe ser mayor o igual a 0")
+    .default(0),
+  budget_equipment: z
+    .number()
+    .min(0, "El presupuesto de equipos debe ser mayor o igual a 0")
+    .default(0),
+  budget_overhead: z
+    .number()
+    .min(0, "El presupuesto de gastos generales debe ser mayor o igual a 0")
+    .default(0),
   start_date: z.string().optional(),
   estimated_end_date: z.string().optional(),
   description: z.string().optional(),
@@ -57,12 +85,17 @@ interface ProjectDialogProps {
   onSuccess?: () => void;
 }
 
-export function ProjectDialog({ open, onOpenChange, project, onSuccess }: ProjectDialogProps) {
+export function ProjectDialog({
+  open,
+  onOpenChange,
+  project,
+  onSuccess,
+}: ProjectDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [createNewClient, setCreateNewClient] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState("basic");
 
   // Cargar clientes
   useEffect(() => {
@@ -72,8 +105,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
         const clients = await api.clients.getAll();
         setClients(clients);
       } catch (error) {
-        console.error('Error loading clients:', error);
-        toast.error('Error al cargar clientes');
+        console.error("Error loading clients:", error);
+        toast.error("Error al cargar clientes");
         setClients([]); // Ensure clients is always an array even on error
       } finally {
         setLoadingClients(false);
@@ -88,17 +121,17 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: project?.name || '',
-      client_id: project?.client_id || 'none',
-      clientName: '',
-      status: project?.status || 'planned',
+      name: project?.name || "",
+      client_id: project?.client_id || "none",
+      clientName: "",
+      status: project?.status || "planned",
       budget_materials: project?.budget_materials || 0,
       budget_labor: project?.budget_labor || 0,
       budget_equipment: project?.budget_equipment || 0,
       budget_overhead: project?.budget_overhead || 0,
-      start_date: project?.start_date || '',
-      estimated_end_date: project?.estimated_end_date || '',
-      description: project?.description || '',
+      start_date: project?.start_date || "",
+      estimated_end_date: project?.estimated_end_date || "",
+      description: project?.description || "",
     },
   });
 
@@ -107,30 +140,30 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
     if (project) {
       form.reset({
         name: project.name,
-        client_id: project.client_id || 'none',
-        clientName: '',
+        client_id: project.client_id || "none",
+        clientName: "",
         status: project.status,
         budget_materials: project.budget_materials,
         budget_labor: project.budget_labor,
         budget_equipment: project.budget_equipment,
         budget_overhead: project.budget_overhead,
-        start_date: project.start_date || '',
-        estimated_end_date: project.estimated_end_date || '',
-        description: project.description || '',
+        start_date: project.start_date || "",
+        estimated_end_date: project.estimated_end_date || "",
+        description: project.description || "",
       });
     } else {
       form.reset({
-        name: '',
-        client_id: 'none',
-        clientName: '',
-        status: 'planned',
+        name: "",
+        client_id: "none",
+        clientName: "",
+        status: "planned",
         budget_materials: 0,
         budget_labor: 0,
         budget_equipment: 0,
         budget_overhead: 0,
-        start_date: '',
-        estimated_end_date: '',
-        description: '',
+        start_date: "",
+        estimated_end_date: "",
+        description: "",
       });
     }
   }, [project, form]);
@@ -139,18 +172,18 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
     setIsLoading(true);
     try {
       let clientId = data.client_id;
-      
+
       // Create new client if needed
       if (createNewClient && data.clientName?.trim()) {
         const newClient = await api.clients.create({
           name: data.clientName.trim(),
-          contact_name: '',
-          phone: '',
-          email: '',
-          address: '',
+          contact_name: "",
+          phone: "",
+          email: "",
+          address: "",
         });
         clientId = newClient.id;
-        toast.success('Cliente creado exitosamente');
+        toast.success("Cliente creado exitosamente");
         // Recargar lista de clientes
         const updatedClients = await api.clients.getAll();
         setClients(updatedClients);
@@ -158,7 +191,7 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
 
       const projectData: CreateProjectRequest = {
         name: data.name,
-        client_id: clientId === 'none' ? undefined : clientId,
+        client_id: clientId === "none" ? undefined : clientId,
         status: data.status,
         budget_materials: data.budget_materials || 0,
         budget_labor: data.budget_labor || 0,
@@ -171,38 +204,40 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
 
       if (project?.id) {
         await api.projects.update(project.id, projectData);
-        toast.success('Proyecto actualizado exitosamente');
+        toast.success("Proyecto actualizado exitosamente");
       } else {
         await api.projects.create(projectData);
-        toast.success('Proyecto creado exitosamente');
+        toast.success("Proyecto creado exitosamente");
       }
-      
+
       onOpenChange(false);
       onSuccess?.();
       form.reset();
       setCreateNewClient(false);
-      setActiveTab('basic');
+      setActiveTab("basic");
     } catch (error) {
-      console.error('Error saving project:', error);
-      toast.error(error instanceof Error ? error.message : 'Error al guardar el proyecto');
+      console.error("Error saving project:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Error al guardar el proyecto"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   // Calcular presupuesto total - usar safeNumber para evitar concatenación
-  const materials = safeNumber(form.watch('budget_materials'));
-  const labor = safeNumber(form.watch('budget_labor'));
-  const equipment = safeNumber(form.watch('budget_equipment'));
-  const overhead = safeNumber(form.watch('budget_overhead'));
+  const materials = safeNumber(form.watch("budget_materials"));
+  const labor = safeNumber(form.watch("budget_labor"));
+  const equipment = safeNumber(form.watch("budget_equipment"));
+  const overhead = safeNumber(form.watch("budget_overhead"));
   const totalBudget = materials + labor + equipment + overhead;
 
   const getStatusLabel = (status: ProjectStatus) => {
     const labels = {
-      planned: 'Planificado',
-      in_progress: 'En Progreso',
-      on_hold: 'En Pausa',
-      completed: 'Completado',
+      planned: "Planificado",
+      in_progress: "En Progreso",
+      on_hold: "En Pausa",
+      completed: "Completado",
     };
     return labels[status];
   };
@@ -212,19 +247,23 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {project ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+            {project ? "Editar Proyecto" : "Nuevo Proyecto"}
           </DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="basic">Información Básica</TabsTrigger>
                 <TabsTrigger value="budget">Presupuesto</TabsTrigger>
                 <TabsTrigger value="schedule">Fechas</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="basic" className="space-y-4 mt-4">
                 {/* Project Name */}
                 <FormField
@@ -234,7 +273,10 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                     <FormItem>
                       <FormLabel>Nombre del Proyecto *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Construcción casa familiar, etc." />
+                        <Input
+                          {...field}
+                          placeholder="Construcción casa familiar, etc."
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -270,15 +312,27 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                       name="client_id"
                       render={({ field }) => (
                         <FormItem>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={loadingClients}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={loadingClients}
+                          >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder={loadingClients ? "Cargando..." : "Seleccionar cliente (opcional)"} />
+                                <SelectValue
+                                  placeholder={
+                                    loadingClients
+                                      ? "Cargando..."
+                                      : "Seleccionar cliente (opcional)"
+                                  }
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">Sin cliente asignado</SelectItem>
-                              {clients?.map((client) => (
+                              <SelectItem value="none">
+                                Sin cliente asignado
+                              </SelectItem>
+                              {clients?.map(client => (
                                 <SelectItem key={client.id} value={client.id}>
                                   {client.name}
                                 </SelectItem>
@@ -295,7 +349,10 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input {...field} placeholder="Nombre del nuevo cliente" />
+                            <Input
+                              {...field}
+                              placeholder="Nombre del nuevo cliente"
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -310,17 +367,28 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Estado *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar estado" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="planned">{getStatusLabel('planned')}</SelectItem>
-                          <SelectItem value="in_progress">{getStatusLabel('in_progress')}</SelectItem>
-                          <SelectItem value="on_hold">{getStatusLabel('on_hold')}</SelectItem>
-                          <SelectItem value="completed">{getStatusLabel('completed')}</SelectItem>
+                          <SelectItem value="planned">
+                            {getStatusLabel("planned")}
+                          </SelectItem>
+                          <SelectItem value="in_progress">
+                            {getStatusLabel("in_progress")}
+                          </SelectItem>
+                          <SelectItem value="on_hold">
+                            {getStatusLabel("on_hold")}
+                          </SelectItem>
+                          <SelectItem value="completed">
+                            {getStatusLabel("completed")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -336,8 +404,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                     <FormItem>
                       <FormLabel>Descripción</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          {...field} 
+                        <Textarea
+                          {...field}
                           placeholder="Detalles del proyecto, especificaciones, notas..."
                           rows={4}
                         />
@@ -373,8 +441,11 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                               min="0"
                               step="1"
                               {...field}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                              onChange={e => {
+                                const value =
+                                  e.target.value === ""
+                                    ? 0
+                                    : parseFloat(e.target.value);
                                 field.onChange(safeNumber(value));
                               }}
                               placeholder="25000000"
@@ -382,7 +453,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                             />
                           </FormControl>
                           <div className="text-sm text-muted-foreground">
-                            {safeNumber(field.value) > 0 && `≈ ${formatCurrency(safeNumber(field.value))}`}
+                            {safeNumber(field.value) > 0 &&
+                              `≈ ${formatCurrency(safeNumber(field.value))}`}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -402,8 +474,11 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                               min="0"
                               step="1"
                               {...field}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                              onChange={e => {
+                                const value =
+                                  e.target.value === ""
+                                    ? 0
+                                    : parseFloat(e.target.value);
                                 field.onChange(safeNumber(value));
                               }}
                               placeholder="18000000"
@@ -411,7 +486,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                             />
                           </FormControl>
                           <div className="text-sm text-muted-foreground">
-                            {safeNumber(field.value) > 0 && `≈ ${formatCurrency(safeNumber(field.value))}`}
+                            {safeNumber(field.value) > 0 &&
+                              `≈ ${formatCurrency(safeNumber(field.value))}`}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -431,8 +507,11 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                               min="0"
                               step="1"
                               {...field}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                              onChange={e => {
+                                const value =
+                                  e.target.value === ""
+                                    ? 0
+                                    : parseFloat(e.target.value);
                                 field.onChange(safeNumber(value));
                               }}
                               placeholder="8000000"
@@ -440,7 +519,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                             />
                           </FormControl>
                           <div className="text-sm text-muted-foreground">
-                            {safeNumber(field.value) > 0 && `≈ ${formatCurrency(safeNumber(field.value))}`}
+                            {safeNumber(field.value) > 0 &&
+                              `≈ ${formatCurrency(safeNumber(field.value))}`}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -460,8 +540,11 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                               min="0"
                               step="1"
                               {...field}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                              onChange={e => {
+                                const value =
+                                  e.target.value === ""
+                                    ? 0
+                                    : parseFloat(e.target.value);
                                 field.onChange(safeNumber(value));
                               }}
                               placeholder="4000000"
@@ -469,7 +552,8 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                             />
                           </FormControl>
                           <div className="text-sm text-muted-foreground">
-                            {safeNumber(field.value) > 0 && `≈ ${formatCurrency(safeNumber(field.value))}`}
+                            {safeNumber(field.value) > 0 &&
+                              `≈ ${formatCurrency(safeNumber(field.value))}`}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -479,30 +563,40 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                     {/* Budget Distribution */}
                     {totalBudget > 0 && (
                       <div className="space-y-3 p-4 bg-muted rounded-lg mt-4">
-                        <h4 className="font-medium text-sm">Distribución del Presupuesto</h4>
+                        <h4 className="font-medium text-sm">
+                          Distribución del Presupuesto
+                        </h4>
                         <div className="space-y-2">
                           {materials > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Materiales</span>
-                              <span>{((materials / totalBudget) * 100).toFixed(1)}%</span>
+                              <span>
+                                {((materials / totalBudget) * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           {labor > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Mano de Obra</span>
-                              <span>{((labor / totalBudget) * 100).toFixed(1)}%</span>
+                              <span>
+                                {((labor / totalBudget) * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           {equipment > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Equipos</span>
-                              <span>{((equipment / totalBudget) * 100).toFixed(1)}%</span>
+                              <span>
+                                {((equipment / totalBudget) * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           {overhead > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Gastos Generales</span>
-                              <span>{((overhead / totalBudget) * 100).toFixed(1)}%</span>
+                              <span>
+                                {((overhead / totalBudget) * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                         </div>
@@ -523,7 +617,6 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
               </TabsContent>
 
               <TabsContent value="schedule" className="space-y-4 mt-4">
-
                 {/* Dates */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
@@ -557,7 +650,6 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
               </TabsContent>
             </Tabs>
 
-
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
@@ -565,7 +657,7 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
                 onClick={() => {
                   onOpenChange(false);
                   setCreateNewClient(false);
-                  setActiveTab('basic');
+                  setActiveTab("basic");
                 }}
                 disabled={isLoading}
               >
@@ -573,7 +665,11 @@ export function ProjectDialog({ open, onOpenChange, project, onSuccess }: Projec
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? 'Guardando...' : (project ? 'Actualizar Proyecto' : 'Crear Proyecto')}
+                {isLoading
+                  ? "Guardando..."
+                  : project
+                    ? "Actualizar Proyecto"
+                    : "Crear Proyecto"}
               </Button>
             </div>
           </form>

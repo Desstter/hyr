@@ -3,10 +3,10 @@
 // Servicio para gestión de PILA (Seguridad Social Colombia)
 // =====================================================
 
-import { useState } from 'react';
-import { apiClient } from './client';
-import { apiUrl } from '../appConfig';
-import { toast } from '@/components/ui/use-toast';
+import { useState, useCallback } from "react";
+import { apiClient } from "./client";
+import { apiUrl } from "../appConfig";
+import { toast } from "@/components/ui/use-toast";
 
 // Tipos para PILA
 export interface PILAEmployee {
@@ -27,7 +27,7 @@ export interface PILASubmission {
   total_arl: number;
   total_contributions: number;
   file_path: string;
-  status: 'GENERADO' | 'ENVIADO' | 'PROCESADO' | 'ERROR';
+  status: "GENERADO" | "ENVIADO" | "PROCESADO" | "ERROR";
   created_at: string;
 }
 
@@ -76,18 +76,26 @@ class PILAService {
   /**
    * Generar archivo PILA para un período específico
    */
-  async generatePILA(period: string, employees: PILAEmployee[]): Promise<PILAGenerateResponse> {
+  async generatePILA(
+    period: string,
+    employees: PILAEmployee[]
+  ): Promise<PILAGenerateResponse> {
     try {
-      const response = await apiClient.post<PILAGenerateResponse>(`/pila/${period}/generate`, { employees });
+      const response = await apiClient.post<PILAGenerateResponse>(
+        `/pila/${period}/generate`,
+        { employees }
+      );
 
       if (!response.success) {
-        throw new Error(response.message || 'Error generando PILA');
+        throw new Error(response.message || "Error generando PILA");
       }
 
       return response;
     } catch (error: unknown) {
-      console.error('Error generating PILA:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error generando archivo PILA'));
+      console.error("Error generating PILA:", error);
+      throw new Error(
+        error instanceof Error ? error.message : "Error generando archivo PILA"
+      );
     }
   }
 
@@ -101,21 +109,28 @@ class PILAService {
   }): Promise<PILASubmissionsResponse> {
     try {
       const searchParams = new URLSearchParams();
-      
-      if (filters?.status) searchParams.append('status', filters.status);
-      if (filters?.year) searchParams.append('year', filters.year);
-      if (filters?.limit) searchParams.append('limit', filters.limit.toString());
 
-      const response = await apiClient.get<PILASubmissionsResponse>(`/pila/submissions?${searchParams.toString()}`);
-      
+      if (filters?.status) searchParams.append("status", filters.status);
+      if (filters?.year) searchParams.append("year", filters.year);
+      if (filters?.limit)
+        searchParams.append("limit", filters.limit.toString());
+
+      const response = await apiClient.get<PILASubmissionsResponse>(
+        `/pila/submissions?${searchParams.toString()}`
+      );
+
       if (!response.success) {
-        throw new Error('Error obteniendo submissions PILA');
+        throw new Error("Error obteniendo submissions PILA");
       }
 
       return response;
     } catch (error: unknown) {
-      console.error('Error fetching PILA submissions:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error obteniendo historial PILA'));
+      console.error("Error fetching PILA submissions:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Error obteniendo historial PILA"
+      );
     }
   }
 
@@ -126,10 +141,10 @@ class PILAService {
     try {
       const downloadUrl = await apiUrl(`/pila/${period}/download`);
       const response = await fetch(downloadUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Accept': 'text/csv'
-        }
+          Accept: "text/csv",
+        },
       });
 
       if (!response.ok) {
@@ -139,29 +154,31 @@ class PILAService {
 
       // Obtener el blob del CSV
       const blob = await response.blob();
-      
+
       // Crear URL de descarga
       const url = window.URL.createObjectURL(blob);
-      
+
       // Obtener nombre de archivo del header o generar uno
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `pila_${period.replace('-', '_')}.csv`;
-      
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `pila_${period.replace("-", "_")}.csv`;
+
       if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).?\2|[^;\n]*)/.exec(contentDisposition);
+        const matches = /filename[^;=\n]*=((['"]).?\2|[^;\n]*)/.exec(
+          contentDisposition
+        );
         if (matches && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
+          filename = matches[1].replace(/['"]/g, "");
         }
       }
 
       // Crear y ejecutar descarga
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Limpiar URL
       window.URL.revokeObjectURL(url);
 
@@ -169,12 +186,14 @@ class PILAService {
         title: "Descarga completada",
         description: `Archivo ${filename} descargado exitosamente`,
       });
-
     } catch (error: unknown) {
-      console.error('Error downloading PILA:', error);
+      console.error("Error downloading PILA:", error);
       toast({
         title: "Error de descarga",
-        description: (error instanceof Error ? error.message : 'Error descargando archivo PILA'),
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error descargando archivo PILA",
         variant: "destructive",
       });
       throw error;
@@ -184,7 +203,10 @@ class PILAService {
   /**
    * Actualizar estado de una submission PILA
    */
-  async updateStatus(period: string, status: PILASubmission['status']): Promise<PILASubmission> {
+  async updateStatus(
+    period: string,
+    status: PILASubmission["status"]
+  ): Promise<PILASubmission> {
     try {
       const response = await apiClient.put<{
         success: boolean;
@@ -193,13 +215,17 @@ class PILAService {
       }>(`/pila/${period}/status`, { status });
 
       if (!response.success) {
-        throw new Error(response.message || 'Error actualizando estado PILA');
+        throw new Error(response.message || "Error actualizando estado PILA");
       }
 
       return response.data;
     } catch (error: unknown) {
-      console.error('Error updating PILA status:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error actualizando estado PILA'));
+      console.error("Error updating PILA status:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Error actualizando estado PILA"
+      );
     }
   }
 
@@ -209,9 +235,11 @@ class PILAService {
   async checkPILAExists(period: string): Promise<PILASubmission | null> {
     try {
       const submissions = await this.getSubmissions();
-      return submissions.data.submissions.find(sub => sub.period === period) || null;
+      return (
+        submissions.data.submissions.find(sub => sub.period === period) || null
+      );
     } catch (error) {
-      console.error('Error checking PILA existence:', error);
+      console.error("Error checking PILA existence:", error);
       return null;
     }
   }
@@ -227,9 +255,9 @@ class PILAService {
   }> {
     try {
       const currentYear = new Date().getFullYear().toString();
-      const submissions = await this.getSubmissions({ 
-        year: currentYear, 
-        limit: 12 
+      const submissions = await this.getSubmissions({
+        year: currentYear,
+        limit: 12,
       });
 
       const recent = submissions.data.submissions.slice(0, 5);
@@ -239,11 +267,11 @@ class PILAService {
       // Determinar períodos pendientes (últimos 3 meses)
       const today = new Date();
       const pendingPeriods: string[] = [];
-      
+
       for (let i = 1; i <= 3; i++) {
         const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
+        const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
         if (!submissions.data.submissions.find(sub => sub.period === period)) {
           pendingPeriods.push(period);
         }
@@ -253,12 +281,13 @@ class PILAService {
         recent_submissions: recent,
         total_employees_processed: totalEmployees,
         total_contributions_this_year: totalContributions,
-        pending_periods: pendingPeriods
+        pending_periods: pendingPeriods,
       };
-
     } catch (error: unknown) {
-      console.error('Error getting PILA dashboard summary:', error);
-      throw new Error((error instanceof Error ? error.message : 'Error obteniendo resumen PILA'));
+      console.error("Error getting PILA dashboard summary:", error);
+      throw new Error(
+        error instanceof Error ? error.message : "Error obteniendo resumen PILA"
+      );
     }
   }
 }
@@ -272,30 +301,35 @@ export function usePILASubmissions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSubmissions = async (filters?: Parameters<typeof pilaService.getSubmissions>[0]) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await pilaService.getSubmissions(filters);
-      setSubmissions(response.data.submissions);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las submissions PILA",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadSubmissions = useCallback(
+    async (filters?: Parameters<typeof pilaService.getSubmissions>[0]) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await pilaService.getSubmissions(filters);
+        setSubmissions(response.data.submissions);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las submissions PILA",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  ); // Empty dependency array since the function doesn't depend on any props or state
+
+  const refresh = useCallback(() => loadSubmissions(), [loadSubmissions]);
 
   return {
     submissions,
     loading,
     error,
     loadSubmissions,
-    refresh: () => loadSubmissions()
+    refresh,
   };
 }
 
@@ -307,7 +341,7 @@ export function useGeneratePILA() {
     try {
       setGenerating(true);
       const response = await pilaService.generatePILA(period, employees);
-      
+
       toast({
         title: "✅ PILA generado exitosamente",
         description: `Archivo CSV creado para período ${period}`,
@@ -317,7 +351,8 @@ export function useGeneratePILA() {
     } catch (error: unknown) {
       toast({
         title: "Error generando PILA",
-        description: (error instanceof Error ? error.message : 'Error desconocido'),
+        description:
+          error instanceof Error ? error.message : "Error desconocido",
         variant: "destructive",
       });
       throw error;
@@ -328,7 +363,7 @@ export function useGeneratePILA() {
 
   return {
     generatePILA,
-    generating
+    generating,
   };
 }
 
