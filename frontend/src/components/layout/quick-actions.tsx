@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Receipt, FileText, Users, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -9,13 +10,16 @@ import { ProjectDialog } from "@/components/projects/project-dialog";
 import { ExpenseDialog } from "@/components/expenses/expense-dialog";
 import { PersonnelDialog } from "@/components/personnel/personnel-dialog";
 import { CostSimulatorDialog } from "@/components/simulator/cost-simulator-dialog";
+import { IncomeDialog } from "@/components/incomes/income-dialog";
 
 export function QuickActions() {
   const t = useTranslations("es");
+  const router = useRouter();
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showPersonnelDialog, setShowPersonnelDialog] = useState(false);
   const [showEstimateDialog, setShowEstimateDialog] = useState(false);
+  const [showIncomeDialog, setShowIncomeDialog] = useState(false);
 
   const handleNewProject = () => {
     setShowProjectDialog(true);
@@ -31,6 +35,10 @@ export function QuickActions() {
 
   const handleCreateEstimate = () => {
     setShowEstimateDialog(true);
+  };
+
+  const handleRegisterIncome = () => {
+    setShowIncomeDialog(true);
   };
 
   return (
@@ -78,10 +86,22 @@ export function QuickActions() {
             </span>
           </Button>
         </Tooltip>
+        <Tooltip content="Registrar Ingreso">
+          <Button
+            variant="outline"
+            onClick={handleRegisterIncome}
+            size="sm"
+            className="flex items-center gap-1.5 border-green-200 text-green-700 hover:bg-green-50"
+            aria-label="Registrar Ingreso"
+          >
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden 2xl:inline">Ingreso</span>
+          </Button>
+        </Tooltip>
         <Tooltip content="Procesar Nómina">
           <Button
             variant="outline"
-            onClick={() => (window.location.href = "/payroll")}
+            onClick={() => router.push("/payroll")}
             size="sm"
             className="flex items-center gap-1.5 border-green-200 text-green-700 hover:bg-green-50"
             aria-label="Procesar Nómina"
@@ -144,6 +164,15 @@ export function QuickActions() {
           <Button
             size="sm"
             variant="outline"
+            onClick={handleRegisterIncome}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-2 border-green-200 text-green-700"
+          >
+            <DollarSign className="h-4 w-4" />
+            <span className="text-xs">Ingreso</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             onClick={handleCreateEstimate}
             className="flex flex-col items-center gap-1 h-auto py-2 px-2"
           >
@@ -184,6 +213,14 @@ export function QuickActions() {
         onSuccess={() => {
           // Optionally navigate to simulator page
           setShowEstimateDialog(false);
+        }}
+      />
+
+      <IncomeDialog
+        open={showIncomeDialog}
+        onOpenChange={setShowIncomeDialog}
+        onSuccess={() => {
+          // Optionally refresh data or navigate
         }}
       />
     </>

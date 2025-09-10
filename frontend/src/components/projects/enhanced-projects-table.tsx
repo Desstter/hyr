@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { api, handleApiError } from "@/lib/api";
 import type { Project, Client } from "@/lib/api";
+import { useProjectTimeEntries } from "@/lib/api/time-entries";
 import {
   formatCurrency,
   formatDate,
@@ -90,8 +91,8 @@ export function EnhancedProjectsTable({
         api.clients.list(),
       ]);
 
-      const projectsData = projectsResult;
-      const clientsData = clientsResult.data || clientsResult;
+      const projectsData = Array.isArray(projectsResult) ? projectsResult : [];
+      const clientsData = Array.isArray(clientsResult) ? clientsResult : [];
 
       setProjects(projectsData);
       setClients(clientsData);
@@ -170,13 +171,21 @@ export function EnhancedProjectsTable({
     return "primary";
   };
 
-  const ProjectCard = ({ project }: { project: Project }) => {
+  // Component wrapper that includes time tracking data
+  const ProjectCardWithTimeTracking = ({ project }: { project: Project }) => {
+    const { summary: timeTrackingSummary } = useProjectTimeEntries(project.id);
+    
     const clientName = project.client_id
       ? clientMap.get(project.client_id)
       : "Sin cliente";
+    
+    // Calculate real total cost including time tracking
+    const timeCost = timeTrackingSummary?.totalCost || 0;
+    const realSpentTotal = (project.spent_total || 0) + timeCost;
+    
     const budgetUtilization =
       project.budget_total > 0
-        ? (project.spent_total / project.budget_total) * 100
+        ? (realSpentTotal / project.budget_total) * 100
         : 0;
     const isOverBudget = budgetUtilization > 100;
     const isAtRisk = budgetUtilization > 90 && project.progress < 90;
@@ -279,13 +288,13 @@ export function EnhancedProjectsTable({
           <div className="grid grid-cols-3 gap-3 pt-4 border-t">
             <div className="text-center">
               <p className="text-sm font-medium text-[hsl(var(--success))]">
-                {formatCurrency(project.budget_total - project.spent_total)}
+                {formatCurrency(project.budget_total - realSpentTotal)}
               </p>
               <p className="text-xs text-muted-foreground">Disponible</p>
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-[hsl(var(--warning))]">
-                {formatCurrency(project.spent_total || 0)}
+                {formatCurrency(realSpentTotal)}
               </p>
               <p className="text-xs text-muted-foreground">Gastado</p>
             </div>
@@ -458,7 +467,7 @@ export function EnhancedProjectsTable({
       {filteredAndSortedProjects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {filteredAndSortedProjects.map(project => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCardWithTimeTracking key={project.id} project={project} />
           ))}
         </div>
       ) : (

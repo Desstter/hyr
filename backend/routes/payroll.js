@@ -98,6 +98,41 @@ router.post('/periods/:id/process', async (req, res) => {
         }
         
         const { start_date, end_date } = period.rows[0];
+
+        // VALIDACIONES CRÍTICAS ANTES DE PROCESAR
+        // 1. Verificar que todas las horas estén aprobadas
+        const unapprovedHours = await db.query(`
+            SELECT COUNT(*) as count
+            FROM time_entries 
+            WHERE work_date BETWEEN $1 AND $2
+            AND status NOT IN ('approved', 'payroll_locked')
+        `, [start_date, end_date]);
+
+        if (parseInt(unapprovedHours.rows[0].count) > 0) {
+            return res.status(400).json({ 
+                error: 'Existen horas sin aprobar en el período',
+                details: `${unapprovedHours.rows[0].count} registros pendientes de aprobación`
+            });
+        }
+
+        // 2. Verificar empleados sin registros de tiempo
+        const employeesWithoutHours = await db.query(`
+            SELECT p.id, p.name
+            FROM personnel p
+            WHERE p.status = 'active'
+            AND p.id NOT IN (
+                SELECT DISTINCT personnel_id 
+                FROM time_entries 
+                WHERE work_date BETWEEN $1 AND $2
+            )
+        `, [start_date, end_date]);
+
+        if (employeesWithoutHours.rows.length > 0) {
+            return res.status(400).json({ 
+                error: 'Empleados sin registros de tiempo en el período',
+                details: employeesWithoutHours.rows.map(emp => emp.name).join(', ')
+            });
+        }
         const processedEmployees = [];
         const errors = [];
         
@@ -183,6 +218,14 @@ router.post('/periods/:id/process', async (req, res) => {
             }
         }
         
+        // BLOQUEAR HORAS PARA QUE NO SE PUEDAN MODIFICAR
+        await db.query(`
+            UPDATE time_entries 
+            SET status = 'payroll_locked', payroll_period_id = $1
+            WHERE work_date BETWEEN $2 AND $3
+            AND status = 'approved'
+        `, [id, start_date, end_date]);
+
         // Marcar período como completado
         await db.query(`
             UPDATE payroll_periods 
@@ -538,6 +581,118 @@ router.get('/periods/:id/pila-2025', async (req, res) => {
         });
         
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Validar horas antes de procesar nómina
+router.get('/periods/:id/validate-hours', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Obtener período
+        const period = await db.query(`
+            SELECT * FROM payroll_periods WHERE id = $1
+        `, [id]);
+        
+        if (period.rows.length === 0) {
+            return res.status(404).json({ error: 'Período no encontrado' });
+        }
+        
+        const { start_date, end_date } = period.rows[0];
+        
+        // Validaciones
+        const validations = [];
+        
+        // 1. Horas sin aprobar
+        const unapprovedHours = await db.query(`
+            SELECT COUNT(*) as count, 
+                   STRING_AGG(DISTINCT p.name, ', ') as employees
+            FROM time_entries te
+            JOIN personnel p ON te.personnel_id = p.id
+            WHERE te.work_date BETWEEN $1 AND $2
+            AND te.status NOT IN ('approved', 'payroll_locked')
+        `, [start_date, end_date]);
+        
+        if (parseInt(unapprovedHours.rows[0].count) > 0) {
+            validations.push({
+                type: 'error',
+                code: 'UNAPPROVED_HOURS',
+                message: `${unapprovedHours.rows[0].count} registros sin aprobar`,
+                details: `Empleados: ${unapprovedHours.rows[0].employees}`
+            });
+        }
+        
+        // 2. Empleados sin registros
+        const employeesWithoutHours = await db.query(`
+            SELECT p.id, p.name
+            FROM personnel p
+            WHERE p.status = 'active'
+            AND p.id NOT IN (
+                SELECT DISTINCT personnel_id 
+                FROM time_entries 
+                WHERE work_date BETWEEN $1 AND $2
+            )
+        `, [start_date, end_date]);
+        
+        if (employeesWithoutHours.rows.length > 0) {
+            validations.push({
+                type: 'error',
+                code: 'MISSING_HOURS',
+                message: `${employeesWithoutHours.rows.length} empleados sin registros`,
+                details: employeesWithoutHours.rows.map(emp => emp.name).join(', ')
+            });
+        }
+        
+        // 3. Horas excesivas (más de 12h/día)
+        const excessiveHours = await db.query(`
+            SELECT te.work_date, p.name, 
+                   (te.hours_worked + COALESCE(te.overtime_hours, 0)) as total_hours
+            FROM time_entries te
+            JOIN personnel p ON te.personnel_id = p.id
+            WHERE te.work_date BETWEEN $1 AND $2
+            AND (te.hours_worked + COALESCE(te.overtime_hours, 0)) > 12
+        `, [start_date, end_date]);
+        
+        if (excessiveHours.rows.length > 0) {
+            validations.push({
+                type: 'warning',
+                code: 'EXCESSIVE_HOURS',
+                message: `${excessiveHours.rows.length} días con más de 12 horas`,
+                details: excessiveHours.rows.map(r => 
+                    `${r.name}: ${r.total_hours}h el ${r.work_date}`
+                ).join(', ')
+            });
+        }
+        
+        // 4. Resumen por empleado
+        const hoursSummary = await db.query(`
+            SELECT 
+                p.name,
+                COUNT(te.id) as entries_count,
+                SUM(te.hours_worked) as total_regular_hours,
+                SUM(te.overtime_hours) as total_overtime_hours,
+                SUM(te.total_pay) as total_pay
+            FROM personnel p
+            LEFT JOIN time_entries te ON p.id = te.personnel_id
+                AND te.work_date BETWEEN $1 AND $2
+            WHERE p.status = 'active'
+            GROUP BY p.id, p.name
+            ORDER BY p.name
+        `, [start_date, end_date]);
+        
+        const hasErrors = validations.some(v => v.type === 'error');
+        
+        res.json({
+            period_id: id,
+            period: { start_date, end_date },
+            isReadyForPayroll: !hasErrors,
+            validations,
+            summary: hoursSummary.rows
+        });
+        
+    } catch (error) {
+        console.error('Error validating hours:', error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -73,6 +73,18 @@ router.get('/dashboard-stats', auditLogger('READ', 'compliance_dashboard'), asyn
  */
 async function getInvoicesStatistics() {
     try {
+        // First, detect which column name is used in the table
+        const columnCheck = await db.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'electronic_invoices' 
+            AND column_name IN ('dian_status', 'dian_validation_status')
+        `);
+        
+        const statusColumn = columnCheck.rows.find(row => 
+            row.column_name === 'dian_status' || row.column_name === 'dian_validation_status'
+        )?.column_name || 'dian_validation_status'; // fallback to original name
+        
         const [totalResult, todayResult, statusResult] = await Promise.all([
             // Total invoices count
             db.query('SELECT COUNT(*) as total FROM electronic_invoices'),
@@ -84,13 +96,13 @@ async function getInvoicesStatistics() {
                 WHERE DATE(created_at) = CURRENT_DATE
             `),
             
-            // Status distribution
+            // Status distribution - using detected column name
             db.query(`
                 SELECT 
-                    dian_status,
+                    ${statusColumn} as status,
                     COUNT(*) as count
                 FROM electronic_invoices 
-                GROUP BY dian_status
+                GROUP BY ${statusColumn}
             `)
         ]);
 
@@ -99,7 +111,7 @@ async function getInvoicesStatistics() {
         
         // Calculate acceptance percentage
         const statusCounts = statusResult.rows.reduce((acc, row) => {
-            acc[row.dian_status || 'PENDIENTE'] = parseInt(row.count);
+            acc[row.status || 'PENDIENTE'] = parseInt(row.count);
             return acc;
         }, {});
 
@@ -336,13 +348,25 @@ router.get('/invoices-summary', async (req, res) => {
     try {
         const stats = await getInvoicesStatistics();
         
+        // Detect the status column name (same logic as in getInvoicesStatistics)
+        const columnCheck = await db.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'electronic_invoices' 
+            AND column_name IN ('dian_status', 'dian_validation_status')
+        `);
+        
+        const statusColumn = columnCheck.rows.find(row => 
+            row.column_name === 'dian_status' || row.column_name === 'dian_validation_status'
+        )?.column_name || 'dian_validation_status';
+        
         // Get recent invoices
         const recentResult = await db.query(`
             SELECT 
                 invoice_number,
                 client_name,
                 total_amount,
-                dian_status,
+                ${statusColumn} as dian_status,
                 created_at
             FROM electronic_invoices 
             ORDER BY created_at DESC 

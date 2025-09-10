@@ -26,16 +26,18 @@ export class TimeEntriesService {
     projectId?: string;
     startDate?: string;
     endDate?: string;
+    status?: string;
     limit?: number;
     offset?: number;
   }): Promise<ApiListResponse<TimeEntry>> {
     const searchParams = new URLSearchParams();
 
     if (params?.personnelId)
-      searchParams.append("personnelId", params.personnelId);
-    if (params?.projectId) searchParams.append("projectId", params.projectId);
-    if (params?.startDate) searchParams.append("startDate", params.startDate);
-    if (params?.endDate) searchParams.append("endDate", params.endDate);
+      searchParams.append("personnel_id", params.personnelId);
+    if (params?.projectId) searchParams.append("project_id", params.projectId);
+    if (params?.startDate) searchParams.append("start_date", params.startDate);
+    if (params?.endDate) searchParams.append("end_date", params.endDate);
+    if (params?.status) searchParams.append("status", params.status);
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.offset) searchParams.append("offset", params.offset.toString());
 
@@ -98,8 +100,8 @@ export class TimeEntriesService {
     };
   }> {
     const searchParams = new URLSearchParams();
-    if (params?.startDate) searchParams.append("startDate", params.startDate);
-    if (params?.endDate) searchParams.append("endDate", params.endDate);
+    if (params?.startDate) searchParams.append("start_date", params.startDate);
+    if (params?.endDate) searchParams.append("end_date", params.endDate);
 
     const url = searchParams.toString()
       ? `${this.basePath}/personnel/${personnelId}?${searchParams.toString()}`
@@ -129,12 +131,12 @@ export class TimeEntriesService {
     };
   }> {
     const searchParams = new URLSearchParams();
-    if (params?.startDate) searchParams.append("startDate", params.startDate);
-    if (params?.endDate) searchParams.append("endDate", params.endDate);
+    if (params?.startDate) searchParams.append("start_date", params.startDate);
+    if (params?.endDate) searchParams.append("end_date", params.endDate);
 
     const url = searchParams.toString()
-      ? `${this.basePath}/project/${projectId}?${searchParams.toString()}`
-      : `${this.basePath}/project/${projectId}`;
+      ? `${this.basePath}/project/${projectId}/summary?${searchParams.toString()}`
+      : `${this.basePath}/project/${projectId}/summary`;
 
     return apiClient.get(url);
   }
@@ -195,10 +197,10 @@ export class TimeEntriesService {
       daysWorked: number;
     };
   }> {
-    const searchParams = new URLSearchParams({ startDate: params.startDate });
+    const searchParams = new URLSearchParams({ start_date: params.startDate });
     if (params.personnelId)
-      searchParams.append("personnelId", params.personnelId);
-    if (params.projectId) searchParams.append("projectId", params.projectId);
+      searchParams.append("personnel_id", params.personnelId);
+    if (params.projectId) searchParams.append("project_id", params.projectId);
 
     return apiClient.get(
       `${this.basePath}/weekly-summary?${searchParams.toString()}`
@@ -247,8 +249,8 @@ export class TimeEntriesService {
       month: params.month.toString(),
     });
     if (params.personnelId)
-      searchParams.append("personnelId", params.personnelId);
-    if (params.projectId) searchParams.append("projectId", params.projectId);
+      searchParams.append("personnel_id", params.personnelId);
+    if (params.projectId) searchParams.append("project_id", params.projectId);
 
     return apiClient.get(
       `${this.basePath}/monthly-summary?${searchParams.toString()}`
@@ -309,9 +311,9 @@ export class TimeEntriesService {
       period: params.period,
     });
     if (params.personnelId)
-      searchParams.append("personnelId", params.personnelId);
-    if (params.projectId) searchParams.append("projectId", params.projectId);
-    if (params.startDate) searchParams.append("startDate", params.startDate);
+      searchParams.append("personnel_id", params.personnelId);
+    if (params.projectId) searchParams.append("project_id", params.projectId);
+    if (params.startDate) searchParams.append("start_date", params.startDate);
 
     return apiClient.get(
       `${this.basePath}/productivity-stats?${searchParams.toString()}`
@@ -329,10 +331,10 @@ export class TimeEntriesService {
   }): Promise<Blob> {
     const searchParams = new URLSearchParams();
     if (params?.personnelId)
-      searchParams.append("personnelId", params.personnelId);
-    if (params?.projectId) searchParams.append("projectId", params.projectId);
-    if (params?.startDate) searchParams.append("startDate", params.startDate);
-    if (params?.endDate) searchParams.append("endDate", params.endDate);
+      searchParams.append("personnel_id", params.personnelId);
+    if (params?.projectId) searchParams.append("project_id", params.projectId);
+    if (params?.startDate) searchParams.append("start_date", params.startDate);
+    if (params?.endDate) searchParams.append("end_date", params.endDate);
 
     const url = searchParams.toString()
       ? `${this.basePath}/export/excel?${searchParams.toString()}`
@@ -375,6 +377,26 @@ export class TimeEntriesService {
       ids,
       status,
       notes,
+    });
+  }
+
+  /**
+   * Aprobar múltiples registros de tiempo para nómina
+   */
+  async bulkApprove(
+    ids: string[],
+    approverNotes?: string
+  ): Promise<{
+    message: string;
+    approved: Array<{
+      id: string;
+      personnel_id: string;
+      work_date: string;
+    }>;
+  }> {
+    return apiClient.post(`${this.basePath}/bulk-approve`, {
+      ids,
+      approver_notes: approverNotes,
     });
   }
 }

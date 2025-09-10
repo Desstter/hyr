@@ -234,6 +234,82 @@ router.post('/payroll/:period/generate', dianAuditLogger('dian_payroll_documents
 });
 
 /**
+ * DELETE /api/dian/payroll/:period
+ * Elimina documentos de nómina electrónica para un período
+ * ADVERTENCIA: Esta operación es irreversible y debe usarse con precaución
+ */
+router.delete('/payroll/:period', dianAuditLogger('dian_payroll_documents'), async (req, res) => {
+    try {
+        const { period } = req.params;
+        
+        // Validar formato de período
+        const periodRegex = /^\d{4}-\d{2}$/;
+        if (!periodRegex.test(period)) {
+            return res.status(400).json({
+                error: 'Formato de período inválido. Use YYYY-MM (ej: 2025-09)'
+            });
+        }
+        
+        // Verificar que existen documentos para el período
+        const existingPayroll = await db.query(`
+            SELECT id, employee_name, employee_document, cune FROM dian_payroll_documents WHERE period = $1
+        `, [period]);
+        
+        if (existingPayroll.rows.length === 0) {
+            return res.status(404).json({
+                error: `No se encontraron documentos de nómina para el período ${period}`
+            });
+        }
+        
+        // Eliminar todos los documentos del período
+        const result = await db.query(`
+            DELETE FROM dian_payroll_documents WHERE period = $1
+            RETURNING id, employee_name, employee_document, cune
+        `, [period]);
+        
+        // Log auditoría para cada documento eliminado
+        for (const doc of result.rows) {
+            await logAuditEvent({
+                actor: 'USER',
+                eventType: 'DELETE',
+                refTable: 'dian_payroll_documents',
+                refId: doc.id,
+                payload: {
+                    action: 'payroll_period_deleted',
+                    period,
+                    employee_name: doc.employee_name,
+                    employee_document: doc.employee_document,
+                    cune: doc.cune,
+                    reason: 'Regeneración de nómina electrónica'
+                }
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: `Nómina electrónica del período ${period} eliminada exitosamente`,
+            data: {
+                period,
+                deleted_documents: result.rows.length,
+                deleted_employees: result.rows.map(row => ({
+                    id: row.id,
+                    employee_name: row.employee_name,
+                    employee_document: row.employee_document,
+                    cune: row.cune
+                }))
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error eliminando nómina electrónica:', error);
+        res.status(500).json({
+            error: 'Error interno del servidor',
+            details: error.message
+        });
+    }
+});
+
+/**
  * GET /api/dian/payroll/:period
  * Lista documentos de nómina electrónica para un período
  */

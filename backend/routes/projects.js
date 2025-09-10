@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
         `;
         
         const result = await db.query(query, params);
-        res.json({ data: result.rows });
+        res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -254,7 +254,7 @@ router.get('/:id/expenses', async (req, res) => {
         query += ` ORDER BY date DESC, created_at DESC`;
         
         const result = await db.query(query, params);
-        res.json({ data: result.rows });
+        res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -288,7 +288,7 @@ router.get('/:id/personnel', async (req, res) => {
             ORDER BY total_hours DESC
         `, [id]);
         
-        res.json({ data: result.rows });
+        res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

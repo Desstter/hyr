@@ -57,7 +57,8 @@
       "Read(/C:\\Users\\Usuario\\Desktop\\HYR/**)",
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []

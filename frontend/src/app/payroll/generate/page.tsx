@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDianSettings } from "@/lib/hooks/useCompanySettings";
 
 
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,8 @@ interface PayrollDocument {
 }
 
 export default function PayrollGeneratePage() {
+  const { settings: dianSettings, loading: loadingDian } = useDianSettings();
+  
   const [period, setPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -62,9 +65,11 @@ export default function PayrollGeneratePage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [generatedPayroll, setGeneratedPayroll] =
     useState<PayrollDocument | null>(null);
+  const [existingPayroll, setExistingPayroll] = useState<PayrollDocument | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [showXmlDialog, setShowXmlDialog] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -131,7 +136,7 @@ export default function PayrollGeneratePage() {
             id: emp.id,
             document_number: emp.document_number,
             name: emp.name,
-            salary:
+            base_salary:
               Number(emp.monthly_salary) ||
               (Number(emp.hourly_rate) || 0) * 192,
             position: emp.position,
@@ -142,10 +147,33 @@ export default function PayrollGeneratePage() {
       const data = await response.json();
 
       if (data.success) {
-        setGeneratedPayroll(data.data);
+        // Map the API response to the expected PayrollDocument structure
+        const mappedPayroll = {
+          id: data.data.processed[0]?.id || "",
+          cune: data.data.processed[0]?.cune || "",
+          period: data.data.period,
+          employee_count: data.data.total_employees,
+          total_salary: data.data.summary.total_payroll,
+          total_deductions: data.data.processed.reduce((sum, emp) => sum + (emp.calculations?.totalDeductions || 0), 0),
+          total_employer_cost: data.data.summary.total_employer_cost,
+          dian_status: data.data.processed[0]?.dian_status || "",
+          xml_content: data.data.processed[0]?.xml_content || "",
+          created_at: data.data.processed[0]?.created_at || new Date().toISOString()
+        };
+        
+        setGeneratedPayroll(mappedPayroll);
+        setExistingPayroll(null);
         toast({
           title: "✅ Nómina generada exitosamente",
-          description: `CUNE: ${data.data.cune}`,
+          description: `CUNE: ${mappedPayroll.cune}`,
+        });
+      } else if (response.status === 409) {
+        // Handle conflict - existing payroll for period
+        setExistingPayroll(data);
+        toast({
+          title: "Nómina ya existe",
+          description: `Ya existe nómina electrónica para ${period}. Use las opciones disponibles.`,
+          variant: "default",
         });
       } else {
         toast({
@@ -173,66 +201,211 @@ export default function PayrollGeneratePage() {
     setLoading(false);
   };
 
-  const _generateMockXML = (employees: Employee[], period: string) => {
-    const totalSalary = employees.reduce(
-      (sum, emp) =>
-        sum +
-        (Number(emp.monthly_salary) || (Number(emp.hourly_rate) || 0) * 192),
-      0
-    );
-    const totalDeductions = employees.reduce(
-      (sum, emp) =>
-        sum +
-        (Number(emp.monthly_salary) || (Number(emp.hourly_rate) || 0) * 192) *
-          0.08,
-      0
-    );
+  const viewExistingPayroll = async () => {
+    if (!period) return;
 
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<NominaIndividual xmlns="dian:gov:co:facturaelectronica:NominaIndividual">
-    <InformacionGeneral>
-        <Version>V1.0: Documento Soporte de Pago de Nómina Electrónica</Version>
-        <Ambiente>2</Ambiente>
-        <TipoXML>103</TipoXML>
-        <CUNE>HYR2025090123456789ABCDEF1234567890ABCDEF12</CUNE>
-        <EncripCUNE>CUNE-SHA384</EncripCUNE>
-        <FechaGen>${new Date().toISOString().split("T")[0]}</FechaGen>
-        <Periodo>${period}</Periodo>
-        <NumeroSecuenciaXML>1</NumeroSecuenciaXML>
-        <LugarGeneracionXML>
-            <Pais>CO</Pais>
-            <DepartamentoEstado>11</DepartamentoEstado>
-            <MunicipioDistrito>11001</MunicipioDistrito>
-            <Idioma>es</Idioma>
-        </LugarGeneracionXML>
-    </InformacionGeneral>
-    
-    <Empleador>
-        <RazonSocial>HYR CONSTRUCTORA &amp; SOLDADURA S.A.S.</RazonSocial>
-        <NIT>900123456</NIT>
-        <DV>7</DV>
-    </Empleador>
-    
-    <Trabajador>
-        <TipoTrabajador>01</TipoTrabajador>
-        <SubTipoTrabajador>00</SubTipoTrabajador>
-        <TipoDocumento>13</TipoDocumento>
-    </Trabajador>
-    
-    <Pago>
-        <TotalDevengados>${totalSalary.toFixed(2)}</TotalDevengados>
-        <TotalDeducciones>${totalDeductions.toFixed(2)}</TotalDeducciones>
-        <ComprobanteTotal>${(totalSalary - totalDeductions).toFixed(2)}</ComprobanteTotal>
-    </Pago>
-    
-</NominaIndividual>`;
+    try {
+      const { apiUrl } = await import("@/lib/appConfig");
+      const url = await apiUrl(`/dian/payroll/${period}`);
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success && data.data.documents.length > 0) {
+        // Map existing payroll to display format
+        const existingDoc = data.data.documents[0];
+        const mappedPayroll = {
+          id: existingDoc.id,
+          cune: existingDoc.cune,
+          period: existingDoc.period,
+          employee_count: data.data.summary.total_employees,
+          total_salary: data.data.summary.total_base_salary,
+          total_deductions: 0, // Will need to calculate or get from backend
+          total_employer_cost: 0, // Will need to calculate or get from backend
+          dian_status: existingDoc.dian_status,
+          xml_content: "", // Will load when needed
+          created_at: existingDoc.created_at
+        };
+
+        setGeneratedPayroll(mappedPayroll);
+        setExistingPayroll(null);
+        toast({
+          title: "Nómina existente cargada",
+          description: `CUNE: ${existingDoc.cune}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading existing payroll:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la nómina existente",
+        variant: "destructive",
+      });
+    }
   };
+
+  const deleteExistingPayroll = async () => {
+    if (!period) return;
+
+    try {
+      setLoading(true);
+      const { apiUrl } = await import("@/lib/appConfig");
+      const url = await apiUrl(`/dian/payroll/${period}`);
+      const response = await fetch(url, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setExistingPayroll(null);
+        toast({
+          title: "✅ Nómina eliminada",
+          description: `Nómina del período ${period} eliminada. Puede generar una nueva.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Error eliminando nómina",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting payroll:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la nómina existente",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setShowRegenerateDialog(false);
+    }
+  };
+
+  const handleRegenerateConfirm = async () => {
+    await deleteExistingPayroll();
+    // After deletion, automatically try to generate new payroll
+    setTimeout(() => {
+      generatePayroll();
+    }, 1000);
+  };
+
 
   if (loadingEmployees) {
     return (
       <div className="p-6 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Cargando empleados...</span>
+      </div>
+    );
+  }
+
+  // Show existing payroll conflict dialog
+  if (existingPayroll) {
+    return (
+      <div className="p-6 space-y-6">
+        <h1 className="text-3xl font-bold">Generar Nómina Electrónica</h1>
+        
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-orange-800">
+              <AlertCircle className="h-6 w-6 mr-2" />
+              Nómina Ya Existe - {period}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-orange-700">
+              {existingPayroll.error}
+            </p>
+            
+            {existingPayroll.existing_employees && (
+              <div className="p-3 bg-white rounded border">
+                <h4 className="font-medium mb-2">Empleados en nómina existente:</h4>
+                <ul className="text-sm text-gray-600">
+                  {existingPayroll.existing_employees.map((doc: string, index: number) => (
+                    <li key={index}>• CC {doc}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div className="flex space-x-3">
+              <Button onClick={viewExistingPayroll} variant="outline">
+                <Eye className="h-4 w-4 mr-2" />
+                Ver Nómina Existente
+              </Button>
+              
+              <Button 
+                onClick={() => setShowRegenerateDialog(true)}
+                variant="destructive"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Regenerar Nómina
+              </Button>
+              
+              <Button 
+                onClick={() => setExistingPayroll(null)}
+                variant="secondary"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Regenerate Confirmation Dialog */}
+        <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-red-600">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                ⚠️ Confirmar Regeneración
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                Esta acción eliminará permanentemente la nómina electrónica existente 
+                para el período <strong>{period}</strong> y generará una nueva.
+              </p>
+              
+              <div className="p-3 bg-red-50 rounded border border-red-200">
+                <h4 className="font-medium text-red-800 mb-1">⚠️ Advertencias Legales:</h4>
+                <ul className="text-sm text-red-700 space-y-1">
+                  <li>• Esta acción es irreversible</li>
+                  <li>• Debe notificar a la DIAN sobre la anulación</li>
+                  <li>• Mantenga registros de auditoría</li>
+                  <li>• Verifique compliance antes de proceder</li>
+                </ul>
+              </div>
+              
+              <div className="flex space-x-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowRegenerateDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleRegenerateConfirm}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Confirmar Regeneración
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -280,7 +453,7 @@ export default function PayrollGeneratePage() {
               <div>
                 <Label className="text-sm text-gray-600">Total Salarios</Label>
                 <p className="text-lg font-semibold">
-                  ${generatedPayroll.total_salary.toLocaleString("es-CO")}
+                  ${(generatedPayroll.total_salary || 0).toLocaleString("es-CO")}
                 </p>
               </div>
               <div>
@@ -288,7 +461,7 @@ export default function PayrollGeneratePage() {
                   Total Deducciones
                 </Label>
                 <p className="text-lg font-semibold text-red-600">
-                  ${generatedPayroll.total_deductions.toLocaleString("es-CO")}
+                  ${(generatedPayroll.total_deductions || 0).toLocaleString("es-CO")}
                 </p>
               </div>
               <div>
@@ -297,7 +470,7 @@ export default function PayrollGeneratePage() {
                 </Label>
                 <p className="text-lg font-semibold text-blue-600">
                   $
-                  {generatedPayroll.total_employer_cost.toLocaleString("es-CO")}
+                  {(generatedPayroll.total_employer_cost || 0).toLocaleString("es-CO")}
                 </p>
               </div>
             </div>
@@ -367,7 +540,7 @@ export default function PayrollGeneratePage() {
                 Resolución DIAN
               </h4>
               <p className="text-sm text-blue-800">
-                000000000042 - Vigente hasta 2025-12-31
+                {loadingDian ? "Cargando..." : `${dianSettings.resolutionNumber} - Vigente hasta ${dianSettings.resolutionValidUntil}`}
               </p>
             </div>
 

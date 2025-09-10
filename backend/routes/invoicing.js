@@ -11,6 +11,34 @@ const { generateCUFE, generateInvoiceNumber, simulateDIANValidation } = require(
 const { loadTaxConfig, getVATRate, getICARate } = require('../utils/tax-loader');
 
 // =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+/**
+ * Get the correct status column name for electronic_invoices table
+ * Handles migration from dian_validation_status to dian_status
+ */
+async function getStatusColumn() {
+    try {
+        const columnCheck = await db.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'electronic_invoices' 
+            AND column_name IN ('dian_status', 'dian_validation_status')
+        `);
+        
+        const statusColumn = columnCheck.rows.find(row => 
+            row.column_name === 'dian_status' || row.column_name === 'dian_validation_status'
+        )?.column_name || 'dian_validation_status'; // fallback to original name
+        
+        return statusColumn;
+    } catch (error) {
+        console.warn('Error detecting status column, falling back to dian_validation_status:', error);
+        return 'dian_validation_status';
+    }
+}
+
+// =====================================================
 // CREACIÓN Y GESTIÓN DE FACTURAS
 // =====================================================
 
@@ -124,12 +152,15 @@ router.post('/invoices', dianAuditLogger('electronic_invoices'), async (req, res
         // Simular validación DIAN
         const dianResponse = simulateDIANValidation('CUFE');
         
+        // Get the correct status column name
+        const statusColumn = await getStatusColumn();
+        
         // Guardar factura en base de datos
         const result = await db.query(`
             INSERT INTO electronic_invoices (
                 invoice_number, client_name, client_nit, city,
                 subtotal, vat_amount, reteica_amount, total_amount,
-                cufe, xml_ubl_content, dian_validation_status, line_items
+                cufe, xml_ubl_content, ${statusColumn}, line_items
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
         `, [
@@ -234,11 +265,14 @@ router.get('/invoices', async (req, res) => {
             offset = 0
         } = req.query;
         
+        // Get the correct status column name
+        const statusColumn = await getStatusColumn();
+        
         let query = `
             SELECT 
                 id, invoice_number, client_name, client_nit, city,
                 subtotal, vat_amount, reteica_amount, total_amount,
-                cufe, dian_validation_status, created_at
+                cufe, ${statusColumn} as dian_validation_status, created_at
             FROM electronic_invoices
             WHERE 1=1
         `;
@@ -258,7 +292,7 @@ router.get('/invoices', async (req, res) => {
         
         if (status) {
             params.push(status);
-            query += ` AND dian_validation_status = $${++paramCount}`;
+            query += ` AND ${statusColumn} = $${++paramCount}`;
         }
         
         if (date_from) {
@@ -290,7 +324,7 @@ router.get('/invoices', async (req, res) => {
             SELECT COUNT(*) as total FROM electronic_invoices WHERE 1=1
             ${client_name ? `AND client_name ILIKE '%${client_name}%'` : ''}
             ${city ? `AND city = '${city}'` : ''}
-            ${status ? `AND dian_validation_status = '${status}'` : ''}
+            ${status ? `AND ${statusColumn} = '${status}'` : ''}
         `);
         
         res.json({
@@ -329,10 +363,13 @@ router.post('/invoices/:id/resend-dian', dianAuditLogger('electronic_invoices'),
         // Simular nuevo envío a DIAN
         const dianResponse = simulateDIANValidation('CUFE');
         
+        // Get the correct status column name
+        const statusColumn = await getStatusColumn();
+        
         // Actualizar estado
         await db.query(`
             UPDATE electronic_invoices 
-            SET dian_validation_status = $1 
+            SET ${statusColumn} = $1 
             WHERE id = $2
         `, [dianResponse.status, id]);
         
@@ -343,7 +380,7 @@ router.post('/invoices/:id/resend-dian', dianAuditLogger('electronic_invoices'),
             refId: id,
             payload: {
                 action: 'invoice_resent_to_dian',
-                previous_status: invoice.rows[0].dian_validation_status,
+                previous_status: invoice.rows[0][statusColumn],
                 new_status: dianResponse.status
             }
         });

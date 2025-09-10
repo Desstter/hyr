@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { QuickActions } from "./quick-actions";
+import { useBusinessProfile } from "@/lib/hooks/useCompanySettings";
 
 export function TopBar() {
+  const { profile, loading } = useBusinessProfile();
   return (
     <div
       className="sticky top-0 z-40 flex h-16 flex-shrink-0 items-center gap-x-2 sm:gap-x-4 border-b border-border bg-card px-4 shadow-sm sm:px-6 lg:px-8 backdrop-blur-md bg-card/95"
@@ -49,11 +51,11 @@ export function TopBar() {
           className="h-9 w-9 rounded-xl bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center text-sm font-bold shadow-sm"
           suppressHydrationWarning
         >
-          RH
+          {loading ? "..." : profile.contact.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
         </div>
         <div className="hidden lg:block text-right" suppressHydrationWarning>
           <p className="text-sm font-medium text-foreground">
-            Santiago Hurtado
+            {loading ? "Cargando..." : profile.contact}
           </p>
           <p className="text-xs text-muted-foreground">Administrador</p>
         </div>

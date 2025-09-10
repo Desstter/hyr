@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, Calculator, Save } from "lucide-react";
 import {
   Dialog,
@@ -27,7 +27,11 @@ import { generateId } from "@/lib/utils";
 import { clientsService } from "@/lib/api/clients";
 import {
   useTemplates,
+  usePresets,
   CostTemplate,
+  saveEstimation,
+  calculateEstimation,
+  type EstimationItem,
 } from "@/lib/api/simulator";
 import type { Client } from "@/lib/api/types";
 import { toast } from "sonner";
@@ -91,13 +95,15 @@ export function CostSimulatorDialog({
   const [clients, setClients] = useState<Client[]>([]);
   const [_loadingClients, _setLoadingClients] = useState(true);
   const { templates, loading: _loadingTemplates } = useTemplates();
-
+  
   const [formData, setFormData] = useState<EstimateFormData>({
     name: "",
     profitMargin: 15,
     currency: "COP",
     items: [],
   });
+
+  const { presets, loading: _loadingPresets } = usePresets(formData.templateId || 'construction');
 
   const [_selectedTemplate, _setSelectedTemplate] = useState<
     CostTemplate | undefined
@@ -144,19 +150,42 @@ export function CostSimulatorDialog({
     };
   };
 
-  const generateEstimateFromTemplate = (
+  const generateEstimateFromTemplate = useCallback((
     template: CostTemplate,
     margin: number
   ): Partial<CostEstimate> => {
-    // This would need to be implemented based on the template structure
-    // For now, return basic structure
+    // Use real presets from the API when available
+    if (presets.length > 0) {
+      // Use the first preset as a base, or you could allow user to select
+      const selectedPreset = presets[0];
+      
+      // Convert API preset items to component format
+      const templateItems: CostEstimateItem[] = selectedPreset.items.map((item, _index) => ({
+        id: generateId(),
+        name: item.name || item.subcategory,
+        type: item.category === 'materials' ? 'material' : 
+              item.category === 'labor' ? 'labor' : 'equipment',
+        quantity: item.quantity,
+        unitPrice: item.cost_per_unit || 0,
+        unit: item.unit || 'und'
+      }));
+      
+      return {
+        name: `Estimación basada en ${template.name} - ${selectedPreset.name}`,
+        profitMargin: margin,
+        currency: "COP" as const,
+        items: templateItems,
+      };
+    }
+    
+    // Fallback if no presets are available
     return {
       name: `Estimación basada en ${template.name}`,
       profitMargin: margin,
       currency: "COP" as const,
       items: [],
     };
-  };
+  }, [presets]);
 
   // Initialize form data
   useEffect(() => {
@@ -192,7 +221,7 @@ export function CostSimulatorDialog({
       _setSelectedTemplate(undefined);
       setIsEditing(false);
     }
-  }, [estimate, template, open]);
+  }, [estimate, template, open, generateEstimateFromTemplate]);
 
   // Calculate totals
   const calculation = calculateEstimateTotal(
@@ -293,48 +322,43 @@ export function CostSimulatorDialog({
     }
 
     try {
-      // For now, we'll use a simple local storage approach since the API doesn't have cost estimates endpoints yet
-      // This can be replaced with actual API calls when the backend endpoints are implemented
-      const estimateData: CostEstimate = {
-        id: isEditing && estimate ? estimate.id : generateId(),
-        name: formData.name,
-        clientId: formData.clientId,
-        templateId: formData.templateId,
-        items: formData.items,
-        subtotal: calculation.subtotal,
-        profitMargin: formData.profitMargin,
-        totalBeforeMargin: calculation.totalBeforeMargin,
-        total: calculation.total,
-        currency: formData.currency,
+      // Convert form items to API format
+      const estimationItems: EstimationItem[] = formData.items.map(item => ({
+        category: item.type === 'material' ? 'materials' : 
+                  item.type === 'labor' ? 'labor' : 'equipment',
+        subcategory: item.name.toLowerCase().replace(/\s+/g, '_'),
+        quantity: item.quantity,
+        name: item.name,
+        cost_per_unit: item.unitPrice,
+      }));
+
+      // Calculate estimation using the real API
+      const calculationResult = await calculateEstimation({
+        template_type: formData.templateId || 'construction',
+        items: estimationItems,
+        project_duration_days: 30,
+        apply_benefits: true
+      });
+
+      // Save the estimation using the real API
+      const _savedEstimation = await saveEstimation({
+        project_name: formData.name,
+        client_name: clients.find(c => c.id === formData.clientId)?.name || 'Cliente desconocido',
+        template_type: formData.templateId || 'construction',
+        estimation_data: calculationResult,
         notes: formData.notes,
-        createdAt: isEditing && estimate ? estimate.createdAt : new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
-      // Save to localStorage for now
-      const storageKey = "cost-estimates";
-      const existingEstimates = JSON.parse(
-        localStorage.getItem(storageKey) || "[]"
-      );
-
-      if (isEditing && estimate) {
-        const index = existingEstimates.findIndex(
-          (e: CostEstimate) => e.id === estimate.id
-        );
-        if (index > -1) {
-          existingEstimates[index] = estimateData;
-        }
+      if (isEditing) {
         toast.success("Cotización actualizada");
       } else {
-        existingEstimates.push(estimateData);
-        toast.success("Cotización creada");
+        toast.success("Cotización creada y guardada en base de datos");
       }
-
-      localStorage.setItem(storageKey, JSON.stringify(existingEstimates));
+      
       onSuccess();
     } catch (error) {
-      console.error("Error saving quote:", error);
-      toast.error("Error al guardar la cotización");
+      console.error("Error saving estimation:", error);
+      toast.error("Error al guardar la cotización: " + (error instanceof Error ? error.message : 'Error desconocido'));
     }
   };
 

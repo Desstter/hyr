@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ProgressRing, ProgressRingCard } from "@/components/ui/progress-ring";
-import { BarChart, MiniBarChart } from "@/components/ui/bar-chart";
+import { BarChart } from "@/components/ui/bar-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -54,16 +54,6 @@ export function EnhancedKPISection({
         100
       : 0;
 
-  // Mock data for trends (in real app, this would come from API)
-  const monthlyRevenueTrend = [
-    65000000,
-    72000000,
-    68000000,
-    85000000,
-    92000000,
-    kpis.revenue_this_month,
-  ];
-  const _dailyActiveProjects = [4, 4, 5, 4, 4, 4, kpis.active_projects];
 
   const formatCurrency = (amount: number) => {
     const safeAmount = safeNumber(amount);
@@ -113,11 +103,6 @@ export function EnhancedKPISection({
                 <TrendingUp className="h-6 w-6 text-[hsl(var(--success))]" />
               </div>
             </div>
-            <MiniBarChart
-              data={monthlyRevenueTrend}
-              variant="success"
-              height={32}
-            />
           </CardContent>
         </Card>
 

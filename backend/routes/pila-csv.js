@@ -69,8 +69,33 @@ router.post('/:period/generate', pilaAuditLogger(), async (req, res) => {
         `, [`${period}-01`]);
         
         if (employeesResult.rows.length === 0) {
+            // Proporcionar información adicional para ayudar al usuario
+            const activeEmployees = await db.query(`
+                SELECT COUNT(*) as count FROM personnel WHERE status = 'active'
+            `);
+            
+            const allTimeEntries = await db.query(`
+                SELECT COUNT(*) as count FROM time_entries 
+                WHERE DATE_TRUNC('month', work_date) = $1::date
+            `, [`${period}-01`]);
+
             return res.status(404).json({
-                error: `No se encontraron empleados con horas trabajadas para el período ${period}`
+                error: `No se encontraron empleados con horas trabajadas para el período ${period}`,
+                details: {
+                    period: period,
+                    active_employees: parseInt(activeEmployees.rows[0].count),
+                    time_entries_in_period: parseInt(allTimeEntries.rows[0].count),
+                    next_steps: [
+                        "Registre las horas trabajadas de los empleados para el período especificado",
+                        "Asegúrese de que los empleados estén marcados como 'activos'",
+                        "Verifique que las fechas de registro correspondan al período de PILA",
+                        `Para generar PILA de ${period}, necesita registrar horas en el sistema de 'Registro de Horas'`
+                    ]
+                },
+                help: {
+                    workflow: "Ir a 'Registro de Horas' > Agregar horas trabajadas > Procesar PILA",
+                    required_data: "Empleados activos con horas registradas en el período"
+                }
             });
         }
         

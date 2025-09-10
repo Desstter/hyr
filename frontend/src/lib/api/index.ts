@@ -31,6 +31,7 @@ import { complianceService } from "./compliance";
 import { invoicingService } from "./invoicing";
 import { pilaService } from "./pila";
 import { filesService } from "./files";
+import { incomes } from "./incomes";
 
 // Re-exportar servicios
 export { clientsService, ClientsService } from "./clients";
@@ -48,6 +49,7 @@ export { complianceService, ComplianceService } from "./compliance";
 export { invoicingService, InvoicingService } from "./invoicing";
 export { pilaService, useGeneratePILA, usePILASubmissions } from "./pila";
 export { filesService } from "./files";
+export { incomes } from "./incomes";
 
 // =====================================================
 // CONFIGURACIÓN Y UTILIDADES
@@ -96,6 +98,7 @@ export const api = {
   invoicing: invoicingService,
   pila: pilaService,
   files: filesService,
+  incomes: incomes,
 } as const;
 
 // =====================================================

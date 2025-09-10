@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/lib/i18n";
+import { useBusinessProfile } from "@/lib/hooks/useCompanySettings";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -49,6 +50,7 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const t = useTranslations("es");
+  const { profile, loading } = useBusinessProfile();
 
   return (
     <div
@@ -120,14 +122,16 @@ export function Sidebar() {
           >
             <div className="flex items-center" suppressHydrationWarning>
               <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
-                <span className="text-sm font-bold text-white">RH</span>
+                <span className="text-sm font-bold text-white">
+                  {loading ? "..." : profile.contact.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                </span>
               </div>
               <div className="ml-3 min-w-0 flex-1" suppressHydrationWarning>
                 <p className="text-sm font-medium text-foreground truncate">
-                  Santiago Hurtado
+                  {loading ? "Cargando..." : profile.contact}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  Constructora & Soldadura
+                  {loading ? "..." : profile.name}
                 </p>
               </div>
             </div>
