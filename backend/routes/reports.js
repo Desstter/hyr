@@ -77,9 +77,13 @@ router.get('/executive-dashboard', async (req, res) => {
                     COUNT(*) as total_projects,
                     COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as active_projects,
                     COUNT(CASE WHEN status = 'completed' AND end_date >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as completed_this_month,
-                    COALESCE(SUM(CASE WHEN status = 'completed' AND end_date >= DATE_TRUNC('month', CURRENT_DATE) THEN budget_total END), 0) as revenue_this_month,
                     COALESCE(SUM(CASE WHEN status = 'in_progress' THEN budget_total - spent_total END), 0) as projected_profit
                 FROM projects
+            ),
+            incomes_summary AS (
+                SELECT 
+                    COALESCE(SUM(CASE WHEN DATE_TRUNC('month', date::date) = DATE_TRUNC('month', CURRENT_DATE) THEN amount END), 0) as revenue_this_month
+                FROM project_incomes
             ),
             expenses_summary AS (
                 SELECT 
@@ -93,7 +97,7 @@ router.get('/executive-dashboard', async (req, res) => {
                 ps.total_projects,
                 ps.active_projects, 
                 ps.completed_this_month,
-                ps.revenue_this_month,
+                ins.revenue_this_month,
                 ps.projected_profit,
                 
                 -- Nómina
@@ -107,16 +111,17 @@ router.get('/executive-dashboard', async (req, res) => {
                 es.equipment_this_month,
                 
                 -- Indicadores calculados
-                ps.revenue_this_month - es.expenses_this_month - cmp.total_payroll_cost as net_profit_this_month,
+                ins.revenue_this_month - es.expenses_this_month - cmp.total_payroll_cost as net_profit_this_month,
                 CASE 
-                    WHEN ps.revenue_this_month > 0 
-                    THEN ROUND(((ps.revenue_this_month - es.expenses_this_month - cmp.total_payroll_cost) / ps.revenue_this_month * 100), 2)
+                    WHEN ins.revenue_this_month > 0 
+                    THEN ROUND(((ins.revenue_this_month - es.expenses_this_month - cmp.total_payroll_cost) / ins.revenue_this_month * 100), 2)
                     ELSE 0 
                 END as profit_margin_percent
                 
             FROM projects_summary ps
             CROSS JOIN current_month_payroll cmp  
             CROSS JOIN expenses_summary es
+            CROSS JOIN incomes_summary ins
         `);
         
         // Proyectos con mayor riesgo
@@ -278,12 +283,11 @@ router.get('/financial-trends', async (req, res) => {
             ),
             revenue_by_month AS (
                 SELECT 
-                    DATE_TRUNC('month', p.end_date) as month,
-                    SUM(p.budget_total) as total_revenue
-                FROM projects p
-                WHERE p.status = 'completed'
-                AND p.end_date >= CURRENT_DATE - INTERVAL '${parseInt(months)} months'
-                GROUP BY DATE_TRUNC('month', p.end_date)
+                    DATE_TRUNC('month', pi.date AT TIME ZONE 'UTC') as month,
+                    SUM(pi.amount) as total_revenue
+                FROM project_incomes pi
+                WHERE DATE_TRUNC('month', pi.date AT TIME ZONE 'UTC') >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '${parseInt(months)} months')
+                GROUP BY DATE_TRUNC('month', pi.date AT TIME ZONE 'UTC')
             )
             SELECT 
                 TO_CHAR(md.month, 'YYYY-MM') as month,
@@ -458,5 +462,6 @@ router.get('/payroll-compliance', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 module.exports = router;
