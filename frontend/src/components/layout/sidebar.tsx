@@ -21,11 +21,13 @@ import {
   UserCheck,
   FileSpreadsheet,
   Shield,
+  TrendingUp,
 } from "lucide-react";
 
 const navigation = [
   { name: "dashboard", href: "/", icon: LayoutDashboard },
   { name: "projects", href: "/projects", icon: FolderOpen },
+  { name: "incomes", href: "/incomes", icon: TrendingUp },
   { name: "clients", href: "/clients", icon: Building2 },
   { name: "personnel", href: "/personnel", icon: Users },
   { name: "payroll", href: "/payroll", icon: DollarSign },

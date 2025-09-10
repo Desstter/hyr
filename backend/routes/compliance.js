@@ -251,10 +251,10 @@ async function getContractorsStatistics() {
             // Obligated vs non-obligated contractors
             db.query(`
                 SELECT 
-                    dian_obligated,
+                    obligated_to_invoice,
                     COUNT(*) as count
                 FROM contractors 
-                GROUP BY dian_obligated
+                GROUP BY obligated_to_invoice
             `)
         ]);
 
@@ -262,7 +262,7 @@ async function getContractorsStatistics() {
         const documentSupportCount = parseInt(documentsResult.rows[0].total);
         
         const obligatedBreakdown = obligatedResult.rows.reduce((acc, row) => {
-            acc[row.dian_obligated ? 'obligated' : 'not_obligated'] = parseInt(row.count);
+            acc[row.obligated_to_invoice ? 'obligated' : 'not_obligated'] = parseInt(row.count);
             return acc;
         }, { obligated: 0, not_obligated: 0 });
 
