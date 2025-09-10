@@ -311,7 +311,7 @@ export function ExpensesTable() {
         </span>
         <span className="font-semibold text-lg">
           {formatCurrency(
-            filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+            filteredExpenses.reduce((sum, expense) => sum + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount), 0)
           )}
         </span>
       </div>

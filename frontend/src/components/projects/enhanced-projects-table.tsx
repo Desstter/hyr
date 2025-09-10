@@ -141,7 +141,9 @@ export function EnhancedProjectsTable({
     .sort((a, b) => {
       switch (sortBy) {
         case "budget":
-          return (b.budget_total || 0) - (a.budget_total || 0);
+          const budgetA = typeof a.budget_total === 'string' ? parseFloat(a.budget_total) : (a.budget_total || 0);
+          const budgetB = typeof b.budget_total === 'string' ? parseFloat(b.budget_total) : (b.budget_total || 0);
+          return budgetB - budgetA;
         case "progress":
           return (b.progress || 0) - (a.progress || 0);
         case "status":
@@ -181,11 +183,13 @@ export function EnhancedProjectsTable({
     
     // Calculate real total cost including time tracking
     const timeCost = timeTrackingSummary?.totalCost || 0;
-    const realSpentTotal = (project.spent_total || 0) + timeCost;
+    const spentTotal = typeof project.spent_total === 'string' ? parseFloat(project.spent_total) : (project.spent_total || 0);
+    const realSpentTotal = spentTotal + timeCost;
     
+    const budgetTotal = typeof project.budget_total === 'string' ? parseFloat(project.budget_total) : (project.budget_total || 0);
     const budgetUtilization =
-      project.budget_total > 0
-        ? (realSpentTotal / project.budget_total) * 100
+      budgetTotal > 0
+        ? (realSpentTotal / budgetTotal) * 100
         : 0;
     const isOverBudget = budgetUtilization > 100;
     const isAtRisk = budgetUtilization > 90 && project.progress < 90;
@@ -275,7 +279,7 @@ export function EnhancedProjectsTable({
 
               <div className="text-center">
                 <p className="text-lg font-bold text-foreground">
-                  {formatCurrency(project.budget_total || 0)}
+                  {formatCurrency(budgetTotal)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Presupuesto total
@@ -288,7 +292,7 @@ export function EnhancedProjectsTable({
           <div className="grid grid-cols-3 gap-3 pt-4 border-t">
             <div className="text-center">
               <p className="text-sm font-medium text-[hsl(var(--success))]">
-                {formatCurrency(project.budget_total - realSpentTotal)}
+                {formatCurrency(budgetTotal - realSpentTotal)}
               </p>
               <p className="text-xs text-muted-foreground">Disponible</p>
             </div>
@@ -547,7 +551,10 @@ export function EnhancedProjectsTable({
                 </p>
                 <p className="text-xl font-bold text-foreground">
                   {formatCurrency(
-                    projects.reduce((sum, p) => sum + (p.budget_total || 0), 0)
+                    projects.reduce((sum, p) => {
+                      const budget = typeof p.budget_total === 'string' ? parseFloat(p.budget_total) : (p.budget_total || 0);
+                      return sum + budget;
+                    }, 0)
                   )}
                 </p>
               </div>
