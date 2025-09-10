@@ -54,6 +54,13 @@ export interface PayrollSettings {
   arlTarifa: number;
 }
 
+export interface DianSettings {
+  resolutionNumber: string;
+  resolutionValidUntil: string;
+  environment: "1" | "2"; // 1=Producción, 2=Habilitación/Pruebas
+  xmlType: string;
+}
+
 export interface Setting<T = unknown> {
   key: string;
   value: T;
@@ -68,6 +75,7 @@ export interface AllSettings {
   app_preferences: Setting<AppPreferences>;
   notification_settings: Setting<NotificationSettings>;
   payroll_settings: Setting<PayrollSettings>;
+  dian_settings: Setting<DianSettings>;
   [key: string]: Setting;
 }
 
@@ -266,6 +274,21 @@ export class SettingsService {
    */
   async updatePayrollSettings(settings: PayrollSettings): Promise<void> {
     await this.update("payroll_settings", settings);
+  }
+
+  /**
+   * Obtener configuraciones de DIAN
+   */
+  async getDianSettings(): Promise<DianSettings> {
+    const result = await this.get<DianSettings>("dian_settings");
+    return result.value;
+  }
+
+  /**
+   * Actualizar configuraciones de DIAN
+   */
+  async updateDianSettings(settings: DianSettings): Promise<void> {
+    await this.update("dian_settings", settings);
   }
 
   // =====================================================

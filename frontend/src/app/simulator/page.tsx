@@ -158,7 +158,9 @@ export default function CostSimulatorPage() {
   const computeLaborEntryCost = (entry: { personnelId: string; hours: number; days: number }): number => {
     const person = activePersonnel.find(ap => ap.id === entry.personnelId);
     if (!person) return 0;
-    const base = entry.hours > 0 ? getHourlyRate(person) * entry.hours : getDailyRate(person) * entry.days;
+    const hoursCost = entry.hours > 0 ? getHourlyRate(person) * entry.hours : 0;
+    const daysCost = entry.days > 0 ? getDailyRate(person) * entry.days : 0;
+    const base = hoursCost + daysCost;
     return applyBenefits ? base * 1.58 : base;
   };
 
@@ -270,9 +272,10 @@ export default function CostSimulatorPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Panel de Configuración */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 space-y-6">
           {/* Selección de Template */}
           <Card>
             <CardHeader>
@@ -505,10 +508,10 @@ export default function CostSimulatorPage() {
               )}
             </CardContent>
           </Card>
-        </div>
+          </div>
 
-        {/* Panel de Resultados */}
-        <div className="space-y-6">
+          {/* Panel de Resultados */}
+          <div className="xl:col-span-1 space-y-6">
           {estimation ? (
             <>
               {/* Resumen de Costos */}
@@ -699,79 +702,245 @@ export default function CostSimulatorPage() {
               </CardContent>
             </Card>
           )}
+          </div>
+        </div>
 
-        {/* Simulación de Nómina (Empleados) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Simulación de Nómina (Empleados)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">Calcule pagos por horas o por días según tarifa del empleado.</div>
-              <Button variant="outline" size="sm" onClick={addLaborEntry}>Agregar empleado</Button>
-            </div>
-
-            {laborEntries.length === 0 ? (
-              <div className="text-center text-gray-500 py-6">No hay empleados agregados para la simulación</div>
-            ) : (
-              <div className="space-y-3">
-                {laborEntries.map(entry => {
-                  const person = activePersonnel.find(p => p.id === entry.personnelId);
-                  const hourly = getHourlyRate(person);
-                  const daily = getDailyRate(person);
-                  const cost = computeLaborEntryCost(entry);
-                  return (
-                    <div key={entry.id} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border rounded p-3">
-                      <div className="md:col-span-2">
-                        <Label>Empleado</Label>
-                        <Select value={entry.personnelId} onValueChange={val => updateLaborEntry(entry.id, "personnelId", val)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar empleado" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {activePersonnel.map(p => (
-                              <SelectItem key={p.id} value={p.id!}>
-                                {p.name} {p.position ? `- ${p.position}` : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Horas</Label>
-                        <Input type="number" min={0} value={entry.hours} onChange={e => updateLaborEntry(entry.id, "hours", e.target.value)} />
-                      </div>
-                      <div>
-                        <Label>Días</Label>
-                        <Input type="number" min={0} value={entry.days} onChange={e => updateLaborEntry(entry.id, "days", e.target.value)} />
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <div className="font-medium">Tarifas</div>
-                        <div>{hourly ? `Hora: ${hourly.toLocaleString("es-CO")}` : "Hora: n/d"}</div>
-                        <div>{daily ? `Día: ${daily.toLocaleString("es-CO")}` : "Día: n/d"}</div>
-                      </div>
-                      <div className="flex items-center justify-between md:justify-end gap-2">
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">Costo estimado</div>
-                          <div className="font-semibold text-blue-700">{new Intl.NumberFormat("es-CO").format(cost)}</div>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeLaborEntry(entry.id)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
+        {/* Simulación de Nómina (Empleados) - Full Width Section */}
+        <div className="mt-8">
+          <Card className="w-full">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-xl font-bold flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Calculator className="h-6 w-6 text-blue-600" />
                     </div>
-                  );
-                })}
+                    Simulación de Nómina (Empleados)
+                  </CardTitle>
+                  <p className="text-gray-600 mt-2">
+                    Calcule costos de personal por horas trabajadas o días laborados según las tarifas configuradas.
+                  </p>
+                </div>
+                <Button 
+                  variant="default" 
+                  size="lg" 
+                  onClick={addLaborEntry}
+                  className="shrink-0"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Agregar Empleado
+                </Button>
               </div>
-            )}
+            </CardHeader>
+            <CardContent className="pt-4">
+              {laborEntries.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="max-w-md mx-auto">
+                    <div className="p-4 bg-gray-200 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                      <Calculator className="h-10 w-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Sin empleados agregados
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Agregue empleados para simular costos de nómina del proyecto
+                    </p>
+                    <Button onClick={addLaborEntry} variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar primer empleado
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {laborEntries.map(entry => {
+                      const person = activePersonnel.find(p => p.id === entry.personnelId);
+                      const hourly = getHourlyRate(person);
+                      const daily = getDailyRate(person);
+                      const cost = computeLaborEntryCost(entry);
+                      return (
+                        <Card key={entry.id} className="relative border-2 hover:border-blue-200 transition-colors">
+                          <CardContent className="p-6">
+                            <div className="absolute top-4 right-4">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeLaborEntry(entry.id)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              {/* Employee Selection */}
+                              <div>
+                                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                  Empleado
+                                </Label>
+                                <Select 
+                                  value={entry.personnelId} 
+                                  onValueChange={val => updateLaborEntry(entry.id, "personnelId", val)}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccionar empleado" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {activePersonnel.map(p => (
+                                      <SelectItem key={p.id} value={p.id!}>
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{p.name}</span>
+                                          {p.position && (
+                                            <span className="text-xs text-gray-500">{p.position}</span>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-            <div className="flex justify-between items-center pt-2 border-t mt-2">
-              <div className="text-sm text-gray-600">Total Nómina Simulada</div>
-              <div className="text-lg font-bold text-blue-700">{new Intl.NumberFormat("es-CO").format(totalSimulatedLabor)}</div>
-            </div>
-          </CardContent>
-        </Card>
+                              {/* Hours and Days Inputs */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Horas
+                                  </Label>
+                                  <Input 
+                                    type="number" 
+                                    min={0} 
+                                    value={entry.hours} 
+                                    onChange={e => updateLaborEntry(entry.id, "hours", e.target.value)}
+                                    placeholder="0"
+                                    className="text-center"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Días
+                                  </Label>
+                                  <Input 
+                                    type="number" 
+                                    min={0} 
+                                    value={entry.days} 
+                                    onChange={e => updateLaborEntry(entry.id, "days", e.target.value)}
+                                    placeholder="0"
+                                    className="text-center"
+                                  />
+                                </div>
+                              </div>
 
+                              {/* Rate Information */}
+                              {person && (
+                                <div className="bg-gray-50 rounded-lg p-4 border">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-gray-700">Tarifas Configuradas</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-gray-600">Por hora:</span>
+                                      <div className="font-medium">
+                                        {hourly ? formatCurrency(hourly) : "N/D"}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-600">Por día:</span>
+                                      <div className="font-medium">
+                                        {daily ? formatCurrency(daily) : "N/D"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Cost Summary */}
+                              <div className="border-t pt-4">
+                                {person && (entry.hours > 0 || entry.days > 0) && (
+                                  <div className="space-y-2 mb-3">
+                                    <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                                      Desglose de Costo
+                                    </div>
+                                    {entry.hours > 0 && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">
+                                          {entry.hours}h × {formatCurrency(getHourlyRate(person))}
+                                        </span>
+                                        <span className="font-medium">
+                                          {formatCurrency(getHourlyRate(person) * entry.hours)}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {entry.days > 0 && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">
+                                          {entry.days}d × {formatCurrency(getDailyRate(person))}
+                                        </span>
+                                        <span className="font-medium">
+                                          {formatCurrency(getDailyRate(person) * entry.days)}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {entry.hours > 0 && entry.days > 0 && (
+                                      <div className="border-t pt-1 text-xs text-gray-500">
+                                        Los costos por horas y días se suman
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    Total Estimado:
+                                  </span>
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-blue-700">
+                                      {formatCurrency(cost)}
+                                    </div>
+                                    {applyBenefits && (
+                                      <div className="text-xs text-gray-500">
+                                        Incluye prestaciones (1.58x)
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+
+                  {/* Total Summary */}
+                  <div className="border-t pt-6">
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              Total Nómina Simulada
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Suma de todos los empleados agregados
+                              {applyBenefits && " (con factor prestacional)"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-blue-700">
+                              {formatCurrency(totalSimulatedLabor)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {laborEntries.length} empleado{laborEntries.length !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

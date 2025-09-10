@@ -83,7 +83,7 @@ class PILAService {
     try {
       const response = await apiClient.post<PILAGenerateResponse>(
         `/pila/${period}/generate`,
-        { employees }
+        { year: parseInt(period.split('-')[0]) }
       );
 
       if (!response.success) {
@@ -93,9 +93,22 @@ class PILAService {
       return response;
     } catch (error: unknown) {
       console.error("Error generating PILA:", error);
-      throw new Error(
-        error instanceof Error ? error.message : "Error generando archivo PILA"
-      );
+      
+      // Si es un error de API con detalles mejorados, conservar toda la información
+      if (error instanceof Error) {
+        try {
+          // Intentar parsear si es un error JSON con detalles
+          const errorData = JSON.parse(error.message);
+          if (errorData.details && errorData.help) {
+            throw new Error(JSON.stringify(errorData));
+          }
+        } catch {
+          // Si no es JSON, usar el mensaje tal como está
+        }
+        throw error;
+      }
+      
+      throw new Error("Error generando archivo PILA");
     }
   }
 
@@ -349,11 +362,30 @@ export function useGeneratePILA() {
 
       return response.data;
     } catch (error: unknown) {
+      let title = "Error generando PILA";
+      let description = "Error desconocido";
+      
+      if (error instanceof Error) {
+        try {
+          // Intentar parsear detalles mejorados del error
+          const errorData = JSON.parse(error.message);
+          if (errorData.details && errorData.help) {
+            title = "📋 PILA requiere datos de horas trabajadas";
+            description = `${errorData.error}\n\n✅ Próximos pasos:\n${errorData.details.next_steps.slice(0, 2).join('\n')}\n\n💡 ${errorData.help.workflow}`;
+          } else {
+            description = error.message;
+          }
+        } catch {
+          // Si no es JSON, usar mensaje normal
+          description = error.message;
+        }
+      }
+      
       toast({
-        title: "Error generando PILA",
-        description:
-          error instanceof Error ? error.message : "Error desconocido",
+        title,
+        description,
         variant: "destructive",
+        duration: 8000, // Mostrar más tiempo para errores informativos
       });
       throw error;
     } finally {

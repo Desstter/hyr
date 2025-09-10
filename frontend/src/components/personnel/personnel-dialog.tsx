@@ -165,7 +165,8 @@ export function PersonnelDialog({
   const loadProjects = async () => {
     try {
       _setLoadingProjects(true);
-      const projects = await projectsService.getAll();
+      const projectsResponse = await projectsService.getAll();
+      const projects = Array.isArray(projectsResponse) ? projectsResponse : [];
       const activeProjects = projects.filter(
         p => p.status === "in_progress" || p.status === "planned"
       );

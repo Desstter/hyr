@@ -72,10 +72,10 @@ export function ImportExport() {
           api.personnel.getAll(),
         ]);
 
-      const projects = projectsResult;
-      const clients = clientsResult;
-      const expenses = expensesResult.data || expensesResult;
-      const personnel = personnelResult;
+      const projects = Array.isArray(projectsResult) ? projectsResult : [];
+      const clients = Array.isArray(clientsResult) ? clientsResult : [];
+      const expenses = Array.isArray(expensesResult) ? expensesResult : [];
+      const personnel = Array.isArray(personnelResult) ? personnelResult : [];
 
       const exportData: ExportData = {
         version: "1.0",

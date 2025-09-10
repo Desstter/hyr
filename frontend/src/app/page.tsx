@@ -168,15 +168,6 @@ export default function Dashboard() {
             </span>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm text-muted-foreground">Sistema v2.0</p>
-            <p className="text-xs text-muted-foreground">
-              Migrado 100% PostgreSQL
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Enhanced KPI Section - Datos reales de PostgreSQL */}
@@ -305,31 +296,6 @@ export default function Dashboard() {
       {/* Personnel KPIs - Enhanced */}
       <div className="hyr-card-elevated">
         <PersonnelKPIs />
-      </div>
-
-      {/* Footer con información del sistema */}
-      <div className="hyr-card bg-gradient-to-r from-muted/30 to-transparent p-6 mt-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-[hsl(var(--success))]"></div>
-              <span>PostgreSQL migrado exitosamente</span>
-            </div>
-            <div className="hidden sm:block text-muted-foreground">•</div>
-            <span>{kpis.total_projects} proyectos gestionados</span>
-            <div className="hidden sm:block text-muted-foreground">•</div>
-            <span>{kpis.employees_paid} empleados activos</span>
-          </div>
-
-          <div className="text-right">
-            <p className="text-sm font-medium text-foreground">
-              Sistema HYR v2.0
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Constructora & Soldadura
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

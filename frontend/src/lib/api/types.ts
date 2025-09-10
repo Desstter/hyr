@@ -6,6 +6,7 @@
 export type Currency = "COP" | "USD" | "EUR";
 export type ProjectStatus = "planned" | "in_progress" | "on_hold" | "completed";
 export type ExpenseCategory = "materials" | "labor" | "equipment" | "overhead";
+export type PaymentMethod = "transfer" | "cash" | "check" | "card";
 export type PersonnelStatus = "active" | "inactive" | "terminated";
 export type PersonnelDepartment =
   | "construccion"
@@ -87,6 +88,10 @@ export interface Project {
   spent_overhead: number;
   spent_total: number;
 
+  // Información de ingresos
+  total_income?: number;
+  expected_income?: number;
+
   // Fechas y estado
   start_date?: string;
   end_date?: string;
@@ -109,6 +114,7 @@ export interface TimeEntry {
   hours_worked: number;
   overtime_hours: number;
   description?: string;
+  status?: "draft" | "submitted" | "approved" | "payroll_locked" | "rejected";
 
   // Costos calculados automáticamente
   hourly_rate: number;
@@ -143,6 +149,42 @@ export interface Expense {
 
   // Relaciones
   project?: Project;
+}
+
+export interface ProjectIncome {
+  id: string;
+  project_id: string;
+  amount: number;
+  date: string;
+  concept: string;
+  payment_method: PaymentMethod;
+  invoice_number?: string;
+  notes?: string;
+  
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+
+  // Relaciones
+  project?: Project;
+  project_name?: string;
+}
+
+export interface ProjectIncomesSummary {
+  total_income: number;
+  income_count: number;
+  avg_income: number;
+  first_income_date?: string;
+  last_income_date?: string;
+}
+
+export interface ProjectProfitAnalysis {
+  total_income: number;
+  total_spent: number;
+  profit_amount: number;
+  profit_percentage: number;
+  budget_total: number;
+  budget_vs_income_percentage: number;
 }
 
 export interface PayrollPeriod {
@@ -459,6 +501,7 @@ export interface CreateTimeEntryRequest {
   overtime_hours?: number;
   description?: string;
   hourly_rate: number;
+  status?: "draft" | "submitted" | "approved" | "payroll_locked" | "rejected";
 }
 
 export interface CreateExpenseRequest {
@@ -670,3 +713,43 @@ export interface CreateBudgetItemRequest {
 }
 
 export type UpdateBudgetItemRequest = Partial<CreateBudgetItemRequest>;
+
+// =====================================================
+// PROJECT INCOMES - Ingresos por proyecto
+// =====================================================
+
+export interface CreateProjectIncomeRequest {
+  amount: number;
+  date: string;
+  concept: string;
+  payment_method?: PaymentMethod;
+  invoice_number?: string;
+  notes?: string;
+}
+
+export interface IncomeListFilters {
+  project_id?: string;
+  start_date?: string;
+  end_date?: string;
+  payment_method?: PaymentMethod;
+  limit?: number;
+  offset?: number;
+}
+
+export interface IncomesSummary {
+  total_incomes: number;
+  projects_with_incomes: number;
+  total_amount: number;
+  avg_amount: number;
+  first_income_date?: string;
+  last_income_date?: string;
+}
+
+export interface IncomesByPaymentMethod {
+  payment_method: PaymentMethod;
+  count: number;
+  total_amount: number;
+  avg_amount: number;
+}
+
+export type UpdateProjectIncomeRequest = Partial<CreateProjectIncomeRequest>;
