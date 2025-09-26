@@ -78,7 +78,7 @@ class PILAService {
    */
   async generatePILA(
     period: string,
-    employees: PILAEmployee[]
+    _employees: PILAEmployee[]
   ): Promise<PILAGenerateResponse> {
     try {
       const response = await apiClient.post<PILAGenerateResponse>(

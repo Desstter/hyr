@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
+import type { VariantProps } from "class-variance-authority";
 import {
   Table,
   TableBody,
@@ -134,14 +135,14 @@ export function IncomeTable({ incomes, onRefresh }: IncomeTableProps) {
     return <Icon className="h-4 w-4" />;
   };
 
-  const getPaymentMethodVariant = (method: string) => {
-    const variants = {
+  const getPaymentMethodVariant = (method: string): VariantProps<typeof badgeVariants>["variant"] => {
+    const variants: Record<string, VariantProps<typeof badgeVariants>["variant"]> = {
       transfer: "default",
       cash: "secondary",
       check: "outline",
       card: "destructive",
     };
-    return variants[method as keyof typeof variants] || "default";
+    return variants[method] || "default";
   };
 
   if (incomes.length === 0) {
@@ -211,7 +212,7 @@ export function IncomeTable({ incomes, onRefresh }: IncomeTableProps) {
                     {/* Payment Method */}
                     <TableCell>
                       <Badge 
-                        variant={getPaymentMethodVariant(income.payment_method) as any}
+                        variant={getPaymentMethodVariant(income.payment_method)}
                         className="flex items-center gap-1 w-fit"
                       >
                         {getPaymentMethodIcon(income.payment_method)}

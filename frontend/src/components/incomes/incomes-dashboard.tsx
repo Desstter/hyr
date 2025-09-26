@@ -39,14 +39,6 @@ interface ProjectWithIncome {
   incomeCount: number;
 }
 
-interface PaymentMethodStats {
-  method: string;
-  label: string;
-  total: number;
-  count: number;
-  percentage: number;
-  icon: React.ComponentType<{ className?: string }>;
-}
 
 export function IncomesDashboard({ incomes, summary, onRefresh }: IncomesDashboardProps) {
   const t = useTranslations("es");
@@ -208,7 +200,7 @@ export function IncomesDashboard({ incomes, summary, onRefresh }: IncomesDashboa
     try {
       await onRefresh();
       toast.success("Datos actualizados");
-    } catch (err) {
+    } catch {
       toast.error("Error al actualizar datos");
     } finally {
       setLoading(false);
@@ -235,7 +227,6 @@ export function IncomesDashboard({ incomes, summary, onRefresh }: IncomesDashboa
       <IncomesSummaryCards 
         summary={summary}
         currentMonth={currentMonthData}
-        totalIncomes={incomes.length}
       />
 
       {/* Charts and Analytics */}
