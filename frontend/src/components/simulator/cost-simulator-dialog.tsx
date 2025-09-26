@@ -160,15 +160,20 @@ export function CostSimulatorDialog({
       const selectedPreset = presets[0];
       
       // Convert API preset items to component format
-      const templateItems: CostEstimateItem[] = selectedPreset.items.map((item, _index) => ({
-        id: generateId(),
-        name: item.name || item.subcategory,
-        type: item.category === 'materials' ? 'material' : 
-              item.category === 'labor' ? 'labor' : 'equipment',
-        quantity: item.quantity,
-        unitPrice: item.cost_per_unit || 0,
-        unit: item.unit || 'und'
-      }));
+      const templateItems: CostEstimateItem[] = selectedPreset.items.map((item, _index) => {
+        const unitCost = item.cost_per_unit || 0;
+        const quantity = item.quantity || 1;
+        return {
+          id: generateId(),
+          name: item.name || item.subcategory,
+          type: item.category === 'materials' ? 'material' : 
+                item.category === 'labor' ? 'labor' : 'equipment',
+          quantity: quantity,
+          unitCost: unitCost,
+          unit: item.unit || 'und',
+          total: quantity * unitCost
+        };
+      });
       
       return {
         name: `Estimación basada en ${template.name} - ${selectedPreset.name}`,
@@ -329,7 +334,7 @@ export function CostSimulatorDialog({
         subcategory: item.name.toLowerCase().replace(/\s+/g, '_'),
         quantity: item.quantity,
         name: item.name,
-        cost_per_unit: item.unitPrice,
+        cost_per_unit: item.unitCost,
       }));
 
       // Calculate estimation using the real API

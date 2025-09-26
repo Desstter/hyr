@@ -200,15 +200,6 @@ export function IncomeDialog({
     return labels[method];
   };
 
-  const getPaymentMethodIcon = (method: PaymentMethod) => {
-    const icons = {
-      transfer: CreditCard,
-      cash: Banknote,
-      check: Receipt,
-      card: CreditCard,
-    };
-    return icons[method];
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

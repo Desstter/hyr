@@ -51,11 +51,6 @@ export default function PersonnelPage() {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    totalMonthlyCost: number;
-  } | null>(null);
 
   // Cargar datos de personal
   const loadPersonnel = useCallback(async () => {
@@ -67,13 +62,8 @@ export default function PersonnelPage() {
       if (statusFilter !== "all") filters.status = statusFilter;
       if (departmentFilter !== "all") filters.department = departmentFilter;
 
-      const [personnelData, statsData] = await Promise.all([
-        personnelService.getAll(filters),
-        personnelService.getStats().catch(() => null), // Stats opcional
-      ]);
-
+      const personnelData = await personnelService.getAll(filters);
       setPersonnel(personnelData);
-      setStats(statsData);
     } catch (err: unknown) {
       console.error("Error loading personnel:", err);
       const errorMessage =

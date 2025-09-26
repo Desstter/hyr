@@ -22,13 +22,11 @@ interface IncomesSummaryCardsProps {
     growth: number;
     previousTotal: number;
   };
-  totalIncomes: number;
 }
 
 export function IncomesSummaryCards({ 
   summary, 
-  currentMonth, 
-  totalIncomes 
+  currentMonth 
 }: IncomesSummaryCardsProps) {
   const t = useTranslations("es");
 
@@ -52,10 +50,6 @@ export function IncomesSummaryCards({
     return formatCurrency(amount);
   };
 
-  // Calculate current year data
-  const currentYear = new Date().getFullYear();
-  const currentMonth12 = new Date().getMonth();
-  const yearAverage = summary ? (summary.total_amount / 12) : 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

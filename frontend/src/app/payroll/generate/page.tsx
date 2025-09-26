@@ -52,6 +52,8 @@ interface PayrollDocument {
   dian_status: string;
   xml_content: string;
   created_at: string;
+  error?: string;
+  existing_employees?: string[];
 }
 
 export default function PayrollGeneratePage() {
@@ -154,7 +156,7 @@ export default function PayrollGeneratePage() {
           period: data.data.period,
           employee_count: data.data.total_employees,
           total_salary: data.data.summary.total_payroll,
-          total_deductions: data.data.processed.reduce((sum, emp) => sum + (emp.calculations?.totalDeductions || 0), 0),
+          total_deductions: data.data.processed.reduce((sum: number, emp: { calculations?: { totalDeductions?: number } }) => sum + (emp.calculations?.totalDeductions || 0), 0),
           total_employer_cost: data.data.summary.total_employer_cost,
           dian_status: data.data.processed[0]?.dian_status || "",
           xml_content: data.data.processed[0]?.xml_content || "",

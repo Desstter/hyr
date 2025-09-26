@@ -127,6 +127,12 @@ export interface TimeEntry {
   // Relaciones
   personnel?: Personnel;
   project?: Project;
+
+  // Campos desnormalizados para JOIN queries
+  personnel_name?: string;
+  position?: string;
+  department?: string;
+  is_officially_assigned?: boolean;
 }
 
 export interface Expense {

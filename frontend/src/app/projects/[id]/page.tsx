@@ -153,7 +153,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     0
   );
   // Helper function to calculate person's total pay from time entries
-  const getPersonTotalPay = (person: any) => {
+  const getPersonTotalPay = (person: Personnel) => {
     if (!projectTimeEntries || projectTimeEntries.length === 0) {
       return 0;
     }

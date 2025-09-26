@@ -83,8 +83,8 @@ export function IncomesList({ incomes, onRefresh, onCreateIncome }: IncomesListP
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+      let aValue: string | number = a[sortField];
+      let bValue: string | number = b[sortField];
 
       if (sortField === "date") {
         aValue = new Date(aValue || 0).getTime();
@@ -93,8 +93,8 @@ export function IncomesList({ incomes, onRefresh, onCreateIncome }: IncomesListP
         aValue = aValue || 0;
         bValue = bValue || 0;
       } else if (sortField === "concept") {
-        aValue = (aValue || "").toLowerCase();
-        bValue = (bValue || "").toLowerCase();
+        aValue = ((aValue as string) || "").toLowerCase();
+        bValue = ((bValue as string) || "").toLowerCase();
       }
 
       if (sortDirection === "asc") {

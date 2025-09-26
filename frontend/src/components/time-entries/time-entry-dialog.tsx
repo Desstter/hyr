@@ -228,7 +228,7 @@ export function TimeEntryDialog({
           description: "Las horas trabajadas han sido actualizadas",
         });
       } else {
-        const result = await timeEntriesService.create(payload);
+        const result = await timeEntriesService.create(payload) as TimeEntry & { warnings?: string[] };
         if (result.warnings && result.warnings.length > 0) {
           toast({
             title: "⚠️ Registro creado con advertencias",
