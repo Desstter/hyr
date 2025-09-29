@@ -141,9 +141,13 @@ export function EnhancedProjectsTable({
     .sort((a, b) => {
       switch (sortBy) {
         case "budget":
-          const budgetA = typeof a.budget_total === 'string' ? parseFloat(a.budget_total) : (a.budget_total || 0);
-          const budgetB = typeof b.budget_total === 'string' ? parseFloat(b.budget_total) : (b.budget_total || 0);
-          return budgetB - budgetA;
+          const budgetA = typeof a.budget_total === 'string' ? parseFloat(a.budget_total) || 0 : (a.budget_total || 0);
+          const budgetB = typeof b.budget_total === 'string' ? parseFloat(b.budget_total) || 0 : (b.budget_total || 0);
+
+          // Ensure we're working with valid numbers
+          const safeA = isNaN(budgetA) ? 0 : budgetA;
+          const safeB = isNaN(budgetB) ? 0 : budgetB;
+          return safeB - safeA;
         case "progress":
           return (b.progress || 0) - (a.progress || 0);
         case "status":
@@ -181,16 +185,20 @@ export function EnhancedProjectsTable({
       ? clientMap.get(project.client_id)
       : "Sin cliente";
     
-    // Calculate real total cost including time tracking
+    // Calculate real total cost including time tracking with safety checks
     const timeCost = timeTrackingSummary?.totalCost || 0;
-    const spentTotal = typeof project.spent_total === 'string' ? parseFloat(project.spent_total) : (project.spent_total || 0);
+    const spentTotal = typeof project.spent_total === 'string' ? parseFloat(project.spent_total) || 0 : (project.spent_total || 0);
     const realSpentTotal = spentTotal + timeCost;
-    
-    const budgetTotal = typeof project.budget_total === 'string' ? parseFloat(project.budget_total) : (project.budget_total || 0);
-    const budgetUtilization =
-      budgetTotal > 0
-        ? (realSpentTotal / budgetTotal) * 100
-        : 0;
+
+    const budgetTotal = typeof project.budget_total === 'string' ? parseFloat(project.budget_total) || 0 : (project.budget_total || 0);
+
+    // Safe division with proper fallbacks
+    const budgetUtilization = (() => {
+      if (!budgetTotal || budgetTotal <= 0 || isNaN(budgetTotal)) return 0;
+      if (isNaN(realSpentTotal)) return 0;
+      const utilization = (realSpentTotal / budgetTotal) * 100;
+      return isFinite(utilization) ? utilization : 0;
+    })();
     const isOverBudget = budgetUtilization > 100;
     const isAtRisk = budgetUtilization > 90 && project.progress < 90;
 
@@ -552,8 +560,9 @@ export function EnhancedProjectsTable({
                 <p className="text-xl font-bold text-foreground">
                   {formatCurrency(
                     projects.reduce((sum, p) => {
-                      const budget = typeof p.budget_total === 'string' ? parseFloat(p.budget_total) : (p.budget_total || 0);
-                      return sum + budget;
+                      const budget = typeof p.budget_total === 'string' ? parseFloat(p.budget_total) || 0 : (p.budget_total || 0);
+                      const safeBudget = isNaN(budget) ? 0 : budget;
+                      return sum + safeBudget;
                     }, 0)
                   )}
                 </p>

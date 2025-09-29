@@ -56,7 +56,7 @@ export class ApiClient {
     }
 
     return process.env.NODE_ENV === "development"
-      ? "http://localhost:3001/api"
+      ? `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001/api`
       : this.config.api.baseUrl;
   }
 

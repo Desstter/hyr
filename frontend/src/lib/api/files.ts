@@ -81,7 +81,7 @@ class FilesService {
       // Obtener la URL base dinámicamente
       const baseUrl =
         process.env.NODE_ENV === "development"
-          ? "http://localhost:3001/api"
+          ? "http://192.168.50.120:3001/api"
           : await (await import("../appConfig")).apiUrl("");
 
       const response = await fetch(

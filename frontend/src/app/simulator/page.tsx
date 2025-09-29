@@ -141,18 +141,24 @@ export default function CostSimulatorPage() {
     setItems(preset.items);
   };
 
-  // Helpers de simulación de nómina
+  // Helpers de simulación de nómina - NUEVA LÓGICA
   const getHourlyRate = (p?: Personnel): number => {
     if (!p) return 0;
-    if (p.salary_type === "hourly" && Number(p.hourly_rate) > 0) return Number(p.hourly_rate);
-    if (Number(p.monthly_salary) > 0) return Number(p.monthly_salary) / 192; // 192h/mes
+    if (Number(p.daily_rate) > 0) return Number(p.daily_rate) / 7.3; // 7.3 horas legales por día
+    if (Number(p.salary_base) > 0) return Number(p.salary_base) / 192; // 192h/mes
+    // Fallback para empleados no migrados
+    if (Number(p.hourly_rate) > 0) return Number(p.hourly_rate);
+    if (Number(p.monthly_salary) > 0) return Number(p.monthly_salary) / 192;
     return 0;
   };
 
   const getDailyRate = (p?: Personnel): number => {
     if (!p) return 0;
-    if (p.salary_type === "monthly" && Number(p.monthly_salary) > 0) return Number(p.monthly_salary) / 30; // 30 días
-    return getHourlyRate(p) * 8; // 8h/día
+    if (Number(p.daily_rate) > 0) return Number(p.daily_rate); // Usar directamente daily_rate
+    if (Number(p.salary_base) > 0) return Number(p.salary_base) / 24; // 24 días laborales
+    // Fallback para empleados no migrados
+    if (Number(p.monthly_salary) > 0) return Number(p.monthly_salary) / 24;
+    return getHourlyRate(p) * 7.3; // 7.3h/día legal
   };
 
   const computeLaborEntryCost = (entry: { personnelId: string; hours: number; days: number }): number => {

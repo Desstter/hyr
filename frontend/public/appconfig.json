@@ -3,13 +3,13 @@
     "baseUrl": "/api",
     "timeout": 30000
   },
-  "environment": "production",
+  "environment": "development",
   "app": {
     "name": "HYR Constructora & Soldadura",
     "version": "1.0.0"
   },
   "features": {
-    "debugLogs": false,
+    "debugLogs": true,
     "mockData": false
   }
 }

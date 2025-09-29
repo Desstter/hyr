@@ -64,7 +64,7 @@ export default function ContractorDetailPage() {
   const loadContractorDetail = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/contractors/${contractorId}`
+        `http://192.168.50.120:3001/api/contractors/${contractorId}`
       );
 
       if (!response.ok) {

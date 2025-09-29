@@ -169,7 +169,7 @@ export class ExpensesService {
       : `${this.basePath}/export/excel`;
 
     // Usar fetch directamente para descargar archivos
-    const response = await fetch(`http://localhost:3001/api${url}`);
+    const response = await fetch(`http://192.168.50.120:3001/api${url}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

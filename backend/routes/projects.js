@@ -14,12 +14,15 @@ router.get('/', async (req, res) => {
                 COUNT(DISTINCT pa.personnel_id) as employees_assigned,
                 COALESCE(SUM(te.hours_worked), 0) as total_hours,
                 COALESCE(SUM(te.total_pay), 0) as total_labor_direct,
-                CASE 
+                CASE
                     WHEN p.spent_total > p.budget_total THEN 'SOBREPRESUPUESTO'
                     WHEN p.spent_total > (p.budget_total * 0.9) THEN 'ALERTA'
                     ELSE 'NORMAL'
                 END as budget_status,
-                ROUND(((p.budget_total - p.spent_total) / p.budget_total * 100), 2) as profit_margin_percent
+                CASE
+                    WHEN p.budget_total IS NULL OR p.budget_total = 0 THEN 0
+                    ELSE ROUND(((p.budget_total - p.spent_total) / NULLIF(p.budget_total, 0) * 100), 2)
+                END as profit_margin_percent
             FROM projects p
             LEFT JOIN clients c ON p.client_id = c.id
             LEFT JOIN project_assignments pa ON p.id = pa.project_id AND pa.status = 'active'
@@ -119,6 +122,12 @@ router.post('/', async (req, res) => {
         if (!name) {
             return res.status(400).json({ error: 'El nombre del proyecto es requerido' });
         }
+
+        // Validate budget values
+        const totalBudget = Number(budget_materials) + Number(budget_labor) + Number(budget_equipment) + Number(budget_overhead);
+        if (totalBudget < 0) {
+            return res.status(400).json({ error: 'El presupuesto total no puede ser negativo' });
+        }
         
         const result = await db.query(`
             INSERT INTO projects (
@@ -157,6 +166,19 @@ router.put('/:id', async (req, res) => {
             status,
             progress
         } = req.body;
+
+        // Validate budget values if provided
+        if (budget_materials !== undefined || budget_labor !== undefined ||
+            budget_equipment !== undefined || budget_overhead !== undefined) {
+            const materials = Number(budget_materials) || 0;
+            const labor = Number(budget_labor) || 0;
+            const equipment = Number(budget_equipment) || 0;
+            const overhead = Number(budget_overhead) || 0;
+
+            if (materials < 0 || labor < 0 || equipment < 0 || overhead < 0) {
+                return res.status(400).json({ error: 'Los valores de presupuesto no pueden ser negativos' });
+            }
+        }
         
         const result = await db.query(`
             UPDATE projects SET
@@ -304,7 +326,10 @@ router.get('/:id/financial-summary', async (req, res) => {
                 p.budget_total,
                 p.spent_total,
                 p.budget_total - p.spent_total as remaining_budget,
-                ROUND(((p.budget_total - p.spent_total) / p.budget_total * 100), 2) as profit_margin_percent,
+                CASE
+                    WHEN p.budget_total IS NULL OR p.budget_total = 0 THEN 0
+                    ELSE ROUND(((p.budget_total - p.spent_total) / NULLIF(p.budget_total, 0) * 100), 2)
+                END as profit_margin_percent,
                 
                 -- Desglose por categoría
                 p.budget_materials, p.spent_materials,

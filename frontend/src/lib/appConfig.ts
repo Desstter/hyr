@@ -67,11 +67,11 @@ export async function getAppConfig(): Promise<AppConfig> {
 export async function apiUrl(endpoint: string): Promise<string> {
   const appConfig = await getAppConfig();
 
-  // En desarrollo, usar localhost directo
+  // En desarrollo, detectar IP automáticamente basado en el host actual
   // En producción, usar proxy inverso configurado en next.config.ts
   const baseUrl =
     process.env.NODE_ENV === "development"
-      ? "http://localhost:3001/api"
+      ? `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001/api`
       : appConfig.api.baseUrl;
 
   // Asegurar que endpoint empiece con /
@@ -88,7 +88,7 @@ export async function apiUrl(endpoint: string): Promise<string> {
 export function apiUrlSync(endpoint: string, config: AppConfig): string {
   const baseUrl =
     process.env.NODE_ENV === "development"
-      ? "http://localhost:3001/api"
+      ? `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3001/api`
       : config.api.baseUrl;
 
   const normalizedEndpoint = endpoint.startsWith("/")

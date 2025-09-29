@@ -32,9 +32,12 @@ interface Employee {
   document_number: string;
   position: string;
   department: string;
+  salary_base: number | null;
+  daily_rate: number | null;
+  status: string;
+  // Campos de compatibilidad (deprecated)
   monthly_salary: number | null;
   hourly_rate: number | null;
-  status: string;
 }
 
 export default function PILAPage() {
@@ -44,11 +47,12 @@ export default function PILAPage() {
     return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
   });
 
-  // Helper function to calculate employee salary
+  // Helper function to calculate employee salary - NUEVA LÓGICA
   const getEmployeeSalary = (employee: Employee): number => {
     return (
-      Number(employee.monthly_salary) ||
-      (Number(employee.hourly_rate) || 0) * 192
+      Number(employee.salary_base) ||
+      (Number(employee.monthly_salary) ||
+       (Number(employee.hourly_rate) || 0) * 192)
     );
   };
 
@@ -73,16 +77,19 @@ export default function PILAPage() {
     try {
       const personnel = await personnelService.getAll({ status: "active" });
 
-      // Map Personnel to Employee interface
+      // Map Personnel to Employee interface using new salary structure
       const mappedEmployees: Employee[] = personnel.map(person => ({
         id: person.id,
         name: person.name,
         document_number: person.document_number,
         position: person.position,
         department: person.department,
+        salary_base: person.salary_base ?? person.monthly_salary ?? (person.hourly_rate ? person.hourly_rate * 192 : null),
+        daily_rate: person.daily_rate ?? (person.salary_base ? person.salary_base / 24 : (person.monthly_salary ? person.monthly_salary / 24 : null)),
+        status: person.status,
+        // Keep old fields for compatibility
         monthly_salary: person.monthly_salary ?? null,
         hourly_rate: person.hourly_rate ?? null,
-        status: person.status,
       }));
 
       setEmployees(mappedEmployees);

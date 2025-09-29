@@ -6,7 +6,17 @@ const cors = require('cors');
 const { db } = require('./database/connection');
 
 const app = express();
-app.use(cors());
+// Configuración CORS para permitir acceso desde red local
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://192.168.50.120:3000',
+    'http://192.168.1.103:3000',
+    /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:3000$/
+  ],
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rutas existentes
@@ -38,7 +48,8 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`🚀 API HYR corriendo en puerto ${PORT}`);
+const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 API HYR corriendo en ${HOST}:${PORT}`);
 });

@@ -54,10 +54,17 @@ export interface Personnel {
   hire_date: string;
   status: PersonnelStatus;
 
-  // Información financiera
+  // NUEVA LÓGICA: Información financiera separada
   salary_type: SalaryType;
-  hourly_rate?: number;
-  monthly_salary?: number;
+  hourly_rate?: number;        // DEPRECATED: Mantener para compatibilidad
+  monthly_salary?: number;     // DEPRECATED: Mantener para compatibilidad
+  salary_base?: number;        // NUEVO: Salario base para prestaciones
+  daily_rate?: number;         // NUEVO: Precio por día real
+
+  // NUEVO: Horarios esperados
+  expected_arrival_time?: string;   // Formato "HH:MM"
+  expected_departure_time?: string; // Formato "HH:MM"
+
   arl_risk_class: ARLRiskClass;
 
   // Información adicional
@@ -115,6 +122,15 @@ export interface TimeEntry {
   overtime_hours: number;
   description?: string;
   status?: "draft" | "submitted" | "approved" | "payroll_locked" | "rejected";
+
+  // NUEVA LÓGICA: Campos de control de tiempo
+  arrival_time?: string;           // Formato "HH:MM"
+  departure_time?: string;         // Formato "HH:MM"
+  expected_arrival_time?: string;  // Formato "HH:MM"
+  late_minutes?: number;           // Minutos de tardanza
+  early_departure_minutes?: number; // Minutos de salida temprana
+  effective_hours_worked?: number; // Horas efectivas después de descuentos
+  lunch_deducted?: boolean;        // Control de deducción de almuerzo
 
   // Costos calculados automáticamente
   hourly_rate: number;
@@ -255,6 +271,10 @@ export interface PayrollDetail {
   total_employer_cost: number;
 
   created_at: string;
+
+  // Campos desnormalizados para JOIN queries
+  employee_name?: string;
+  document_number?: string;
 
   // Relaciones
   personnel?: Personnel;
@@ -478,8 +498,15 @@ export interface CreatePersonnelRequest {
   department: PersonnelDepartment;
   hire_date: string;
   salary_type: SalaryType;
-  hourly_rate?: number;
-  monthly_salary?: number;
+  hourly_rate?: number;        // DEPRECATED: Mantener para compatibilidad
+  monthly_salary?: number;     // DEPRECATED: Mantener para compatibilidad
+
+  // NUEVA LÓGICA: Nuevos campos obligatorios
+  salary_base?: number;        // Salario base para prestaciones
+  daily_rate?: number;         // Precio por día real
+  expected_arrival_time?: string;   // Hora esperada de llegada
+  expected_departure_time?: string; // Hora esperada de salida
+
   arl_risk_class?: ARLRiskClass;
   emergency_contact?: string;
   emergency_phone?: string;
@@ -501,12 +528,17 @@ export interface CreateProjectRequest {
 
 export interface CreateTimeEntryRequest {
   personnel_id: string;
-  project_id: string;
+  project_id?: string;          // OPCIONAL: Permite time entries sin proyecto específico
   work_date: string;
-  hours_worked: number;
-  overtime_hours?: number;
+  hours_worked?: number;        // OPCIONAL: Se calcula automáticamente
+  overtime_hours?: number;      // OPCIONAL: Se calcula automáticamente
   description?: string;
-  hourly_rate: number;
+  hourly_rate?: number;         // OPCIONAL: Se calcula automáticamente
+
+  // NUEVA LÓGICA: Campos requeridos para control de tiempo
+  arrival_time: string;         // REQUERIDO: Hora de llegada "HH:MM"
+  departure_time: string;       // REQUERIDO: Hora de salida "HH:MM"
+
   status?: "draft" | "submitted" | "approved" | "payroll_locked" | "rejected";
 }
 
@@ -533,6 +565,28 @@ export type UpdatePersonnelRequest = Partial<CreatePersonnelRequest>;
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
 export type UpdateTimeEntryRequest = Partial<CreateTimeEntryRequest>;
 export type UpdateExpenseRequest = Partial<CreateExpenseRequest>;
+
+// Form data types for frontend components
+export interface PersonnelFormData {
+  name: string;
+  document_type: string;
+  document_number: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  position: PersonnelPosition;
+  department: PersonnelDepartment;
+  hire_date: string;
+  status: PersonnelStatus;
+  salary_base: number;
+  daily_rate: number;
+  expected_arrival_time: string;
+  expected_departure_time: string;
+  arl_risk_class: ARLRiskClass;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  bank_account?: string;
+}
 
 // List responses
 export interface ApiListResponse<T> {
