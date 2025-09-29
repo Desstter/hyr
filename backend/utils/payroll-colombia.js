@@ -47,56 +47,61 @@ const COLOMBIA_PAYROLL_2024 = {
 
 /**
  * Calcula la nómina completa de un empleado según legislación colombiana 2024
- * @param {Object} empleado - Datos del empleado
+ * NUEVA LÓGICA: Prestaciones sobre salary_base, pago real sobre daily_rate
+ * @param {Object} empleado - Datos del empleado (con salary_base y daily_rate)
  * @param {Object} horasTrabajadas - Horas trabajadas en el período
  * @returns {Object} Cálculos completos de nómina
  */
 function calcularNominaCompleta(empleado, horasTrabajadas = {}) {
-    const salarioBase = empleado.monthly_salary || (empleado.hourly_rate * 192);
+    // NUEVA LÓGICA: Separar salary_base (prestaciones) vs daily_rate (pago real)
+    const salarioBasePrestaciones = empleado.salary_base || empleado.monthly_salary || (empleado.hourly_rate * 192);
+    const precioDeposito = empleado.daily_rate || (salarioBasePrestaciones / 24);
+
     const horasRegulares = Math.min(horasTrabajadas.regular_hours || 0, 192);
     const horasExtra = horasTrabajadas.overtime_hours || 0;
+    const horasNocturnas = horasTrabajadas.night_hours || 0; // NUEVO: Horas nocturnas
+    const horasLegalesDiarias = 7.3; // Configuración desde settings
+
+    // PAGO REAL: Basado en daily_rate y horas trabajadas
+    const pagoPorHora = precioDeposito / horasLegalesDiarias;
+    const salarioRegular = pagoPorHora * horasRegulares;
+    const salarioExtra = pagoPorHora * horasExtra * 1.25; // 25% recargo horas extra
+    const salarioNocturno = pagoPorHora * horasNocturnas * 0.35; // 35% recargo nocturno
+    const salarioTotal = salarioRegular + salarioExtra + salarioNocturno;
     
-    // Cálculo salarios
-    const salarioRegular = empleado.salary_type === 'monthly' 
-        ? salarioBase 
-        : (salarioBase / 192) * horasRegulares;
-    
-    const salarioExtra = (salarioBase / 192) * horasExtra * 1.25; // 25% recargo nocturno/festivo
-    const salarioTotal = salarioRegular + salarioExtra;
-    
-    // Auxilio de transporte (obligatorio para salarios <= 2 SMMLV)
-    const auxilioTransporte = salarioBase <= (2 * COLOMBIA_PAYROLL_2024.salarioMinimo) 
+    // Auxilio de transporte basado en salary_base (no en pago real)
+    const auxilioTransporte = salarioBasePrestaciones <= (2 * COLOMBIA_PAYROLL_2024.salarioMinimo)
         ? COLOMBIA_PAYROLL_2024.auxilioTransporte : 0;
-    
-    // Deducciones empleado
+
+    // DEDUCCIONES EMPLEADO: Sobre salario REAL pagado (salarioTotal)
     const deducciones = {
         salud: salarioTotal * COLOMBIA_PAYROLL_2024.deducciones.salud,
         pension: salarioTotal * COLOMBIA_PAYROLL_2024.deducciones.pension,
-        solidaridad: salarioBase > (4 * COLOMBIA_PAYROLL_2024.salarioMinimo) 
+        solidaridad: salarioBasePrestaciones > (4 * COLOMBIA_PAYROLL_2024.salarioMinimo)
             ? salarioTotal * COLOMBIA_PAYROLL_2024.deducciones.solidaridad : 0,
         retencionFuente: calcularRetencionFuente(salarioTotal)
     };
-    
+
     // Obtener riesgo ARL del empleado (default V para construcción/soldadura)
     const riesgoARL = empleado.arl_risk_class || 'V';
     const tarifaARL = COLOMBIA_PAYROLL_2024.riesgosARL[riesgoARL] || COLOMBIA_PAYROLL_2024.riesgosARL.V;
-    
-    // Aportes patronales
+
+    // APORTES PATRONALES: Sobre salary_base para cumplir obligaciones legales
     const aportes = {
-        salud: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.salud,
-        pension: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.pension,
-        arl: salarioTotal * tarifaARL,
-        cesantias: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.cesantias,
-        interesesCesantias: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.interesesCesantias,
-        prima: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.prima,
-        vacaciones: salarioTotal * COLOMBIA_PAYROLL_2024.aportes.vacaciones
+        salud: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.salud,
+        pension: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.pension,
+        arl: salarioBasePrestaciones * tarifaARL,
+        cesantias: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.cesantias,
+        interesesCesantias: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.interesesCesantias,
+        prima: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.prima,
+        vacaciones: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.aportes.vacaciones
     };
-    
-    // Parafiscales (solo si nómina > 10 SMMLV total empresa)
+
+    // PARAFISCALES: Sobre salary_base (solo si nómina > 10 SMMLV total empresa)
     const parafiscales = {
-        sena: salarioTotal * COLOMBIA_PAYROLL_2024.parafiscales.sena,
-        icbf: salarioTotal * COLOMBIA_PAYROLL_2024.parafiscales.icbf,
-        cajas: salarioTotal * COLOMBIA_PAYROLL_2024.parafiscales.cajas
+        sena: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.parafiscales.sena,
+        icbf: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.parafiscales.icbf,
+        cajas: salarioBasePrestaciones * COLOMBIA_PAYROLL_2024.parafiscales.cajas
     };
     
     // Totales
@@ -105,42 +110,56 @@ function calcularNominaCompleta(empleado, horasTrabajadas = {}) {
     const totalParafiscales = Object.values(parafiscales).reduce((a, b) => a + b, 0);
     
     return {
-        // Datos base
-        salarioBase,
+        // NUEVA LÓGICA: Datos separados
+        salarioBasePrestaciones,  // Para prestaciones y PILA
+        precioDeposito,           // Para pago real
+        pagoPorHora,              // Precio real por hora
+
+        // Datos de pago
         salarioRegular,
         salarioExtra,
-        salarioTotal,
+        salarioNocturno,          // NUEVO: Pago adicional nocturno
+        salarioTotal,             // Pago REAL al empleado (incluye nocturno)
         auxilioTransporte,
         horasRegulares,
         horasExtra,
-        
-        // Deducciones
+        horasNocturnas,           // NUEVO: Horas nocturnas trabajadas
+
+        // Deducciones (sobre pago real)
         deducciones,
         totalDeducciones,
-        
-        // Aportes patronales
+
+        // Aportes patronales (sobre salary_base)
         aportes,
         totalAportes,
-        
-        // Parafiscales
+
+        // Parafiscales (sobre salary_base)
         parafiscales,
         totalParafiscales,
-        
-        // Neto a pagar empleado
+
+        // Neto a pagar empleado (pago real menos deducciones)
         netoAPagar: salarioTotal + auxilioTransporte - totalDeducciones,
-        
-        // Costo total para el empleador
+
+        // Costo total para el empleador (pago real + prestaciones sobre salary_base)
         costoTotalEmpleador: salarioTotal + auxilioTransporte + totalAportes + totalParafiscales,
-        
-        // Indicadores útiles
-        factorPrestacional: (totalAportes + totalParafiscales) / salarioTotal,
-        costoHoraReal: (salarioTotal + auxilioTransporte + totalAportes + totalParafiscales) / (horasRegulares + horasExtra || 1),
-        
+
+        // Indicadores actualizados
+        factorPrestacional: (totalAportes + totalParafiscales) / salarioBasePrestaciones,
+        costoHoraReal: (salarioTotal + auxilioTransporte + totalAportes + totalParafiscales) / (horasRegulares + horasExtra + horasNocturnas || 1),
+
         // Información legal
         riesgoARL,
         tarifaARL,
-        cumpleAuxilioTransporte: salarioBase <= (2 * COLOMBIA_PAYROLL_2024.salarioMinimo),
-        aplicaSolidaridad: salarioBase > (4 * COLOMBIA_PAYROLL_2024.salarioMinimo)
+        cumpleAuxilioTransporte: salarioBasePrestaciones <= (2 * COLOMBIA_PAYROLL_2024.salarioMinimo),
+        aplicaSolidaridad: salarioBasePrestaciones > (4 * COLOMBIA_PAYROLL_2024.salarioMinimo),
+
+        // NUEVA INFO: Comparación salary_base vs pago real
+        diferenciaBaseVsReal: salarioBasePrestaciones - salarioTotal,
+        porcentajePagoVsBase: (salarioTotal / salarioBasePrestaciones) * 100,
+
+        // NUEVA INFO: Información turno nocturno
+        porcentajeNocturno: horasNocturnas > 0 ? (horasNocturnas / (horasRegulares + horasExtra + horasNocturnas)) * 100 : 0,
+        recargoNocturnoPorcentaje: 35 // Configurable desde settings
     };
 }
 

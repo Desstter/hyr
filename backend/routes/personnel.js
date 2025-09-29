@@ -8,13 +8,17 @@ router.get('/', async (req, res) => {
         const { status, department } = req.query;
         
         let query = `
-            SELECT 
-                p.*,
+            SELECT
+                p.id, p.name, p.document_type, p.document_number, p.phone, p.email, p.address,
+                p.position, p.department, p.hire_date, p.status,
+                p.salary_base, p.daily_rate, p.expected_arrival_time, p.expected_departure_time,
+                p.arl_risk_class, p.emergency_contact, p.emergency_phone, p.bank_account,
+                p.created_at, p.updated_at,
                 COUNT(te.id) as total_time_entries,
                 COALESCE(SUM(te.hours_worked), 0) as total_hours_worked,
                 COALESCE(SUM(te.total_pay), 0) as total_earnings
             FROM personnel p
-            LEFT JOIN time_entries te ON p.id = te.personnel_id 
+            LEFT JOIN time_entries te ON p.id = te.personnel_id
                 AND te.work_date >= DATE_TRUNC('month', CURRENT_DATE)
             WHERE 1=1
         `;
@@ -82,26 +86,16 @@ router.get('/stats', async (req, res) => {
             ORDER BY count DESC
         `;
         
-        // Cálculo de costos salariales
+        // Cálculo de costos salariales con nueva lógica
         const salaryStatsQuery = `
-            SELECT 
-                AVG(CASE 
-                    WHEN salary_type = 'hourly' THEN hourly_rate 
-                    ELSE monthly_salary / 192 
-                END) as avg_hourly_rate,
-                SUM(CASE 
-                    WHEN salary_type = 'monthly' THEN monthly_salary
-                    ELSE (hourly_rate * 192)
-                END) as total_monthly_base,
-                COUNT(CASE WHEN salary_type = 'hourly' THEN 1 END) as hourly_employees,
-                COUNT(CASE WHEN salary_type = 'monthly' THEN 1 END) as monthly_employees
+            SELECT
+                AVG(daily_rate / 7.3) as avg_hourly_rate,
+                SUM(salary_base) as total_monthly_base,
+                COUNT(*) as total_employees
             FROM personnel
             WHERE status = 'active'
-            AND (
-                (salary_type = 'hourly' AND hourly_rate IS NOT NULL AND hourly_rate > 0)
-                OR 
-                (salary_type = 'monthly' AND monthly_salary IS NOT NULL AND monthly_salary > 0)
-            )
+            AND salary_base IS NOT NULL AND salary_base > 0
+            AND daily_rate IS NOT NULL AND daily_rate > 0
         `;
         
         // Ejecutar todas las consultas en paralelo
@@ -131,7 +125,7 @@ router.get('/stats', async (req, res) => {
         const totalMonthlyBase = parseFloat(salary.total_monthly_base) || 0;
         const totalMonthlyCost = Math.round(totalMonthlyBase * 1.58); // Factor prestacional
         const avgHourlyRate = Math.round(parseFloat(salary.avg_hourly_rate) || 0);
-        
+
         const stats = {
             total: parseInt(basic.total),
             active: parseInt(basic.active),
@@ -143,8 +137,7 @@ router.get('/stats', async (req, res) => {
             totalMonthlyCost,
             salaryDetails: {
                 totalMonthlyBase: Math.round(totalMonthlyBase),
-                hourlyEmployees: parseInt(salary.hourly_employees),
-                monthlyEmployees: parseInt(salary.monthly_employees),
+                totalEmployees: parseInt(salary.total_employees),
                 prestationsFactor: 1.58
             }
         };
@@ -166,8 +159,12 @@ router.get('/:id', async (req, res) => {
         const { id } = req.params;
         
         const result = await db.query(`
-            SELECT 
-                p.*,
+            SELECT
+                p.id, p.name, p.document_type, p.document_number, p.phone, p.email, p.address,
+                p.position, p.department, p.hire_date, p.status,
+                p.salary_base, p.daily_rate, p.expected_arrival_time, p.expected_departure_time,
+                p.arl_risk_class, p.emergency_contact, p.emergency_phone, p.bank_account,
+                p.created_at, p.updated_at,
                 COUNT(te.id) as total_time_entries,
                 COALESCE(SUM(te.hours_worked), 0) as total_hours_worked,
                 COALESCE(SUM(te.overtime_hours), 0) as total_overtime_hours,
@@ -203,9 +200,10 @@ router.post('/', async (req, res) => {
             department,
             hire_date,
             status = 'active',
-            salary_type = 'hourly',
-            hourly_rate,
-            monthly_salary,
+            salary_base,
+            daily_rate,
+            expected_arrival_time = '07:00',
+            expected_departure_time = '15:30',
             arl_risk_class = 'V',
             emergency_contact,
             emergency_phone,
@@ -215,37 +213,37 @@ router.post('/', async (req, res) => {
         
         // Validaciones básicas
         if (!name || !document_number || !position || !department || !hire_date) {
-            return res.status(400).json({ 
-                error: 'Campos requeridos: name, document_number, position, department, hire_date' 
+            return res.status(400).json({
+                error: 'Campos requeridos: name, document_number, position, department, hire_date'
             });
         }
-        
-        if (salary_type === 'hourly' && !hourly_rate) {
-            return res.status(400).json({ 
-                error: 'hourly_rate es requerido para salary_type = hourly' 
+
+        if (!salary_base || salary_base < 1300000) {
+            return res.status(400).json({
+                error: 'salary_base es requerido y debe ser al menos el salario mínimo (1,300,000)'
             });
         }
-        
-        if (salary_type === 'monthly' && !monthly_salary) {
-            return res.status(400).json({ 
-                error: 'monthly_salary es requerido para salary_type = monthly' 
+
+        if (!daily_rate || daily_rate <= 0) {
+            return res.status(400).json({
+                error: 'daily_rate es requerido y debe ser mayor a 0'
             });
         }
         
         const result = await db.query(`
             INSERT INTO personnel (
                 name, document_type, document_number, phone, email, address,
-                position, department, hire_date, status, salary_type,
-                hourly_rate, monthly_salary, arl_risk_class,
+                position, department, hire_date, status, salary_base, daily_rate,
+                expected_arrival_time, expected_departure_time, arl_risk_class,
                 emergency_contact, emergency_phone, bank_account
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
             )
             RETURNING *
         `, [
             name, document_type, document_number, phone, email, address,
-            position, department, hire_date, status, salary_type,
-            hourly_rate, monthly_salary, arl_risk_class,
+            position, department, hire_date, status, salary_base, daily_rate,
+            expected_arrival_time, expected_departure_time, arl_risk_class,
             emergency_contact, emergency_phone, bank_account
         ]);
         
@@ -273,9 +271,10 @@ router.put('/:id', async (req, res) => {
             department,
             hire_date,
             status,
-            salary_type,
-            hourly_rate,
-            monthly_salary,
+            salary_base,
+            daily_rate,
+            expected_arrival_time,
+            expected_departure_time,
             arl_risk_class,
             emergency_contact,
             emergency_phone,
@@ -283,27 +282,17 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         
         
-        // Validaciones condicionales (igual que en POST)
-        if (salary_type === 'hourly' && !hourly_rate) {
-            return res.status(400).json({ 
-                error: 'hourly_rate es requerido para salary_type = hourly' 
+        // Validaciones condicionales para nuevos campos
+        if (salary_base !== undefined && salary_base < 1300000) {
+            return res.status(400).json({
+                error: 'salary_base debe ser al menos el salario mínimo (1,300,000)'
             });
         }
-        
-        if (salary_type === 'monthly' && !monthly_salary) {
-            return res.status(400).json({ 
-                error: 'monthly_salary es requerido para salary_type = monthly' 
+
+        if (daily_rate !== undefined && daily_rate <= 0) {
+            return res.status(400).json({
+                error: 'daily_rate debe ser mayor a 0'
             });
-        }
-        
-        // Limpiar campo opuesto según el tipo de salario si se especifica salary_type
-        let finalHourlyRate = hourly_rate;
-        let finalMonthlySalary = monthly_salary;
-        
-        if (salary_type && salary_type === 'hourly') {
-            finalMonthlySalary = null; // Limpiar salario mensual cuando se cambia a hourly
-        } else if (salary_type && salary_type === 'monthly') {
-            finalHourlyRate = null; // Limpiar tarifa por hora cuando se cambia a monthly
         }
         
         
@@ -319,20 +308,21 @@ router.put('/:id', async (req, res) => {
                 department = COALESCE($8, department),
                 hire_date = COALESCE($9, hire_date),
                 status = COALESCE($10, status),
-                salary_type = COALESCE($11, salary_type),
-                hourly_rate = $12,
-                monthly_salary = $13,
-                arl_risk_class = COALESCE($14, arl_risk_class),
-                emergency_contact = COALESCE($15, emergency_contact),
-                emergency_phone = COALESCE($16, emergency_phone),
-                bank_account = COALESCE($17, bank_account),
+                salary_base = COALESCE($11, salary_base),
+                daily_rate = COALESCE($12, daily_rate),
+                expected_arrival_time = COALESCE($13, expected_arrival_time),
+                expected_departure_time = COALESCE($14, expected_departure_time),
+                arl_risk_class = COALESCE($15, arl_risk_class),
+                emergency_contact = COALESCE($16, emergency_contact),
+                emergency_phone = COALESCE($17, emergency_phone),
+                bank_account = COALESCE($18, bank_account),
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $18
+            WHERE id = $19
             RETURNING *
         `, [
             name, document_type, document_number, phone, email, address,
-            position, department, hire_date, status, salary_type,
-            finalHourlyRate, finalMonthlySalary, arl_risk_class,
+            position, department, hire_date, status, salary_base, daily_rate,
+            expected_arrival_time, expected_departure_time, arl_risk_class,
             emergency_contact, emergency_phone, bank_account, id
         ]);
         
@@ -439,18 +429,18 @@ router.post('/:id/time-entries', async (req, res) => {
             });
         }
         
-        // Obtener tarifa del empleado
+        // Obtener tarifa del empleado con nueva lógica
         const personnelResult = await db.query(
-            'SELECT hourly_rate, monthly_salary FROM personnel WHERE id = $1',
+            'SELECT salary_base, daily_rate FROM personnel WHERE id = $1',
             [personnel_id]
         );
-        
+
         if (personnelResult.rows.length === 0) {
             return res.status(404).json({ error: 'Empleado no encontrado' });
         }
-        
+
         const employee = personnelResult.rows[0];
-        const hourly_rate = employee.hourly_rate || (employee.monthly_salary / 192); // 192 horas mensuales
+        const hourly_rate = employee.daily_rate ? (employee.daily_rate / 7.3) : 0; // 7.3 horas legales
         
         const result = await db.query(`
             INSERT INTO time_entries (

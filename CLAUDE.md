@@ -266,3 +266,4 @@ curl http://localhost:3001/api/simulator/presets/construction
 - ✅ Sistema de configuración centralizado implementado  
 - ✅ Fallbacks seguros para configuraciones faltantes
 - ✅ API del simulador completamente funcional
+- There is always the backend running on 3000, never try kill, when you need to restart just ask me

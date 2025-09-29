@@ -82,7 +82,7 @@ export default function ContractorsPage() {
 
   const loadContractors = useCallback(async () => {
     try {
-      let url = "http://localhost:3001/api/contractors";
+      let url = "http://192.168.50.120:3001/api/contractors";
       const params = new URLSearchParams();
 
       if (searchTerm) params.append("search", searchTerm);
@@ -146,7 +146,7 @@ export default function ContractorsPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/contractors", {
+      const response = await fetch("http://192.168.50.120:3001/api/contractors", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -221,7 +221,7 @@ export default function ContractorsPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:3001/api/contractors/document-support",
+        "http://192.168.50.120:3001/api/contractors/document-support",
         {
           method: "POST",
           headers: {

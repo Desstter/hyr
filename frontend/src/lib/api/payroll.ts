@@ -84,6 +84,54 @@ export class PayrollService {
   }
 
   /**
+   * Validar horas de un período antes de procesar nómina
+   * Verifica que todas las horas estén aprobadas y sin errores
+   */
+  async validateHours(periodId: string): Promise<{
+    period_id: string;
+    period: {
+      start_date: string;
+      end_date: string;
+    };
+    isReadyForPayroll: boolean;
+    validations: Array<{
+      type: 'error' | 'warning';
+      code: string;
+      message: string;
+      details: string;
+    }>;
+    summary: Array<{
+      name: string;
+      entries_count: number;
+      total_regular_hours: number;
+      total_overtime_hours: number;
+      total_pay: number;
+    }>;
+  }> {
+    return apiClient.get<{
+      period_id: string;
+      period: {
+        start_date: string;
+        end_date: string;
+      };
+      isReadyForPayroll: boolean;
+      validations: Array<{
+        type: 'error' | 'warning';
+        code: string;
+        message: string;
+        details: string;
+      }>;
+      summary: Array<{
+        name: string;
+        entries_count: number;
+        total_regular_hours: number;
+        total_overtime_hours: number;
+        total_pay: number;
+      }>;
+    }>(`${this.endpoint}/periods/${periodId}/validate-hours`);
+  }
+
+  /**
    * Obtener detalles de nómina de un período
    */
   async getPayrollDetails(periodId: string): Promise<PayrollDetail[]> {

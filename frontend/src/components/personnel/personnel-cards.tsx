@@ -16,10 +16,10 @@ import {
   UserX,
   Phone,
   Mail,
-  MapPin,
   Calendar,
-  DollarSign,
   Loader2,
+  Clock,
+  Badge as BadgeIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -108,9 +108,15 @@ export function PersonnelCards({
           department: person.department || "construccion",
           hire_date: person.hire_date || new Date().toISOString().split("T")[0],
           status: person.status || "active",
-          salary_type: person.salary_type || "hourly",
+          // NUEVA LÓGICA: Usar nuevos campos como principales
+          salary_base: person.salary_base,
+          daily_rate: person.daily_rate,
+          // Campos de compatibilidad (deprecated)
+          salary_type: person.salary_type || "monthly",
           hourly_rate: person.hourly_rate,
           monthly_salary: person.monthly_salary,
+          expected_arrival_time: person.expected_arrival_time,
+          expected_departure_time: person.expected_departure_time,
           arl_risk_class: person.arl_risk_class || "V",
           emergency_contact: person.emergency_contact || "",
           emergency_phone: person.emergency_phone || "",
@@ -204,14 +210,22 @@ export function PersonnelCards({
   // Loading state
   if (loading && personnel.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
+          <Card key={i} className="animate-pulse flex flex-col h-full min-h-[400px]">
+            <CardHeader className="flex-shrink-0">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex gap-2 mt-3">
+                <div className="h-5 bg-gray-200 rounded w-16"></div>
+                <div className="h-5 bg-gray-200 rounded w-12"></div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex-1 space-y-3 p-4">
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3 mt-2"></div>
+              </div>
               <div className="h-3 bg-gray-200 rounded w-full"></div>
               <div className="h-3 bg-gray-200 rounded w-2/3"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -243,20 +257,32 @@ export function PersonnelCards({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredPersonnel.map(person => (
-          <Card key={person.id} className="hover:shadow-lg transition-shadow">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredPersonnel.map(person => {
+          // Calcular costo fijo real (8.5% salud + ARL)
+          const getARLRate = (arlClass: string): number => {
+            const arlRates = {
+              'I': 0.00522, 'II': 0.01044, 'III': 0.02436, 'IV': 0.04350, 'V': 0.06960
+            };
+            return arlRates[arlClass as keyof typeof arlRates] || arlRates['V'];
+          };
+
+          const salaryBase = person.salary_base || (person.monthly_salary || (person.hourly_rate ? person.hourly_rate * 192 : 0));
+          const fixedMonthlyCost = salaryBase * (0.085 + getARLRate(person.arl_risk_class || 'V'));
+
+          return (
+          <Card key={person.id} className="hover:shadow-lg transition-shadow duration-200 border border-gray-200 bg-white">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg font-semibold truncate">
+                <div className="flex-1">
+                  <CardTitle className="text-xl font-bold text-gray-900 mb-0.5 leading-tight">
                     {person.name}
                   </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 mb-1">
                     {formatPosition(person.position || "")}
                   </p>
                   {person.document_number && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500">
                       {person.document_type || "CC"} {person.document_number}
                     </p>
                   )}
@@ -293,138 +319,145 @@ export function PersonnelCards({
                 </DropdownMenu>
               </div>
 
-              <div className="flex space-x-2 mt-3">
-                <Badge className={getDepartmentColor(person.department || "")}>
+              <div className="flex gap-1.5 mt-2">
+                <Badge className={`${getDepartmentColor(person.department || "")} text-xs px-2 py-0.5`}>
                   {formatDepartment(person.department || "")}
                 </Badge>
-                <Badge className={getStatusColor(person.status || "")}>
+                <Badge className={`${getStatusColor(person.status || "")} text-xs px-2 py-0.5`}>
                   {formatStatus(person.status || "")}
                 </Badge>
+                {person.arl_risk_class === 'V' && (
+                  <Badge variant="outline" className="text-xs px-1.5 py-0.5 border-red-200 text-red-600">
+                    ARL V
+                  </Badge>
+                )}
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-3">
-              {/* Financial Information */}
-              <div className="flex items-center space-x-2 text-sm">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <div>
-                  {person.hourly_rate ? (
-                    <span className="font-medium">
+            <CardContent className="p-4 space-y-3">
+              {/* Información Salarial */}
+              <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                {person.salary_base && person.daily_rate ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Salario Base</p>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {formatCurrency(person.salary_base)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Precio/Día</p>
+                      <p className="font-semibold text-blue-600 text-sm">
+                        {formatCurrency(person.daily_rate)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatCurrency(person.daily_rate / 7.3)}/h
+                      </p>
+                    </div>
+                  </div>
+                ) : person.hourly_rate ? (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Tarifa por Hora</p>
+                    <p className="font-semibold text-orange-600 text-sm">
                       {formatCurrency(person.hourly_rate)}/hora
-                    </span>
-                  ) : person.monthly_salary ? (
-                    <span className="font-medium">
+                    </p>
+                    <p className="text-xs text-orange-500">Pendiente migración</p>
+                  </div>
+                ) : person.monthly_salary ? (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Salario Mensual</p>
+                    <p className="font-semibold text-orange-600 text-sm">
                       {formatCurrency(person.monthly_salary)}/mes
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">No definida</span>
-                  )}
-                </div>
+                    </p>
+                    <p className="text-xs text-orange-500">Pendiente migración</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm">Información salarial no definida</p>
+                )}
               </div>
 
-              {/* Assignment Status */}
-              {person.status === "active" && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <UserCheck className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">
-                      Disponible
-                    </span>
-                  </div>
-                  <p className="text-xs text-green-600 mt-1">
-                    Listo para asignar a proyecto
-                  </p>
+              {/* Horario */}
+              {person.expected_arrival_time && person.expected_departure_time && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">Horario:</span>
+                  <span className="font-mono font-medium text-gray-900">
+                    {person.expected_arrival_time} - {person.expected_departure_time}
+                  </span>
                 </div>
               )}
 
-              {/* Contact Information */}
-              <div className="space-y-2">
+              {/* Estado de Disponibilidad */}
+              {person.status === "active" && (
+                <div className="flex items-center gap-2 bg-green-50 p-2 rounded border border-green-200">
+                  <UserCheck className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">Disponible para asignar</span>
+                </div>
+              )}
+
+              {/* Información de Contacto */}
+              <div className="space-y-1">
                 {person.phone && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4" />
-                    <span>{person.phone}</span>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-3 w-3 text-gray-400" />
+                    <span className="text-sm text-gray-700">{person.phone}</span>
                   </div>
                 )}
                 {person.email && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4" />
-                    <span className="truncate">{person.email}</span>
-                  </div>
-                )}
-                {person.address && (
-                  <div className="flex items-start space-x-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mt-0.5" />
-                    <span className="text-xs">{person.address}</span>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-600 truncate">{person.email}</span>
                   </div>
                 )}
                 {person.hire_date && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      Desde{" "}
-                      {new Date(person.hire_date).toLocaleDateString("es-ES")}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">
+                      Desde {new Date(person.hire_date).toLocaleDateString("es-ES")}
                     </span>
                   </div>
                 )}
               </div>
 
-              {/* ARL Risk Class */}
-              {person.arl_risk_class && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-gray-700 mb-1">
-                    Clase ARL:
-                  </p>
-                  <Badge variant="outline" className="text-xs">
-                    Clase {person.arl_risk_class} -{" "}
-                    {person.arl_risk_class === "V"
-                      ? "Construcción/Soldadura"
-                      : person.arl_risk_class === "IV"
-                        ? "Construcción Liviana"
-                        : person.arl_risk_class === "III"
-                          ? "Industrial"
-                          : person.arl_risk_class === "II"
-                            ? "Comercial"
-                            : "Administrativo"}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Emergency Contact */}
-              {person.emergency_contact && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-gray-700">
-                    Contacto de Emergencia:
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {person.emergency_contact}
-                    {person.emergency_phone && ` • ${person.emergency_phone}`}
-                  </p>
-                </div>
-              )}
-
-              {/* Monthly Cost Estimate with Colombian Benefits */}
-              <div className="pt-2 border-t">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600">Costo mensual estimado:</span>
-                  <span className="font-semibold text-blue-600">
-                    {person.hourly_rate
-                      ? formatCurrency(person.hourly_rate * 192 * 1.58) // 192 horas mensuales * factor prestacional
-                      : person.monthly_salary
-                        ? formatCurrency(person.monthly_salary * 1.58)
-                        : "N/A"}
+              {/* Solo mostrar ARL si es relevante (Clase IV o V) */}
+              {person.arl_risk_class && ['IV', 'V'].includes(person.arl_risk_class) && (
+                <div className="flex items-center gap-2">
+                  <BadgeIcon className="h-3 w-3 text-orange-500" />
+                  <span className="text-xs text-orange-600">
+                    ARL Clase {person.arl_risk_class} - {person.arl_risk_class === "V" ? "Riesgo Máximo" : "Riesgo Alto"}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {person.hourly_rate
-                    ? "Incluye factor prestacional 58% (192h/mes)"
-                    : person.monthly_salary
-                      ? "Incluye factor prestacional 58%"
-                      : "Información salarial no disponible"}
-                </p>
+              )}
+
+              {/* Contacto de Emergencia */}
+              {person.emergency_contact && (
+                <div className="border-t pt-2">
+                  <p className="text-xs text-gray-600 mb-0.5">Emergencia:</p>
+                  <p className="text-xs text-gray-800">{person.emergency_contact}</p>
+                  {person.emergency_phone && (
+                    <p className="text-xs text-gray-700 font-mono">{person.emergency_phone}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Costo Fijo Real - Destacado */}
+              <div className="bg-red-50 p-3 rounded border border-red-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs font-medium text-red-700">COSTO FIJO MENSUAL</p>
+                    <p className="text-xs text-red-600">8.5% salud + ARL</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-red-700">
+                      {fixedMonthlyCost > 0 ? formatCurrency(fixedMonthlyCost) : "N/A"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Edit Dialog */}

@@ -2,6 +2,7 @@ import { BusinessProfile } from "@/components/settings/business-profile";
 import { ThemeSettings } from "@/components/settings/theme-settings";
 import { ImportExport } from "@/components/settings/import-export";
 import { NotificationSettings } from "@/components/settings/notification-settings";
+import { PayrollSettings } from "@/components/settings/payroll-settings";
 import { useTranslations } from "@/lib/i18n";
 
 export default function SettingsPage() {
@@ -31,6 +32,11 @@ export default function SettingsPage() {
           <div>
             <ThemeSettings />
           </div>
+        </div>
+
+        {/* Payroll Settings */}
+        <div>
+          <PayrollSettings />
         </div>
 
         {/* Notification Settings */}

@@ -24,6 +24,74 @@ const TIME_ENTRY_STATUSES = {
 };
 
 // =====================================================
+// FUNCIONES AUXILIARES
+// =====================================================
+
+// FUNCIÓN: Calcular horas nocturnas para turnos que cruzan medianoche
+async function calculateNightHours(arrivalTime, departureTime, crossesMidnight) {
+  // Obtener configuración dinámica de horarios nocturnos
+  let nightStart = '22:00'; // 10 PM - configuración por defecto
+  let nightEnd = '06:00';   // 6 AM - configuración por defecto
+
+  try {
+    const nightShiftConfig = await db.query(`
+      SELECT value FROM settings WHERE key = 'night_shift_settings'
+    `);
+
+    if (nightShiftConfig.rows.length > 0) {
+      const config = nightShiftConfig.rows[0].value;
+      nightStart = config.start_time || nightStart;
+      nightEnd = config.end_time || nightEnd;
+    }
+  } catch (error) {
+    console.log('Using default night shift hours due to config error:', error.message);
+  }
+
+  const arrival = new Date(`2000-01-01 ${arrivalTime}`);
+  const nightStartTime = new Date(`2000-01-01 ${nightStart}`);
+  const nightEndTime = new Date(`2000-01-01 ${nightEnd}`);
+
+  let departure;
+  let nightHours = 0;
+
+  if (crossesMidnight) {
+    departure = new Date(`2000-01-02 ${departureTime}`);
+
+    // Caso 1: Turno cruza medianoche
+    // Calcular horas nocturnas desde llegada hasta medianoche (si aplica)
+    if (arrival >= nightStartTime) {
+      const midnightTime = new Date(`2000-01-02 00:00:00`);
+      nightHours += (midnightTime.getTime() - arrival.getTime()) / (1000 * 60 * 60);
+    }
+
+    // Calcular horas nocturnas desde medianoche hasta salida (si aplica)
+    const nextDayNightEnd = new Date(`2000-01-02 ${nightEnd}`);
+    if (departure <= nextDayNightEnd) {
+      const midnightTime = new Date(`2000-01-02 00:00:00`);
+      nightHours += (departure.getTime() - midnightTime.getTime()) / (1000 * 60 * 60);
+    } else if (nextDayNightEnd < departure) {
+      // Trabajó hasta después de las 6 AM
+      nightHours += (nextDayNightEnd.getTime() - new Date(`2000-01-02 00:00:00`).getTime()) / (1000 * 60 * 60);
+    }
+  } else {
+    departure = new Date(`2000-01-01 ${departureTime}`);
+
+    // Caso 2: Turno normal en el mismo día
+    // Solo contar horas nocturnas si trabaja después de las 22:00
+    if (arrival >= nightStartTime && departure > nightStartTime) {
+      nightHours = (departure.getTime() - Math.max(arrival.getTime(), nightStartTime.getTime())) / (1000 * 60 * 60);
+    }
+
+    // También contar horas nocturnas si trabaja antes de las 6:00 AM (turno madrugada)
+    if (arrival < nightEndTime && departure <= nightEndTime) {
+      nightHours += (Math.min(departure.getTime(), nightEndTime.getTime()) - arrival.getTime()) / (1000 * 60 * 60);
+    }
+  }
+
+  return Math.max(0, nightHours);
+}
+
+// =====================================================
 // FUNCIONES DE VALIDACIÓN
 // =====================================================
 
@@ -33,20 +101,60 @@ async function validateTimeEntry(data) {
 
   // Validaciones básicas
   if (!data.personnel_id) errors.push('personnel_id es requerido');
-  if (!data.project_id) errors.push('project_id es requerido');
+  // project_id ahora es opcional - no es requerido
   if (!data.work_date) errors.push('work_date es requerida');
-  if (!data.hours_worked || data.hours_worked <= 0) {
-    errors.push('hours_worked debe ser mayor a 0');
+
+  // NUEVA LÓGICA: Validar arrival_time y departure_time
+  if (!data.arrival_time) errors.push('arrival_time es requerida');
+  if (!data.departure_time) errors.push('departure_time es requerida');
+
+  // Validar tiempos - PERMITIR turnos que cruzan medianoche
+  if (data.arrival_time && data.departure_time) {
+    // Solo validar que no sean exactamente iguales
+    if (data.arrival_time === data.departure_time) {
+      errors.push('arrival_time y departure_time no pueden ser iguales');
+    }
+    // Para turnos que cruzan medianoche (ej: 20:00 a 05:00), no mostrar error
+    // La lógica de cálculo manejará esto correctamente
+  }
+
+  // Calcular horas trabajadas automáticamente - SOPORTA turnos que cruzan medianoche
+  let calculatedHours = 0;
+  let nightHours = 0;
+  let crossesMidnight = false;
+
+  if (data.arrival_time && data.departure_time) {
+    const arrival = new Date(`2000-01-01 ${data.arrival_time}`);
+    let departure = new Date(`2000-01-01 ${data.departure_time}`);
+
+    // Detectar si el turno cruza medianoche
+    if (departure <= arrival) {
+      departure = new Date(`2000-01-02 ${data.departure_time}`);
+      crossesMidnight = true;
+    }
+
+    const diffMs = departure - arrival;
+    calculatedHours = Math.max(0, diffMs / (1000 * 60 * 60));
+
+    // Aplicar deducción de almuerzo solo si está habilitada
+    if (data.lunch_deducted !== false) { // Por defecto true
+      calculatedHours = Math.max(0, calculatedHours - 1); // Restar 1 hora de almuerzo
+    }
+
+    // Calcular horas nocturnas (22:00 - 06:00)
+    nightHours = await calculateNightHours(data.arrival_time, data.departure_time, crossesMidnight);
   }
 
   // Validar límites de horas
-  const totalHours = parseFloat(data.hours_worked) + (parseFloat(data.overtime_hours) || 0);
+  const totalHours = calculatedHours;
   if (totalHours > MAX_TOTAL_HOURS_PER_DAY) {
-    errors.push(`Total de horas (${totalHours}) excede máximo legal de ${MAX_TOTAL_HOURS_PER_DAY} horas por día`);
+    errors.push(`Total de horas (${totalHours.toFixed(2)}) excede máximo legal de ${MAX_TOTAL_HOURS_PER_DAY} horas por día`);
   }
 
-  if (parseFloat(data.hours_worked) > MAX_REGULAR_HOURS_PER_DAY) {
-    warnings.push(`Horas regulares (${data.hours_worked}) exceden ${MAX_REGULAR_HOURS_PER_DAY}h. Se recomienda registrar como sobretiempo`);
+  // Obtener horas legales diarias desde configuración
+  const legalDailyHours = 7.3; // TODO: Obtener de settings
+  if (calculatedHours > legalDailyHours) {
+    warnings.push(`Horas calculadas (${calculatedHours.toFixed(2)}) exceden ${legalDailyHours}h legales. Se calculará sobretiempo automáticamente.`);
   }
 
   // Validar que empleado existe y está activo
@@ -86,12 +194,28 @@ async function validateTimeEntry(data) {
   }
 
   // Validar que no existe entrada duplicada para el mismo día
-  if (data.personnel_id && data.project_id && data.work_date) {
-    const existing = await db.query(`
-      SELECT id FROM time_entries 
-      WHERE personnel_id = $1 AND project_id = $2 AND work_date = $3
-    `, [data.personnel_id, data.project_id, data.work_date]);
-    
+  if (data.personnel_id && data.work_date) {
+    let duplicateQuery;
+    let duplicateParams;
+
+    if (data.project_id) {
+      // Si hay project_id, verificar duplicado con ese proyecto específico
+      duplicateQuery = `
+        SELECT id FROM time_entries
+        WHERE personnel_id = $1 AND project_id = $2 AND work_date = $3
+      `;
+      duplicateParams = [data.personnel_id, data.project_id, data.work_date];
+    } else {
+      // Si no hay project_id, verificar duplicado con project_id NULL
+      duplicateQuery = `
+        SELECT id FROM time_entries
+        WHERE personnel_id = $1 AND project_id IS NULL AND work_date = $2
+      `;
+      duplicateParams = [data.personnel_id, data.work_date];
+    }
+
+    const existing = await db.query(duplicateQuery, duplicateParams);
+
     if (existing.rows.length > 0) {
       errors.push('Ya existe registro de horas para este empleado, proyecto y fecha');
     }
@@ -112,14 +236,28 @@ async function validateTimeEntry(data) {
   return {
     isValid: errors.length === 0,
     errors,
-    warnings
+    warnings,
+    calculations: {
+      nightHours: nightHours || 0,
+      calculatedHours: calculatedHours || 0,
+      crossesMidnight: crossesMidnight || false
+    }
   };
 }
 
-async function calculatePay(personnelId, regularHours, overtimeHours) {
-  // Obtener tarifa del empleado
+
+// NUEVA FUNCIÓN: Cálculo basado en daily_rate y control de tardanzas
+async function calculatePay(personnelId, effectiveHours, overtimeHours, lateMinutes = 0) {
+  // Obtener datos del empleado incluyendo los nuevos campos
   const personnel = await db.query(`
-    SELECT hourly_rate, monthly_salary, salary_type 
+    SELECT
+      hourly_rate,
+      monthly_salary,
+      salary_type,
+      salary_base,
+      daily_rate,
+      expected_arrival_time,
+      expected_departure_time
     FROM personnel WHERE id = $1
   `, [personnelId]);
 
@@ -128,24 +266,44 @@ async function calculatePay(personnelId, regularHours, overtimeHours) {
   }
 
   const employee = personnel.rows[0];
-  let hourlyRate;
+  const dailyLegalHours = 7.3; // TODO: Obtener de settings
 
-  if (employee.salary_type === 'hourly') {
-    hourlyRate = employee.hourly_rate;
-  } else {
-    // Convertir salario mensual a hourly (192 horas mensuales estándar)
-    hourlyRate = employee.monthly_salary / 192;
-  }
+  // NUEVA LÓGICA: Usar daily_rate como base para el pago
+  const dailyRate = employee.daily_rate ||
+                   (employee.salary_base && employee.salary_base / 24) ||
+                   (employee.monthly_salary && employee.monthly_salary / 24) ||
+                   (employee.hourly_rate && employee.hourly_rate * dailyLegalHours);
 
-  const regularPay = regularHours * hourlyRate;
+  const hourlyRate = dailyRate / dailyLegalHours;
+
+  // Calcular descuento por tardanza
+  const lateHoursDiscount = lateMinutes / 60;
+  const adjustedRegularHours = Math.max(0, effectiveHours - lateHoursDiscount);
+
+  const regularPay = adjustedRegularHours * hourlyRate;
   const overtimePay = overtimeHours * hourlyRate * OVERTIME_MULTIPLIER;
   const totalPay = regularPay + overtimePay;
 
   return {
+    // Datos de cálculo
     hourly_rate: hourlyRate,
+    daily_rate: dailyRate,
+    salary_base_for_benefits: employee.salary_base,
+
+    // Horas y descuentos
+    effective_hours: effectiveHours,
+    late_minutes: lateMinutes,
+    late_hours_discount: lateHoursDiscount,
+    adjusted_regular_hours: adjustedRegularHours,
+    overtime_hours: overtimeHours,
+
+    // Pagos
     regular_pay: regularPay,
     overtime_pay: overtimePay,
-    total_pay: totalPay
+    total_pay: totalPay,
+
+    // Metadata para auditoría
+    calculation_method: 'daily_rate_with_time_control'
   };
 }
 
@@ -167,7 +325,7 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     let query = `
-      SELECT 
+      SELECT
         te.*,
         p.name as personnel_name,
         p.position,
@@ -175,7 +333,7 @@ router.get('/', async (req, res) => {
         c.name as client_name
       FROM time_entries te
       JOIN personnel p ON te.personnel_id = p.id
-      JOIN projects pr ON te.project_id = pr.id
+      LEFT JOIN projects pr ON te.project_id = pr.id
       LEFT JOIN clients c ON pr.client_id = c.id
       WHERE 1=1
     `;
@@ -273,7 +431,7 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
     
     const result = await db.query(`
-      SELECT 
+      SELECT
         te.*,
         p.name as personnel_name,
         p.position,
@@ -282,7 +440,7 @@ router.get('/:id', async (req, res) => {
         c.name as client_name
       FROM time_entries te
       JOIN personnel p ON te.personnel_id = p.id
-      JOIN projects pr ON te.project_id = pr.id
+      LEFT JOIN projects pr ON te.project_id = pr.id
       LEFT JOIN clients c ON pr.client_id = c.id
       WHERE te.id = $1
     `, [id]);
@@ -297,26 +455,28 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Crear nueva entrada de tiempo
+// Crear nueva entrada de tiempo CON NUEVA LÓGICA
 router.post('/', async (req, res) => {
   try {
     const {
       personnel_id,
       project_id,
       work_date,
-      hours_worked,
-      overtime_hours = 0,
+      arrival_time,      // NUEVO CAMPO REQUERIDO
+      departure_time,    // NUEVO CAMPO REQUERIDO
+      lunch_deducted = true,  // NUEVO: Control de deducción de almuerzo
       description,
       status = TIME_ENTRY_STATUSES.DRAFT
     } = req.body;
 
-    // Validar datos
+    // Validar datos con nueva lógica
     const validation = await validateTimeEntry({
       personnel_id,
       project_id,
       work_date,
-      hours_worked,
-      overtime_hours
+      arrival_time,
+      departure_time,
+      lunch_deducted
     });
 
     if (!validation.isValid) {
@@ -327,31 +487,79 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Calcular pagos
-    const payInfo = await calculatePay(personnel_id, hours_worked, overtime_hours);
+    // Extraer valores calculados de la validación
+    const { nightHours, calculatedHours, crossesMidnight } = validation.calculations;
 
-    // Crear registro
+    // CALCULAR valores requeridos antes de insertar
+    // Obtener datos del empleado para calcular hourly_rate
+    const personnelResult = await db.query(`
+      SELECT daily_rate, salary_base, monthly_salary, hourly_rate, expected_arrival_time
+      FROM personnel WHERE id = $1
+    `, [personnel_id]);
+
+    if (personnelResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Empleado no encontrado' });
+    }
+
+    const employee = personnelResult.rows[0];
+    const legalDailyHours = 7.3;
+
+    // Calcular hourly_rate basado en daily_rate o salary_base
+    let calculatedHourlyRate = 0;
+    if (employee.daily_rate) {
+      calculatedHourlyRate = employee.daily_rate / legalDailyHours;
+    } else if (employee.salary_base) {
+      calculatedHourlyRate = employee.salary_base / (legalDailyHours * 24); // 24 días laborales
+    } else if (employee.monthly_salary) {
+      calculatedHourlyRate = employee.monthly_salary / (legalDailyHours * 24);
+    } else if (employee.hourly_rate) {
+      calculatedHourlyRate = employee.hourly_rate;
+    }
+
+    // Usar valores calculados desde validateTimeEntry (ya incluye manejo de turnos nocturnos)
+    const totalHours = calculatedHours;
+    const regularHours = Math.min(totalHours, legalDailyHours);
+    const overtimeHours = Math.max(0, totalHours - legalDailyHours);
+
+    // Calcular tardanza si existe expected_arrival_time
+    let lateMinutes = 0;
+    if (employee.expected_arrival_time) {
+      const expectedArrival = new Date(`2000-01-01 ${employee.expected_arrival_time}`);
+      const actualArrival = new Date(`2000-01-01 ${arrival_time}`);
+      if (actualArrival > expectedArrival) {
+        lateMinutes = Math.round((actualArrival - expectedArrival) / (1000 * 60));
+      }
+    }
+
+    // Calcular pagos incluyendo recargo nocturno
+    const regularPay = regularHours * calculatedHourlyRate;
+    const overtimePay = overtimeHours * calculatedHourlyRate * 1.25;
+    const nightPay = nightHours * calculatedHourlyRate * 0.35; // 35% recargo nocturno
+    const totalPay = regularPay + overtimePay + nightPay;
+
+    // Crear registro con todos los campos calculados incluyendo horas nocturnas
     const result = await db.query(`
       INSERT INTO time_entries (
-        personnel_id, project_id, work_date, hours_worked, overtime_hours,
-        description, status, hourly_rate, regular_pay, overtime_pay, total_pay
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        personnel_id, project_id, work_date,
+        hours_worked, overtime_hours, night_hours,
+        hourly_rate, total_pay, description, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `, [
-      personnel_id, project_id, work_date, hours_worked, overtime_hours,
-      description, status, payInfo.hourly_rate, payInfo.regular_pay,
-      payInfo.overtime_pay, payInfo.total_pay
+      personnel_id, project_id, work_date,
+      totalHours, overtimeHours, nightHours,
+      calculatedHourlyRate, totalPay, description, status
     ]);
 
-    // Obtener registro completo con nombres
+    // Obtener registro completo con nombres (LEFT JOIN para project_id nullable)
     const fullResult = await db.query(`
-      SELECT 
+      SELECT
         te.*,
         p.name as personnel_name,
         pr.name as project_name
       FROM time_entries te
       JOIN personnel p ON te.personnel_id = p.id
-      JOIN projects pr ON te.project_id = pr.id
+      LEFT JOIN projects pr ON te.project_id = pr.id
       WHERE te.id = $1
     `, [result.rows[0].id]);
 

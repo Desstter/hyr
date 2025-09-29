@@ -35,10 +35,13 @@ interface Employee {
   document_number: string;
   email: string;
   position: string;
-  monthly_salary: number;
-  hourly_rate?: number;
+  salary_base: number;
+  daily_rate: number;
   status: string;
   department: string;
+  // Campos de compatibilidad (deprecated)
+  monthly_salary?: number;
+  hourly_rate?: number;
 }
 
 interface PayrollDocument {
@@ -80,11 +83,15 @@ export default function PayrollGeneratePage() {
   const loadEmployees = async () => {
     try {
       const personnel = await personnelService.getAll({ status: "active" });
-      // Map Personnel to Employee interface
+      // Map Personnel to Employee interface using new salary structure
       const employees = personnel.map(person => ({
         ...person,
         email: person.email || "", // Ensure email is always a string
-        monthly_salary: person.monthly_salary || 0, // Ensure monthly_salary is always a number
+        salary_base: person.salary_base || person.monthly_salary || (person.hourly_rate ? person.hourly_rate * 192 : 1300000),
+        daily_rate: person.daily_rate || (person.salary_base ? person.salary_base / 24 : (person.monthly_salary ? person.monthly_salary / 24 : 54167)),
+        // Keep old fields for compatibility
+        monthly_salary: person.monthly_salary || 0,
+        hourly_rate: person.hourly_rate || 0,
       }));
       setEmployees(employees);
     } catch (error) {
@@ -138,9 +145,9 @@ export default function PayrollGeneratePage() {
             id: emp.id,
             document_number: emp.document_number,
             name: emp.name,
-            base_salary:
-              Number(emp.monthly_salary) ||
-              (Number(emp.hourly_rate) || 0) * 192,
+            base_salary: Number(emp.salary_base) ||
+              (Number(emp.monthly_salary) ||
+               (Number(emp.hourly_rate) || 0) * 192),
             position: emp.position,
           })),
         }),
@@ -597,8 +604,9 @@ export default function PayrollGeneratePage() {
                       <p className="font-semibold">
                         $
                         {(
-                          Number(employee.monthly_salary) ||
-                          (Number(employee.hourly_rate) || 0) * 192
+                          Number(employee.salary_base) ||
+                          (Number(employee.monthly_salary) ||
+                           (Number(employee.hourly_rate) || 0) * 192)
                         ).toLocaleString("es-CO")}
                       </p>
                       <Badge
@@ -621,8 +629,9 @@ export default function PayrollGeneratePage() {
                         .reduce(
                           (sum, emp) =>
                             sum +
-                            (Number(emp.monthly_salary) ||
-                              (Number(emp.hourly_rate) || 0) * 192),
+                            (Number(emp.salary_base) ||
+                             (Number(emp.monthly_salary) ||
+                              (Number(emp.hourly_rate) || 0) * 192)),
                           0
                         )
                         .toLocaleString("es-CO")}

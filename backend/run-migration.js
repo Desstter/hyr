@@ -1,6 +1,6 @@
 /**
  * HYR CONSTRUCTORA & SOLDADURA - TIME ENTRIES DATABASE MIGRATION SCRIPT
- * Adds missing fields to time_entries table for workflow management
+ * Makes project_id nullable and adds lunch_deducted control
  */
 
 // Load environment variables first
@@ -21,37 +21,66 @@ const pool = new Pool({
 
 async function runMigration() {
     const client = await pool.connect();
-    
+
     try {
-        console.log('🚀 Starting time_entries table migration...');
-        
+        console.log('🚀 Starting time_entries nullable project_id migration...');
+
         // 1. Run the time entries migration
-        console.log('📝 Adding missing fields to time_entries table...');
-        
+        console.log('📝 Making project_id nullable and adding lunch_deducted...');
+
         // Read and execute the migration SQL file
-        const migrationPath = path.join(__dirname, 'database', 'migrations', '2025_09_10_fix_time_entries_missing_fields.sql');
+        const migrationPath = path.join(__dirname, 'database', 'migration-time-entries-nullable-project.sql');
         const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
-        
+
         await client.query(migrationSQL);
         
         console.log('✅ Time entries migration applied successfully');
-        
+
         // 2. Verify migration results
         console.log('🔍 Verifying migration results...');
-        const verificationResult = await client.query(`
-            SELECT 
+
+        // Check project_id nullable
+        const projectIdCheck = await client.query(`
+            SELECT is_nullable
+            FROM information_schema.columns
+            WHERE table_name = 'time_entries' AND column_name = 'project_id'
+        `);
+        console.log('✓ project_id nullable:', projectIdCheck.rows[0]?.is_nullable === 'YES');
+
+        // Check lunch_deducted exists
+        const lunchDeductedCheck = await client.query(`
+            SELECT column_name, data_type, column_default
+            FROM information_schema.columns
+            WHERE table_name = 'time_entries' AND column_name = 'lunch_deducted'
+        `);
+        console.log('✓ lunch_deducted existe:', lunchDeductedCheck.rows.length > 0);
+        if (lunchDeductedCheck.rows.length > 0) {
+            console.log('✓ lunch_deducted default:', lunchDeductedCheck.rows[0]?.column_default);
+        }
+
+        // Check expected times in personnel
+        const expectedTimesCheck = await client.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'personnel'
+                AND column_name IN ('expected_arrival_time', 'expected_departure_time')
+        `);
+        console.log('✓ Campos de tiempo esperado agregados:', expectedTimesCheck.rows.length === 2);
+
+        console.log('✅ New fields verified in database:');
+        const allNewFields = await client.query(`
+            SELECT
                 column_name,
                 data_type,
                 is_nullable,
                 column_default
-            FROM information_schema.columns 
-            WHERE table_name = 'time_entries' 
-                AND column_name IN ('status', 'payroll_period_id', 'approver_notes', 'updated_at')
-            ORDER BY ordinal_position;
+            FROM information_schema.columns
+            WHERE (table_name = 'time_entries' AND column_name IN ('lunch_deducted', 'arrival_time', 'departure_time'))
+               OR (table_name = 'personnel' AND column_name IN ('expected_arrival_time', 'expected_departure_time'))
+            ORDER BY table_name, ordinal_position;
         `);
-        
-        console.log('✅ New fields added to time_entries:');
-        verificationResult.rows.forEach(row => {
+
+        allNewFields.rows.forEach(row => {
             console.log(`   - ${row.column_name}: ${row.data_type} (nullable: ${row.is_nullable})`);
         });
         

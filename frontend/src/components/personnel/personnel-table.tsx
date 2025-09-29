@@ -7,7 +7,7 @@ import { personnelService } from "@/lib/api/personnel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -36,6 +36,12 @@ import {
   Mail,
   RefreshCw,
   Loader2,
+  Building2,
+  UserCheck2,
+  Users2,
+  Clock,
+  DollarSign,
+  CreditCard,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -135,27 +141,69 @@ export function PersonnelTable({
     });
   }, [personnel, searchTerm, statusFilter, departmentFilter]);
 
-  // Summary statistics
+  // Summary statistics - NUEVA LÓGICA
+  // Función para calcular tarifa ARL por clase de riesgo
+  const getARLRate = (arlClass: string): number => {
+    const arlRates = {
+      'I': 0.00522,   // 0.522% - Actividades administrativas mínimo riesgo
+      'II': 0.01044,  // 1.044% - Actividades comerciales riesgo bajo
+      'III': 0.02436, // 2.436% - Actividades industriales riesgo medio
+      'IV': 0.04350,  // 4.350% - Construcción riesgo alto
+      'V': 0.06960    // 6.960% - Construcción pesada/soldadura riesgo máximo
+    };
+    return arlRates[arlClass as keyof typeof arlRates] || arlRates['V']; // Default a clase V si no se especifica
+  };
+
   const stats = useMemo(() => {
     const activePersonnel = personnel.filter(p => p.status === "active");
 
-    // Calculate average hourly rate only for employees with valid hourly_rate
-    const personnelWithHourlyRate = activePersonnel.filter(
-      p => safeNumber(p.hourly_rate) > 0
+    // NUEVA LÓGICA: Usar daily_rate para promedio por hora
+    const personnelWithDailyRate = activePersonnel.filter(
+      p => safeNumber(p.daily_rate) > 0
     );
     const averageHourlyRate =
-      personnelWithHourlyRate.length > 0
-        ? personnelWithHourlyRate.reduce(
-            (sum, p) => sum + safeNumber(p.hourly_rate),
+      personnelWithDailyRate.length > 0
+        ? personnelWithDailyRate.reduce(
+            (sum, p) => sum + (safeNumber(p.daily_rate) / 7.3), // 7.3 horas legales
             0
-          ) / personnelWithHourlyRate.length
+          ) / personnelWithDailyRate.length
         : 0;
 
+    // NUEVA LÓGICA: Costo teórico basado en salary_base para prestaciones
     const totalMonthlyCost = activePersonnel.reduce((sum, p) => {
+      const salaryBase = safeNumber(p.salary_base);
+
+      // Si tiene nueva estructura, usar salary_base para prestaciones
+      if (salaryBase > 0) {
+        return sum + salaryBase * 1.58; // Factor prestacional sobre salary_base
+      }
+
+      // Fallback para empleados no migrados
       const monthlySalary = safeNumber(p.monthly_salary);
       const hourlyRate = safeNumber(p.hourly_rate);
-      const rate = monthlySalary || hourlyRate * 192; // 192 horas mensuales
-      return sum + rate * 1.58; // Factor prestacional
+      const rate = monthlySalary || hourlyRate * 192;
+      return sum + rate * 1.58;
+    }, 0);
+
+    // NUEVA LÓGICA: Costo fijo real (8.5% salud empleador + ARL por clase)
+    const totalFixedMonthlyCost = activePersonnel.reduce((sum, p) => {
+      const salaryBase = safeNumber(p.salary_base);
+
+      if (salaryBase > 0) {
+        const saludEmpleador = salaryBase * 0.085; // 8.5% salud empleador
+        const arlRate = getARLRate(p.arl_risk_class || 'V');
+        const arlCost = salaryBase * arlRate;
+        return sum + saludEmpleador + arlCost;
+      }
+
+      // Fallback para empleados no migrados
+      const monthlySalary = safeNumber(p.monthly_salary);
+      const hourlyRate = safeNumber(p.hourly_rate);
+      const rate = monthlySalary || hourlyRate * 192;
+      const saludEmpleador = rate * 0.085;
+      const arlRate = getARLRate(p.arl_risk_class || 'V');
+      const arlCost = rate * arlRate;
+      return sum + saludEmpleador + arlCost;
     }, 0);
 
     return {
@@ -165,6 +213,7 @@ export function PersonnelTable({
       available: assignmentStats.totalAvailable,
       averageHourlyRate,
       totalMonthlyCost,
+      totalFixedMonthlyCost,
     };
   }, [personnel, assignmentStats]);
 
@@ -359,70 +408,140 @@ export function PersonnelTable({
 
   return (
     <div className="space-y-6">
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Empleados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
+      {/* Statistics Cards - Responsive Grid */}
+      <div className="space-y-6">
+        {/* Personal Overview Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">
+                    Total Empleados
+                  </p>
+                  <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                </div>
+                <div className="h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Empleados Activos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.active}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-green-600 uppercase tracking-wide">
+                    Empleados Activos
+                  </p>
+                  <p className="text-3xl font-bold text-green-900">{stats.active}</p>
+                </div>
+                <div className="h-12 w-12 bg-green-600 rounded-lg flex items-center justify-center">
+                  <UserCheck2 className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Disponibles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {stats.available}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">
+                    Disponibles
+                  </p>
+                  <p className="text-3xl font-bold text-cyan-900">{stats.available}</p>
+                </div>
+                <div className="h-12 w-12 bg-cyan-600 rounded-lg flex items-center justify-center">
+                  <Users2 className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Tarifa Promedio/Hora
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(stats.averageHourlyRate)}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-indigo-600 uppercase tracking-wide">
+                    Promedio/Hora
+                  </p>
+                  <p className="text-2xl font-bold text-indigo-900">
+                    {formatCurrency(stats.averageHourlyRate)}
+                  </p>
+                  <p className="text-xs text-indigo-600 font-medium">
+                    Basado en daily_rate/7.3h
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Costo Mensual Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(stats.totalMonthlyCost)}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Financial Overview Stats */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-gray-600" />
+            Resumen Financiero Mensual
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-orange-600" />
+                      <p className="text-sm font-medium text-orange-600 uppercase tracking-wide">
+                        Costo Total (Teórico)
+                      </p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900">
+                      {formatCurrency(stats.totalMonthlyCost)}
+                    </p>
+                    <div className="bg-orange-200 px-3 py-1 rounded-full">
+                      <p className="text-xs font-medium text-orange-700">
+                        Incluye prestaciones sociales (Factor 1.58x)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-16 w-16 bg-orange-600 rounded-xl flex items-center justify-center">
+                    <CreditCard className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-red-600" />
+                      <p className="text-sm font-medium text-red-600 uppercase tracking-wide">
+                        Costo Fijo Real
+                      </p>
+                    </div>
+                    <p className="text-3xl font-bold text-red-900">
+                      {formatCurrency(stats.totalFixedMonthlyCost)}
+                    </p>
+                    <div className="bg-red-200 px-3 py-1 rounded-full">
+                      <p className="text-xs font-medium text-red-700">
+                        Solo 8.5% salud empleador + ARL
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-16 w-16 bg-red-600 rounded-xl flex items-center justify-center">
+                    <CreditCard className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Filters - Only show if no external filters are provided */}
@@ -498,7 +617,7 @@ export function PersonnelTable({
                 <TableHead>Departamento</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Asignaciones</TableHead>
-                <TableHead>Tarifa</TableHead>
+                <TableHead>Información Salarial</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -623,14 +742,36 @@ export function PersonnelTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        {person.hourly_rate ? (
-                          <span className="font-medium">
+                      <div className="flex flex-col space-y-1">
+                        {/* NUEVA LÓGICA: Mostrar salary_base y daily_rate */}
+                        {person.salary_base && person.daily_rate ? (
+                          <>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">Base:</span>
+                              <span className="font-medium text-sm">
+                                {formatCurrency(person.salary_base)}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">Día:</span>
+                              <span className="font-medium text-sm text-blue-600">
+                                {formatCurrency(person.daily_rate)}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {formatCurrency(person.daily_rate / 7.3)}/hora
+                            </div>
+                          </>
+                        ) : person.hourly_rate ? (
+                          // Fallback para empleados no migrados
+                          <span className="font-medium text-yellow-600">
                             {formatCurrency(person.hourly_rate)}/hora
+                            <div className="text-xs text-yellow-500">Pendiente migración</div>
                           </span>
                         ) : person.monthly_salary ? (
-                          <span className="font-medium">
+                          <span className="font-medium text-yellow-600">
                             {formatCurrency(person.monthly_salary)}/mes
+                            <div className="text-xs text-yellow-500">Pendiente migración</div>
                           </span>
                         ) : (
                           <span className="text-gray-400">No definida</span>
