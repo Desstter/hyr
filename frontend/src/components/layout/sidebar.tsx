@@ -125,7 +125,7 @@ export function Sidebar() {
             <div className="flex items-center" suppressHydrationWarning>
               <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
                 <span className="text-sm font-bold text-white">
-                  {loading ? "..." : profile.contact.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  {loading ? "..." : (profile.contact || "AD").split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                 </span>
               </div>
               <div className="ml-3 min-w-0 flex-1" suppressHydrationWarning>
