@@ -101,7 +101,6 @@ construction-admin/node_modules/
 *.db
 
 # PostgreSQL dumps
-*.sql
 *.dump
 backup/
 backups/
