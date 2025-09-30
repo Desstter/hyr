@@ -51,7 +51,7 @@ export function TopBar() {
           className="h-9 w-9 rounded-xl bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center text-sm font-bold shadow-sm"
           suppressHydrationWarning
         >
-          {loading ? "..." : profile.contact.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+          {loading ? "..." : (profile.contact || "AD").split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
         </div>
         <div className="hidden lg:block text-right" suppressHydrationWarning>
           <p className="text-sm font-medium text-foreground">
