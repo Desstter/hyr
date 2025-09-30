@@ -58,7 +58,8 @@
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
       "Bash(dir:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(pg_dump:*)"
     ],
     "deny": [],
     "ask": []
