@@ -211,4 +211,5 @@ reports/
 # =======================================================
 # END HYR CONSTRUCTORA & SOLDADURA GITIGNORE
 # Mantiene seguridad y funcionalidad para deployment
-# =======================================================
+# =======================================================.claude/
+CLAUDE.md
