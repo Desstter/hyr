@@ -13,10 +13,12 @@ const app = express();
 // Cabeceras de seguridad (API JSON: no necesita CSP de navegador)
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// Configuración CORS para permitir acceso desde red local
+// Configuración CORS
 const corsOptions = {
   origin: [
     'http://localhost:3000',
+    'http://localhost:3002',
+    'https://hyr.moonhellal.com',
     'http://192.168.50.120:3000',
     'http://192.168.1.103:3000',
     /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:3000$/
