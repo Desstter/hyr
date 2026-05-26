@@ -5,6 +5,7 @@
 // =====================================================
 
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 const { 
@@ -62,7 +63,7 @@ router.get('/config/:year?', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -89,7 +90,7 @@ router.put('/config/:year', async (req, res) => {
             config: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -456,7 +457,7 @@ router.post('/simulate-2025', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -555,7 +556,7 @@ router.get('/periods/:id/summary-2025', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -633,7 +634,7 @@ router.get('/periods/:id/pila-2025', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

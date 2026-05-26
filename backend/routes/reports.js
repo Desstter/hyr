@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -32,7 +33,7 @@ router.get('/project-profitability', async (req, res) => {
                 -- Empleados asignados y costo de mano de obra
                 COUNT(DISTINCT te.personnel_id) as employees_assigned,
                 COALESCE(SUM(te.total_pay), 0) as total_labor_cost_direct,
-                COALESCE(SUM(te.total_pay * 1.58), 0) as total_labor_cost_with_benefits,
+                COALESCE(SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')), 0) as total_labor_cost_with_benefits,
                 
                 p.start_date,
                 p.estimated_end_date,
@@ -48,7 +49,7 @@ router.get('/project-profitability', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -152,7 +153,7 @@ router.get('/executive-dashboard', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -177,12 +178,12 @@ router.get('/employee-productivity', async (req, res) => {
                 COALESCE(SUM(te.total_pay), 0) as total_earnings,
                 
                 -- Costo para la empresa (incluyendo prestaciones)
-                COALESCE(SUM(te.total_pay * 1.58), 0) as total_cost_to_company,
+                COALESCE(SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')), 0) as total_cost_to_company,
                 
                 -- Eficiencia (ingresos generados vs costo)
                 CASE 
                     WHEN SUM(te.total_pay) > 0 AND SUM(te.hours_worked) > 0
-                    THEN ROUND(SUM(te.total_pay * 1.58) / SUM(te.hours_worked), 2)
+                    THEN ROUND(SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')) / SUM(te.hours_worked), 2)
                     ELSE 0 
                 END as cost_per_hour_with_benefits,
                 
@@ -201,7 +202,7 @@ router.get('/employee-productivity', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -217,9 +218,9 @@ router.get('/department-costs', async (req, res) => {
                 COALESCE(SUM(te.hours_worked), 0) as total_hours,
                 COALESCE(SUM(te.overtime_hours), 0) as total_overtime_hours,
                 COALESCE(SUM(te.total_pay), 0) as total_direct_cost,
-                COALESCE(SUM(te.total_pay * 1.58), 0) as total_cost_with_benefits,
-                COALESCE(AVG(te.total_pay * 1.58), 0) as avg_cost_per_employee,
-                COALESCE(SUM(te.total_pay * 1.58) / NULLIF(SUM(te.hours_worked), 0), 0) as cost_per_hour
+                COALESCE(SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')), 0) as total_cost_with_benefits,
+                COALESCE(AVG(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')), 0) as avg_cost_per_employee,
+                COALESCE(SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')) / NULLIF(SUM(te.hours_worked), 0), 0) as cost_per_hour
             FROM personnel p
             LEFT JOIN time_entries te ON p.id = te.personnel_id
         `;
@@ -251,7 +252,7 @@ router.get('/department-costs', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -307,7 +308,7 @@ router.get('/financial-trends', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -325,7 +326,7 @@ router.get('/resource-utilization', async (req, res) => {
                 COUNT(DISTINCT te.personnel_id) as employees_assigned,
                 SUM(te.hours_worked) as total_hours_worked,
                 AVG(te.hours_worked) as avg_hours_per_day,
-                SUM(te.total_pay * 1.58) as total_labor_cost,
+                SUM(te.total_pay * (SELECT COALESCE((value->>'benefit_factor')::numeric, 1.58) FROM settings WHERE key = 'payroll_settings')) as total_labor_cost,
                 
                 -- Eficiencia del proyecto
                 CASE 
@@ -373,7 +374,7 @@ router.get('/resource-utilization', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -459,7 +460,7 @@ router.get('/payroll-compliance', async (req, res) => {
             summary: complianceSummary.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

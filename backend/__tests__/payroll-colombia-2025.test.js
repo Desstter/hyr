@@ -342,7 +342,7 @@ describe('Nómina Colombia 2025 - Cumplimiento Legal', () => {
             const validacion = validarCalculosLegales2025(calculo);
             
             expect(validacion.esValido).toBe(false);
-            expect(validacion.errores).toContain(expect.stringContaining('menor al SMMLV 2025'));
+            expect(validacion.errores).toEqual(expect.arrayContaining([expect.stringContaining('menor al SMMLV 2025')]));
         });
         
         test('Validar: FSP faltante para empleado que debe cotizar', () => {
@@ -351,7 +351,7 @@ describe('Nómina Colombia 2025 - Cumplimiento Legal', () => {
             const validacion = validarCalculosLegales2025(calculo);
             
             expect(validacion.cumplimiento.fsp).toBe('NO_CUMPLE');
-            expect(validacion.errores).toContain('debe cotizar FSP pero no se está calculando');
+            expect(validacion.errores).toEqual(expect.arrayContaining([expect.stringContaining('debe cotizar FSP pero no se está calculando')]));
         });
     });
 
@@ -362,13 +362,15 @@ describe('Nómina Colombia 2025 - Cumplimiento Legal', () => {
     describe('Resumen Ejecutivo Nómina', () => {
         
         test('Resumen: Múltiples empleados con análisis Ley 114-1', () => {
-            const empleados = [empleadoSoldador, empleadoSupervisor, empleadoAltoIngreso];
-            empleados.forEach(emp => emp.horas = { regular_hours: 192, overtime_hours: 0 });
-            
+            const horas = { regular_hours: 192, overtime_hours: 0 };
+            const empleados = [
+                { ...empleadoSoldador, client_id: 'empresa-001', horas },
+                { ...empleadoSupervisor, client_id: 'empresa-001', horas },
+                { ...empleadoAltoIngreso, client_id: 'empresa-001', horas }
+            ];
+
             const empresas = {
-                [empleadoSoldador.client_id || 'default']: empresaCalificaLey114_1,
-                [empleadoSupervisor.client_id || 'default']: empresaCalificaLey114_1,
-                [empleadoAltoIngreso.client_id || 'default']: empresaCalificaLey114_1
+                'empresa-001': empresaCalificaLey114_1
             };
             
             const resumen = generarResumenNomina2025(empleados, '2025-01', empresas);

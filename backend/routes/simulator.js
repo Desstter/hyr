@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -75,7 +76,7 @@ router.get('/templates', (req, res) => {
     
     res.json(templates);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -185,7 +186,7 @@ router.post('/calculate', (req, res) => {
 
     res.json(estimation);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -219,7 +220,7 @@ router.post('/save-estimation', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error saving estimation:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -288,7 +289,7 @@ router.get('/presets/:template_type', (req, res) => {
 
     res.json(presets[template_type] || []);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -326,7 +327,7 @@ router.post('/create-project-from-estimation', async (req, res) => {
       project: project_preview 
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -354,7 +355,7 @@ router.get('/saved-estimations', async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Error loading saved estimations:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -400,7 +401,7 @@ router.post('/duplicate-estimation/:id', async (req, res) => {
     res.json(duplicateResult.rows[0]);
   } catch (error) {
     console.error('Error duplicating estimation:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -428,7 +429,7 @@ router.delete('/estimations/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting estimation:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -518,7 +519,7 @@ router.post('/convert-to-project', async (req, res) => {
     });
   } catch (error) {
     console.error('Error converting estimation to project:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 

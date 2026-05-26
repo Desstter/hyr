@@ -10,6 +10,7 @@ const path = require('path');
 const { db } = require('../database/connection');
 const { pilaAuditLogger, logAuditEvent } = require('../middleware/audit-logger');
 const { loadTaxConfig } = require('../utils/tax-loader');
+const { loadPayrollConfig } = require('../utils/payroll-config-loader');
 
 // Asegurar que el directorio de exports existe
 const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
@@ -99,9 +100,10 @@ router.post('/:period/generate', pilaAuditLogger(), async (req, res) => {
             });
         }
         
-        // Cargar configuración tributaria
+        // Cargar configuración tributaria y de nómina (fuente única de tasas)
         const taxConfig = loadTaxConfig(year);
-        
+        const payrollConfig = await loadPayrollConfig(parseInt(year, 10));
+
         // Generar datos PILA para cada empleado
         const pilaEmployees = [];
         let totalContributions = 0;
@@ -131,38 +133,35 @@ router.post('/:period/generate', pilaAuditLogger(), async (req, res) => {
                 baseSalary = (parseFloat(employee.hourly_rate) || 0) * monthlyHours;
             }
             
-            // Asegurar salario mínimo
-            baseSalary = Math.max(baseSalary, taxConfig.payroll.minimum_wage);
-            
+            // Asegurar salario mínimo (SMMLV desde annual_payroll_settings)
+            baseSalary = Math.max(baseSalary, payrollConfig.salarioMinimo);
+
             // IBC (Ingreso Base de Cotización)
             const ibc = baseSalary;
-            
-            // Calcular aportes según configuración colombiana
-            const healthEmployee = ibc * 0.04;
-            const healthEmployer = ibc * 0.085;
-            const pensionEmployee = ibc * 0.04;
-            const pensionEmployer = ibc * 0.12;
-            
-            // ARL según clase de riesgo
-            const arlRates = {
-                'I': 0.00522,
-                'II': 0.01044,
-                'III': 0.02436,
-                'IV': 0.04350,
-                'V': 0.06960
-            };
-            const arlRate = arlRates[employee.arl_risk_class] || arlRates['V'];
+
+            // Tasas desde la fuente única (annual_payroll_settings)
+            const ded = payrollConfig.deducciones;
+            const ap = payrollConfig.aportes;
+            const para = payrollConfig.parafiscales;
+
+            const healthEmployee = ibc * ded.salud;
+            const healthEmployer = ibc * ap.salud;
+            const pensionEmployee = ibc * ded.pension;
+            const pensionEmployer = ibc * ap.pension;
+
+            // ARL según clase de riesgo del empleado
+            const arlRate = ap.arl[employee.arl_risk_class] || ap.arl.V;
             const arl = ibc * arlRate;
-            
+
             // Parafiscales (SENA, ICBF, Cajas)
-            const sena = ibc * 0.02;
-            const icbf = ibc * 0.03;
-            const cajas = ibc * 0.04;
-            
+            const sena = ibc * para.sena;
+            const icbf = ibc * para.icbf;
+            const cajas = ibc * para.cajas;
+
             // Cesantías y prestaciones
-            const cesantias = ibc * 0.0833;
-            const prima = ibc * 0.0833;
-            const vacaciones = ibc * 0.0417;
+            const cesantias = ibc * ap.cesantias;
+            const prima = ibc * ap.prima;
+            const vacaciones = ibc * ap.vacaciones;
             
             const employeeData = {
                 // Identificación

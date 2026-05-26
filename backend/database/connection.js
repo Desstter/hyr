@@ -40,9 +40,19 @@ if (!dbConfig.password && process.env.NODE_ENV === 'production') {
 
 const db = new Pool(dbConfig);
 
-// Test de conexión
-db.connect()
-  .then(() => console.log('✅ Conectado a PostgreSQL'))
-  .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
+/**
+ * Verifica la conectividad con PostgreSQL. Se invoca explícitamente al arrancar
+ * el servidor (no como efecto secundario de importar este módulo), para que
+ * importar `db` en tests o scripts no abra conexiones ni genere ruido.
+ */
+async function verifyConnection() {
+    const client = await db.connect();
+    try {
+        await client.query('SELECT 1');
+        console.log('✅ Conectado a PostgreSQL');
+    } finally {
+        client.release();
+    }
+}
 
-module.exports = { db };
+module.exports = { db, verifyConnection };

@@ -4,6 +4,7 @@
 // =====================================================
 
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 const { format, startOfMonth, endOfMonth, addDays, subDays } = require('date-fns');
@@ -82,7 +83,7 @@ router.get('/events', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching calendar events:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -118,7 +119,7 @@ router.get('/events/month', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching monthly events:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -150,7 +151,7 @@ router.get('/events/:id', async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error fetching event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -193,7 +194,7 @@ router.post('/events', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error creating event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -238,7 +239,7 @@ router.put('/events/:id', async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error updating event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -259,7 +260,7 @@ router.delete('/events/:id', async (req, res) => {
         res.json({ message: 'Event deleted successfully' });
     } catch (error) {
         console.error('Error deleting event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -288,7 +289,7 @@ router.patch('/events/:id/complete', async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error completing event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -335,7 +336,7 @@ router.get('/payroll-events', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching payroll events:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -371,7 +372,7 @@ router.post('/payroll-events', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error creating payroll event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -423,7 +424,7 @@ router.get('/project-events', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching project events:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -459,7 +460,7 @@ router.post('/project-events', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error creating project event:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -517,7 +518,7 @@ router.get('/summary', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching calendar summary:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -567,7 +568,7 @@ router.get('/dashboard', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching dashboard events:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

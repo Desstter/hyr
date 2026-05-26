@@ -9,6 +9,7 @@ const { db } = require('../database/connection');
 const { dianAuditLogger, logAuditEvent } = require('../middleware/audit-logger');
 const { generateCUNE, simulateDIANValidation } = require('../utils/dian-ids');
 const { loadTaxConfig } = require('../utils/tax-loader');
+const { loadPayrollConfig } = require('../utils/payroll-config-loader');
 
 // =====================================================
 // GENERACIÓN Y GESTIÓN DE NÓMINA ELECTRÓNICA
@@ -56,9 +57,13 @@ router.post('/payroll/:period/generate', dianAuditLogger('dian_payroll_documents
         }
         const companyConfig = companyResult.rows[0];
         
-        // Cargar configuración tributaria
+        // Cargar configuración tributaria y de nómina (fuente única de tasas)
         const taxConfig = loadTaxConfig(year);
-        
+        const payrollConfig = await loadPayrollConfig(parseInt(year, 10));
+        const pcDed = payrollConfig.deducciones;
+        const pcAp = payrollConfig.aportes;
+        const pcPara = payrollConfig.parafiscales;
+
         // Verificar si ya existe nómina para el período
         const existingPayroll = await db.query(`
             SELECT employee_document FROM dian_payroll_documents WHERE period = $1
@@ -93,29 +98,30 @@ router.post('/payroll/:period/generate', dianAuditLogger('dian_payroll_documents
                     workedDays: worked_days
                 });
                 
-                // Calcular deducciones básicas (simplificado para MVP)
-                const healthEmployee = base_salary * 0.04;
-                const pensionEmployee = base_salary * 0.04;
-                const solidarityFund = base_salary > (4 * taxConfig.payroll.minimum_wage) ? 
-                    base_salary * 0.01 : 0;
-                
-                // Calcular aportes patronales
-                const healthEmployer = base_salary * 0.085;
-                const pensionEmployer = base_salary * 0.12;
-                const arl = base_salary * 0.06960; // Clase V construcción
-                const severance = base_salary * 0.0833;
-                const servicePrima = base_salary * 0.0833;
-                const vacation = base_salary * 0.0417;
+                // Deducciones empleado (tasas desde annual_payroll_settings)
+                const healthEmployee = base_salary * pcDed.salud;
+                const pensionEmployee = base_salary * pcDed.pension;
+                const solidarityFund = base_salary > (4 * payrollConfig.salarioMinimo) ?
+                    base_salary * pcDed.solidaridad : 0;
+
+                // Aportes patronales
+                const healthEmployer = base_salary * pcAp.salud;
+                const pensionEmployer = base_salary * pcAp.pension;
+                const arlClass = employee.arl_risk_class || 'V';
+                const arl = base_salary * (pcAp.arl[arlClass] || pcAp.arl.V);
+                const severance = base_salary * pcAp.cesantias;
+                const servicePrima = base_salary * pcAp.prima;
+                const vacation = base_salary * pcAp.vacaciones;
                 const severanceInterest = severance * 0.12;
-                
+
                 // Parafiscales
-                const sena = base_salary * 0.02;
-                const icbf = base_salary * 0.03;
-                const compensationBox = base_salary * 0.04;
-                
-                // Auxilio de transporte
-                const transportAllowance = base_salary <= (2 * taxConfig.payroll.minimum_wage) ?
-                    taxConfig.payroll.transport_allowance : 0;
+                const sena = base_salary * pcPara.sena;
+                const icbf = base_salary * pcPara.icbf;
+                const compensationBox = base_salary * pcPara.cajas;
+
+                // Auxilio de transporte (≤ 2 SMMLV)
+                const transportAllowance = base_salary <= (2 * payrollConfig.salarioMinimo) ?
+                    payrollConfig.auxilioTransporte : 0;
                 
                 // Generar XML stub
                 const xmlContent = generatePayrollXML({

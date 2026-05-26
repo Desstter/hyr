@@ -4,7 +4,29 @@
 // Cumplimiento Legal Completo con FSP y Ley 114-1
 // =====================================================
 
-const { COLOMBIA_PAYROLL_2025, calculateFSP, qualifiesForLaw114_1, calculateOvertimeRate } = require('../config/payroll-2025');
+const { COLOMBIA_PAYROLL_2025, calculateOvertimeRate } = require('../config/payroll-2025');
+
+// FSP basado en la config inyectada (fuente de verdad: annual_payroll_settings en BD).
+function calculateFSP(baseSalary, config) {
+    const smmlv = config.salarioMinimo;
+    if (!config.fsp || config.fsp.enabled === false) return 0;
+    const ibcInSMMLV = baseSalary / smmlv;
+    if (ibcInSMMLV < 4) return 0;
+    const range = (config.fsp.ranges || []).find(r => ibcInSMMLV >= r.min && ibcInSMMLV < r.max);
+    return range ? baseSalary * range.rate : 0;
+}
+
+// Ley 114-1 basado en la config inyectada.
+function qualifiesForLaw114_1(empresa, empleado, baseSalary, config) {
+    const ley = config.ley114_1 || {};
+    if (!ley.enabled) return false;
+    const ibcInSMMLV = baseSalary / config.salarioMinimo;
+    const maxIbc = ley.max_ibc_smmlv != null ? ley.max_ibc_smmlv : 10;
+    if (ibcInSMMLV >= maxIbc) return false;
+    const minEmployees = ley.min_employees_pn != null ? ley.min_employees_pn : 2;
+    const isEligibleCompany = empresa.is_juridica || (empresa.employee_count >= minEmployees);
+    return Boolean(isEligibleCompany && empresa.qualifies_law_114_1);
+}
 
 /**
  * Calcula la nómina completa de un empleado según legislación colombiana 2025
@@ -18,10 +40,8 @@ const { COLOMBIA_PAYROLL_2025, calculateFSP, qualifiesForLaw114_1, calculateOver
  * @returns {Object} Cálculos completos de nómina 2025
  */
 function calcularNominaCompleta2025(empleado, horasTrabajadas = {}, empresa = {}, centroTrabajo = {}, opciones = {}) {
-    // Configuración año (default 2025)
-    const config = opciones.year ? 
-        require('../config/payroll-2025').getPayrollConfig(opciones.year) : 
-        COLOMBIA_PAYROLL_2025;
+    // Configuración: usar la inyectada desde BD (opciones.config) o el archivo como fallback
+    const config = opciones.config || COLOMBIA_PAYROLL_2025;
     
     // =====================================================
     // 1. CÁLCULOS SALARIO BASE
@@ -90,7 +110,7 @@ function calcularNominaCompleta2025(empleado, horasTrabajadas = {}, empresa = {}
     const pensionEmpleado = salarioTotal * config.deducciones.pension;
     
     // FSP - Fondo Solidaridad Pensional (NUEVO 2025)
-    const fspEmpleado = empleado.fsp_exempt ? 0 : calculateFSP(salarioBase, config.salarioMinimo);
+    const fspEmpleado = empleado.fsp_exempt ? 0 : calculateFSP(salarioBase, config);
     
     // Solidaridad (solo salarios > 4 SMMLV) - ESTE ES DIFERENTE AL FSP
     const solidaridadEmpleado = salarioBase > (4 * config.salarioMinimo) 
@@ -111,7 +131,7 @@ function calcularNominaCompleta2025(empleado, horasTrabajadas = {}, empresa = {}
     // 5. VERIFICAR LEY 114-1 EXONERACIONES
     // =====================================================
     
-    const aplicaLey114_1 = qualifiesForLaw114_1(empresa, empleado, salarioBase);
+    const aplicaLey114_1 = qualifiesForLaw114_1(empresa, empleado, salarioBase, config);
     const exoneracion = {
         saludEmpleadorExento: aplicaLey114_1,
         senaExento: aplicaLey114_1,  

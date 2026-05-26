@@ -1,16 +1,19 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
-const { calcularNominaCompleta, _generarResumenNomina, validarCalculosLegales, COLOMBIA_PAYROLL_2024 } = require('../utils/payroll-colombia');
 
 // Importar utilidades para generación de documentos
 const archiver = require('archiver');
 const { getEmployeePayrollData, getPeriodEmployees, validatePayrollData, generateDocumentAuditTrail } = require('../utils/payroll-documents');
 const { generatePayslipPDF } = require('../utils/pdf-generators/payslip-pdf');
 const { generatePayslipExcel } = require('../utils/excel-generators/payslip-excel');
+const { getMonthName } = require('../utils/document-helpers');
 
-// Importar utilidades 2025
-const { COLOMBIA_PAYROLL_2025, _calcularNominaCompleta2025 } = require('../utils/payroll-colombia-2025');
+// Motor de nómina 2025 (única fuente) + cargador de configuración desde BD
+const { calcularNominaCompleta2025, validarCalculosLegales2025 } = require('../utils/payroll-colombia-2025');
+const { loadPayrollConfig } = require('../utils/payroll-config-loader');
+const { computePayrollDetail } = require('../utils/payroll-detail');
 
 // Obtener períodos de nómina
 router.get('/periods', async (req, res) => {
@@ -52,7 +55,7 @@ router.get('/periods', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -83,198 +86,14 @@ router.post('/periods', async (req, res) => {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Ya existe un período de nómina para este año y mes' });
         }
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
 // Procesar nómina automáticamente
-router.post('/periods/:id/process', async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        // Obtener empleados activos
-        const personnel = await db.query(`
-            SELECT * FROM personnel 
-            WHERE status = 'active'
-        `);
-        
-        // Obtener período
-        const period = await db.query(`
-            SELECT * FROM payroll_periods WHERE id = $1
-        `, [id]);
-        
-        if (period.rows.length === 0) {
-            return res.status(404).json({ error: 'Período no encontrado' });
-        }
-        
-        const { start_date, end_date } = period.rows[0];
-
-        // VALIDACIONES CRÍTICAS ANTES DE PROCESAR
-        // 1. Verificar que todas las horas estén aprobadas
-        const unapprovedHours = await db.query(`
-            SELECT COUNT(*) as count
-            FROM time_entries 
-            WHERE work_date BETWEEN $1 AND $2
-            AND status NOT IN ('approved', 'payroll_locked')
-        `, [start_date, end_date]);
-
-        if (parseInt(unapprovedHours.rows[0].count) > 0) {
-            return res.status(400).json({ 
-                error: 'Existen horas sin aprobar en el período',
-                details: `${unapprovedHours.rows[0].count} registros pendientes de aprobación`
-            });
-        }
-
-        // 2. Verificar empleados sin registros de tiempo
-        const employeesWithoutHours = await db.query(`
-            SELECT p.id, p.name
-            FROM personnel p
-            WHERE p.status = 'active'
-            AND p.id NOT IN (
-                SELECT DISTINCT personnel_id 
-                FROM time_entries 
-                WHERE work_date BETWEEN $1 AND $2
-            )
-        `, [start_date, end_date]);
-
-        // NOTE: We allow employees without hours to proceed since it's normal
-        // (they might be on vacation, sick leave, or not assigned to projects)
-        if (employeesWithoutHours.rows.length > 0) {
-            console.log(`[INFO] Procesando nómina con ${employeesWithoutHours.rows.length} empleados sin horas:`,
-                employeesWithoutHours.rows.map(emp => emp.name).join(', '));
-        }
-        const processedEmployees = [];
-        const errors = [];
-        
-        // Marcar período como procesando
-        await db.query(`
-            UPDATE payroll_periods 
-            SET status = 'processing'
-            WHERE id = $1
-        `, [id]);
-        
-        // Procesar cada empleado
-        for (const employee of personnel.rows) {
-            try {
-                // NUEVA LÓGICA: Obtener horas efectivas con descuentos por tardanza y turno nocturno
-                const timeEntries = await db.query(`
-                    SELECT
-                        SUM(COALESCE(effective_hours_worked, hours_worked)) as regular_hours,
-                        SUM(COALESCE(overtime_hours, 0)) as overtime_hours,
-                        SUM(COALESCE(night_hours, 0)) as night_hours,
-                        SUM(COALESCE(late_minutes, 0)) as total_late_minutes,
-                        COUNT(*) as work_days,
-                        SUM(total_pay + COALESCE(night_pay, 0)) as calculated_pay
-                    FROM time_entries
-                    WHERE personnel_id = $1
-                    AND work_date BETWEEN $2 AND $3
-                    AND status = 'approved'
-                `, [employee.id, start_date, end_date]);
-
-                const hours = timeEntries.rows[0] || {
-                    regular_hours: 0,
-                    overtime_hours: 0,
-                    night_hours: 0,
-                    total_late_minutes: 0,
-                    work_days: 0,
-                    calculated_pay: 0
-                };
-
-                // Calcular nómina con NUEVA LÓGICA (salary_base vs daily_rate)
-                const nomina = calcularNominaCompleta(employee, hours);
-                
-                // Validar cálculos
-                const validacion = validarCalculosLegales(nomina);
-                if (!validacion.esValido) {
-                    errors.push({
-                        employee: employee.name,
-                        errors: validacion.errores
-                    });
-                }
-                
-                // Insertar detalle de nómina con NUEVOS CAMPOS incluyendo turno nocturno
-                await db.query(`
-                    INSERT INTO payroll_details (
-                        payroll_period_id, personnel_id, regular_hours, overtime_hours,
-                        base_salary, regular_pay, overtime_pay, transport_allowance,
-                        health_employee, pension_employee, solidarity_contribution,
-                        health_employer, pension_employer, arl, severance,
-                        severance_interest, service_bonus, vacation,
-                        sena, icbf, compensation_fund
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-                `, [
-                    id, employee.id,
-                    nomina.horasRegulares || 0,
-                    nomina.horasExtra || 0,
-                    nomina.salarioBasePrestaciones,  // USAR salary_base para BD
-                    nomina.salarioRegular + (nomina.salarioNocturno || 0), // Pago real + nocturno
-                    nomina.salarioExtra,             // Pago extra real
-                    nomina.auxilioTransporte,
-                    nomina.deducciones.salud,
-                    nomina.deducciones.pension,
-                    nomina.deducciones.solidaridad,
-                    nomina.aportes.salud,            // Sobre salary_base
-                    nomina.aportes.pension,          // Sobre salary_base
-                    nomina.aportes.arl,              // Sobre salary_base
-                    nomina.aportes.cesantias,
-                    nomina.aportes.interesesCesantias,
-                    nomina.aportes.prima,
-                    nomina.aportes.vacaciones,
-                    nomina.parafiscales.sena,
-                    nomina.parafiscales.icbf,
-                    nomina.parafiscales.cajas
-                ]);
-                
-                processedEmployees.push({
-                    employee: employee.name,
-                    netPay: nomina.netoAPagar,
-                    employerCost: nomina.costoTotalEmpleador
-                });
-                
-            } catch (empError) {
-                errors.push({
-                    employee: employee.name,
-                    error: empError.message
-                });
-            }
-        }
-        
-        // BLOQUEAR HORAS PARA QUE NO SE PUEDAN MODIFICAR
-        await db.query(`
-            UPDATE time_entries 
-            SET status = 'payroll_locked', payroll_period_id = $1
-            WHERE work_date BETWEEN $2 AND $3
-            AND status = 'approved'
-        `, [id, start_date, end_date]);
-
-        // Marcar período como completado
-        await db.query(`
-            UPDATE payroll_periods 
-            SET status = 'completed', processed_at = CURRENT_TIMESTAMP
-            WHERE id = $1
-        `, [id]);
-        
-        res.json({ 
-            message: 'Nómina procesada exitosamente',
-            processedEmployees: processedEmployees.length,
-            errors: errors.length,
-            details: {
-                processed: processedEmployees,
-                errors
-            }
-        });
-        
-    } catch (error) {
-        // Marcar período como error
-        await db.query(`
-            UPDATE payroll_periods 
-            SET status = 'draft'
-            WHERE id = $1
-        `, [req.params.id]);
-        
-        res.status(500).json({ error: error.message });
-    }
-});
+// NOTA: La ruta antigua POST /periods/:id/process (motor 2024) fue eliminada.
+// El único procesamiento de nómina es POST /periods/:id/process-2025 (más abajo),
+// que usa el motor payroll-colombia-2025 + tasas desde annual_payroll_settings.
 
 // Obtener nómina detallada
 router.get('/periods/:id/details', async (req, res) => {
@@ -297,7 +116,7 @@ router.get('/periods/:id/details', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -330,7 +149,7 @@ router.get('/details/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -380,7 +199,7 @@ router.get('/summary/:year/:month', async (req, res) => {
         
         res.json(summary.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -400,26 +219,27 @@ router.post('/calculate-preview', async (req, res) => {
             return res.status(404).json({ error: 'Empleado no encontrado' });
         }
         
-        // Calcular nómina usando utilidades colombianas
-        const nomina = calcularNominaCompleta(employee.rows[0], hours || {});
-        
+        // Calcular nómina con el motor 2025 y tasas desde BD
+        const config = await loadPayrollConfig(2025);
+        const nomina = calcularNominaCompleta2025(employee.rows[0], hours || {}, {}, {}, { config });
+
         // Validar cálculos
-        const validacion = validarCalculosLegales(nomina);
-        
+        const validacion = validarCalculosLegales2025(nomina);
+
         res.json({
             employee: employee.rows[0].name,
             calculation: nomina,
             validation: validacion,
             legal_references: {
-                salario_minimo_2024: COLOMBIA_PAYROLL_2024.salarioMinimo,
-                auxilio_transporte_2024: COLOMBIA_PAYROLL_2024.auxilioTransporte,
-                riesgo_arl: nomina.riesgoARL,
+                salario_minimo: config.salarioMinimo,
+                auxilio_transporte: config.auxilioTransporte,
+                clase_arl: nomina.claseARL,
                 tarifa_arl: nomina.tarifaARL
             }
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -472,7 +292,7 @@ router.get('/periods/:id/pila-export', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -483,40 +303,26 @@ router.get('/periods/:id/pila-export', async (req, res) => {
 // Configuración 2025
 router.get('/config/:year?', async (req, res) => {
     try {
-        const year = req.params.year || 2025;
-        
-        if (year === 2025) {
-            // Respuesta directa para 2025
-            res.json({
-                year: 2025,
-                version: '2025.1',
-                salarioMinimo: 1423500,
-                auxilioTransporte: 200000,
-                uvt: 47065,
-                deducciones: COLOMBIA_PAYROLL_2025.deducciones,
-                aportes: COLOMBIA_PAYROLL_2025.aportes,
-                parafiscales: COLOMBIA_PAYROLL_2025.parafiscales,
-                fsp: COLOMBIA_PAYROLL_2025.fsp,
-                law_114_1: COLOMBIA_PAYROLL_2025.law_114_1,
-                arlClasses: COLOMBIA_PAYROLL_2025.arlClasses
-            });
-        } else {
-            // Buscar en base de datos para otros años
-            const result = await db.query(`
-                SELECT * FROM annual_payroll_settings 
-                WHERE year = $1
-            `, [year]);
-            
-            if (result.rows.length === 0) {
-                return res.status(404).json({ 
-                    error: `No existe configuración para el año ${year}` 
-                });
-            }
-            
-            res.json(result.rows[0]);
-        }
+        const year = parseInt(req.params.year || '2025', 10);
+        // Fuente única: annual_payroll_settings (vía cargador con caché)
+        const config = await loadPayrollConfig(year);
+        res.json({
+            year: config.year,
+            salarioMinimo: config.salarioMinimo,
+            auxilioTransporte: config.auxilioTransporte,
+            auxilioConectividad: config.auxilioConectividad,
+            uvt: config.uvt,
+            deducciones: config.deducciones,
+            aportes: config.aportes,
+            parafiscales: config.parafiscales,
+            fsp: config.fsp,
+            ley114_1: config.ley114_1,
+            recargos: config.recargos,
+            topes: config.topes,
+            source: config._source
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -539,6 +345,17 @@ router.post('/periods/:id/process-2025', async (req, res) => {
         }
 
         const period = periodResult.rows[0];
+
+        // Cargar tasas desde annual_payroll_settings (fuente única de verdad)
+        const config = await loadPayrollConfig(period.year);
+
+        // No persistir nómina con tasas de fallback: deben venir de la BD.
+        if (config._source === 'file') {
+            await client.query('ROLLBACK');
+            return res.status(503).json({
+                error: `No se puede procesar la nómina ${period.year}: las tasas no están disponibles en la base de datos (annual_payroll_settings). Configure el año antes de procesar.`
+            });
+        }
 
         // Verificar que no esté ya procesado
         if (period.status === 'completed') {
@@ -608,71 +425,29 @@ router.post('/periods/:id/process-2025', async (req, res) => {
                 daysWorked: 0
             };
 
-            // Calcular salario base
-            const dailyRate = parseFloat(employee.daily_rate) || 54167; // SMMLV diario 2025
-            const salaryBase = parseFloat(employee.salary_base) || 1423500; // SMMLV 2025
-
-            // Calcular pagos
-            const regularPay = (dailyRate / 7.3) * employeeHours.regularHours;
-            const overtimePay = (dailyRate / 7.3) * employeeHours.overtimeHours * 1.25;
-            // Note: night hours not implemented in current schema
-
-            // Auxilio de transporte (si gana menos de 2 SMMLV)
-            const transportAllowance = salaryBase <= (1423500 * 2) ? 200000 : 0;
-
-            const totalIncome = regularPay + overtimePay + transportAllowance;
-
-            // Calcular deducciones empleado
-            const healthEmployee = totalIncome * 0.04;
-            const pensionEmployee = totalIncome * 0.04;
-            const solidarityContribution = totalIncome > (1423500 * 4) ? totalIncome * 0.01 : 0;
-
-            const totalDeductions = healthEmployee + pensionEmployee + solidarityContribution;
-            const netPay = totalIncome - totalDeductions;
-
-            // Calcular aportes patronales
-            const healthEmployer = totalIncome * 0.085;
-            const pensionEmployer = totalIncome * 0.12;
-
-            // ARL según clase de riesgo
-            const arlRates = { 'I': 0.00522, 'II': 0.01044, 'III': 0.02436, 'IV': 0.04350, 'V': 0.06960 };
-            const arl = totalIncome * (arlRates[employee.arl_risk_class] || 0.06960);
-
-            // Prestaciones sociales (8.33% cesantías + intereses + prima + vacaciones)
-            const severance = totalIncome * 0.0833;
-            const severanceInterest = severance * 0.12;
-            const serviceBonus = totalIncome * 0.0833;
-            const vacation = totalIncome * 0.0417;
-
-            // Parafiscales
-            const sena = totalIncome * 0.02;
-            const icbf = totalIncome * 0.03;
-            const compensationFund = totalIncome * 0.04;
-
-            const totalEmployerCostForEmployee = totalIncome + healthEmployer + pensionEmployer +
-                                                 arl + severance + severanceInterest + serviceBonus +
-                                                 vacation + sena + icbf + compensationFund;
+            // Cálculo canónico (única fuente, testeada): utils/payroll-detail.js
+            const d = computePayrollDetail(employee, employeeHours, config);
 
             // 6. Insertar en payroll_details
             await client.query(`
                 INSERT INTO payroll_details (
                     payroll_period_id, personnel_id, regular_hours, overtime_hours,
                     base_salary, regular_pay, overtime_pay, transport_allowance,
-                    total_income, health_employee, pension_employee, solidarity_contribution,
-                    total_deductions, net_pay, health_employer, pension_employer,
+                    health_employee, pension_employee, solidarity_contribution, fsp_employee,
+                    health_employer, pension_employer,
                     arl, severance, severance_interest, service_bonus, vacation,
-                    sena, icbf, compensation_fund, total_employer_cost
+                    sena, icbf, compensation_fund, law_114_1_applied
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                    $17, $18, $19, $20, $21, $22, $23, $24, $25
+                    $17, $18, $19, $20, $21, $22, $23
                 )
             `, [
-                id, employee.id, employeeHours.regularHours, employeeHours.overtimeHours,
-                salaryBase, regularPay, overtimePay, transportAllowance,
-                totalIncome, healthEmployee, pensionEmployee, solidarityContribution,
-                totalDeductions, netPay, healthEmployer, pensionEmployer,
-                arl, severance, severanceInterest, serviceBonus, vacation,
-                sena, icbf, compensationFund, totalEmployerCostForEmployee
+                id, employee.id, d.regularHours, d.overtimeHours,
+                d.salaryBase, d.regularPay, d.overtimePay, d.transportAllowance,
+                d.healthEmployee, d.pensionEmployee, d.solidarityContribution, d.fspEmployee,
+                d.healthEmployer, d.pensionEmployer,
+                d.arl, d.severance, d.severanceInterest, d.serviceBonus, d.vacation,
+                d.sena, d.icbf, d.compensationFund, d.law114Applies
             ]);
 
             // 7. Marcar time_entries como payroll_locked
@@ -685,8 +460,8 @@ router.post('/periods/:id/process-2025', async (req, res) => {
             `, [employee.id, period.start_date, period.end_date]);
 
             processedCount++;
-            totalEmployerCost += totalEmployerCostForEmployee;
-            totalNetPay += netPay;
+            totalEmployerCost += d.totalEmployerCost;
+            totalNetPay += d.netPay;
         }
 
         // 8. Actualizar período como completado
@@ -780,7 +555,7 @@ router.get('/periods/:id/pila-2025', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -892,7 +667,7 @@ router.get('/periods/:id/validate-hours', async (req, res) => {
         
     } catch (error) {
         console.error('Error validating hours:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -934,7 +709,7 @@ router.get('/payslips/:period_id/:employee_id/pdf', async (req, res) => {
 
     } catch (error) {
         console.error('Error generating payslip PDF:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -972,7 +747,7 @@ router.get('/payslips/:period_id/:employee_id/excel', async (req, res) => {
 
     } catch (error) {
         console.error('Error generating payslip Excel:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -1048,7 +823,7 @@ router.get('/payslips/:period_id/bulk/pdf', async (req, res) => {
 
     } catch (error) {
         console.error('Error generating bulk payslips:', error);
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

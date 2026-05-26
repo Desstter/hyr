@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -59,7 +60,7 @@ router.get('/', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -98,7 +99,7 @@ router.get('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -144,7 +145,7 @@ router.post('/', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -209,7 +210,7 @@ router.put('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -241,7 +242,7 @@ router.delete('/:id', async (req, res) => {
         
         res.json({ message: 'Proyecto eliminado', project: result.rows[0] });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -278,7 +279,7 @@ router.get('/:id/expenses', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -312,7 +313,7 @@ router.get('/:id/personnel', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -365,7 +366,7 @@ router.get('/:id/financial-summary', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -411,7 +412,7 @@ router.get('/:id/personnel-assignments', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -463,7 +464,7 @@ router.post('/:id/assign-personnel', async (req, res) => {
             assignment: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

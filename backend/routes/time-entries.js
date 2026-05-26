@@ -4,6 +4,7 @@
 // =====================================================
 
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -421,7 +422,7 @@ router.get('/', async (req, res) => {
 
   } catch (error) {
     console.error('Error getting time entries:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -451,7 +452,7 @@ router.get('/:id', async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -570,7 +571,7 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('Error creating time entry:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -639,7 +640,7 @@ router.put('/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Error updating time entry:', error);
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -671,7 +672,7 @@ router.delete('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -738,7 +739,7 @@ router.get('/validation/:period', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -778,7 +779,7 @@ router.post('/bulk-approve', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -814,7 +815,7 @@ router.post('/lock-for-payroll', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -864,7 +865,7 @@ router.get('/personnel/:personnelId/summary', async (req, res) => {
     res.json(result.rows[0]);
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
@@ -956,7 +957,7 @@ router.get('/project/:projectId/summary', async (req, res) => {
     res.json(response);
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    sendError(res, error);
   }
 });
 

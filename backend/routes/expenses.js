@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -48,7 +49,7 @@ router.get('/', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -72,7 +73,7 @@ router.get('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -114,7 +115,7 @@ router.post('/', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -163,7 +164,7 @@ router.put('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -180,7 +181,7 @@ router.delete('/:id', async (req, res) => {
         
         res.json({ message: 'Gasto eliminado', expense: result.rows[0] });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -226,7 +227,7 @@ router.get('/summary/by-category', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -289,7 +290,7 @@ router.get('/summary/by-project', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -332,7 +333,7 @@ router.get('/summary/by-vendor', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -373,7 +374,7 @@ router.get('/summary/monthly', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

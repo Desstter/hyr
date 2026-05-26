@@ -3,6 +3,7 @@
 // =====================================================
 
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
         const result = await db.query(query, params);
         res.json({ data: result.rows });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -44,7 +45,7 @@ router.get('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -65,7 +66,7 @@ router.post('/', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -88,7 +89,7 @@ router.put('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -113,7 +114,7 @@ router.delete('/:id', async (req, res) => {
         
         res.json({ message: 'Cliente eliminado exitosamente' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -141,7 +142,7 @@ router.get('/:id/projects', async (req, res) => {
         
         res.json({ data: result.rows });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -165,7 +166,7 @@ router.get('/:id/stats', async (req, res) => {
         
         res.json(stats.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

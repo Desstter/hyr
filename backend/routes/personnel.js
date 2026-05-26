@@ -1,6 +1,8 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
+const { getBenefitFactor, loadPayrollConfig } = require('../utils/payroll-config-loader');
 
 // Obtener todos los empleados
 router.get('/', async (req, res) => {
@@ -43,7 +45,7 @@ router.get('/', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -122,8 +124,10 @@ router.get('/stats', async (req, res) => {
         });
         
         // Calcular costos mensuales con prestaciones sociales colombianas
+        // Factor prestacional derivado de annual_payroll_settings (fuente única)
+        const prestationsFactor = await getBenefitFactor(new Date().getFullYear());
         const totalMonthlyBase = parseFloat(salary.total_monthly_base) || 0;
-        const totalMonthlyCost = Math.round(totalMonthlyBase * 1.58); // Factor prestacional
+        const totalMonthlyCost = Math.round(totalMonthlyBase * prestationsFactor);
         const avgHourlyRate = Math.round(parseFloat(salary.avg_hourly_rate) || 0);
 
         const stats = {
@@ -138,7 +142,7 @@ router.get('/stats', async (req, res) => {
             salaryDetails: {
                 totalMonthlyBase: Math.round(totalMonthlyBase),
                 totalEmployees: parseInt(salary.total_employees),
-                prestationsFactor: 1.58
+                prestationsFactor
             }
         };
         
@@ -182,7 +186,7 @@ router.get('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -218,9 +222,10 @@ router.post('/', async (req, res) => {
             });
         }
 
-        if (!salary_base || salary_base < 1300000) {
+        const { salarioMinimo } = await loadPayrollConfig(new Date().getFullYear());
+        if (!salary_base || salary_base < salarioMinimo) {
             return res.status(400).json({
-                error: 'salary_base es requerido y debe ser al menos el salario mínimo (1,300,000)'
+                error: `salary_base es requerido y debe ser al menos el salario mínimo (${salarioMinimo.toLocaleString('es-CO')})`
             });
         }
 
@@ -252,7 +257,7 @@ router.post('/', async (req, res) => {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Número de documento ya existe' });
         }
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -283,9 +288,10 @@ router.put('/:id', async (req, res) => {
         
         
         // Validaciones condicionales para nuevos campos
-        if (salary_base !== undefined && salary_base < 1300000) {
+        const { salarioMinimo } = await loadPayrollConfig(new Date().getFullYear());
+        if (salary_base !== undefined && salary_base < salarioMinimo) {
             return res.status(400).json({
-                error: 'salary_base debe ser al menos el salario mínimo (1,300,000)'
+                error: `salary_base debe ser al menos el salario mínimo (${salarioMinimo.toLocaleString('es-CO')})`
             });
         }
 
@@ -335,7 +341,7 @@ router.put('/:id', async (req, res) => {
         if (error.code === '23505') { // Unique violation
             return res.status(409).json({ error: 'Número de documento ya existe' });
         }
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -369,7 +375,7 @@ router.put('/:id/status', async (req, res) => {
             employee: result.rows[0] 
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -413,7 +419,7 @@ router.delete('/:id', async (req, res) => {
             message: `Empleado ${result.rows[0].name} eliminado permanentemente de la base de datos` 
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -457,7 +463,7 @@ router.post('/:id/time-entries', async (req, res) => {
                 error: 'Ya existe registro de horas para este empleado en este proyecto y fecha' 
             });
         }
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -498,7 +504,7 @@ router.get('/:id/time-entries', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -536,7 +542,7 @@ router.get('/:id/assignments', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -588,7 +594,7 @@ router.post('/:id/assign', async (req, res) => {
             assignment: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -613,7 +619,7 @@ router.delete('/:id/unassign/:projectId', async (req, res) => {
             assignment: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

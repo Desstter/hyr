@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -40,7 +41,7 @@ router.get('/projects/:projectId/incomes', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -66,7 +67,7 @@ router.get('/projects/:projectId/incomes/summary', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -115,7 +116,7 @@ router.post('/projects/:projectId/incomes', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -151,7 +152,7 @@ router.put('/incomes/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -172,7 +173,7 @@ router.delete('/incomes/:id', async (req, res) => {
         
         res.json({ message: 'Ingreso eliminado', income: result.rows[0] });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -232,7 +233,7 @@ router.get('/incomes', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -268,7 +269,7 @@ router.get('/incomes/summary', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -287,7 +288,7 @@ router.get('/projects/:projectId/profit-analysis', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -323,7 +324,7 @@ router.get('/incomes/by-payment-method', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

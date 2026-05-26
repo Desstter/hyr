@@ -4,6 +4,7 @@
 // =====================================================
 
 const express = require('express');
+const { sendError } = require('../utils/http');
 const router = express.Router();
 const { db } = require('../database/connection');
 
@@ -53,7 +54,7 @@ router.get('/', async (req, res) => {
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -88,7 +89,7 @@ router.get('/project/:projectId/personnel', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -122,7 +123,7 @@ router.get('/personnel/:personnelId/projects', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -196,7 +197,7 @@ router.post('/', async (req, res) => {
                 error: 'Ya existe una asignación para este empleado en este proyecto en la fecha especificada' 
             });
         }
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -236,7 +237,7 @@ router.put('/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -279,7 +280,7 @@ router.post('/assign', async (req, res) => {
             assignment: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -310,7 +311,7 @@ router.delete('/unassign', async (req, res) => {
             assignment: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -334,7 +335,7 @@ router.delete('/:id', async (req, res) => {
             deleted: result.rows[0]
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -382,7 +383,7 @@ router.get('/dashboard', async (req, res) => {
             personnel_availability: availability.rows
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -392,7 +393,7 @@ router.get('/availability', async (req, res) => {
         const result = await db.query('SELECT * FROM get_personnel_availability()');
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 
@@ -421,7 +422,7 @@ router.get('/conflicts', async (req, res) => {
         
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        sendError(res, error);
     }
 });
 

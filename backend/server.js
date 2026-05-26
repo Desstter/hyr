@@ -3,9 +3,16 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { db } = require('./database/connection');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { db, verifyConnection } = require('./database/connection');
+const { errorMiddleware, notFoundMiddleware } = require('./utils/http');
 
 const app = express();
+
+// Cabeceras de seguridad (API JSON: no necesita CSP de navegador)
+app.use(helmet({ contentSecurityPolicy: false }));
+
 // Configuración CORS para permitir acceso desde red local
 const corsOptions = {
   origin: [
@@ -18,6 +25,16 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Rate limiting para la API (protección básica ante abuso/bucles)
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes. Intente de nuevo en un minuto.' }
+});
+app.use('/api', apiLimiter);
 
 // Rutas existentes
 app.use('/api/clients', require('./routes/clients'));
@@ -43,13 +60,23 @@ app.use('/api/contractors', require('./routes/contractors'));
 app.use('/api/files', require('./routes/files'));
 app.use('/api', require('./routes/project-incomes'));
 
-// Ruta de salud del servidor
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// Ruta de salud del servidor (incluye verificación de BD)
+app.get('/health', async (req, res) => {
+    try {
+        await db.query('SELECT 1');
+        res.json({ status: 'OK', database: 'up', timestamp: new Date().toISOString() });
+    } catch {
+        res.status(503).json({ status: 'DEGRADED', database: 'down', timestamp: new Date().toISOString() });
+    }
 });
+
+// Middlewares finales: 404 y manejador global de errores (red de seguridad)
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
     console.log(`🚀 API HYR corriendo en ${HOST}:${PORT}`);
+    verifyConnection().catch(err => console.error('❌ Error conectando a PostgreSQL:', err.message));
 });
