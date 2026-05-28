@@ -23,6 +23,9 @@ pnpm-lock.yaml
 .env.test.local
 .env.production.local
 .env.*
+# ...salvo las plantillas de ejemplo (sin secretos), necesarias para replicar:
+!.env.example
+!**/.env.example
 
 # Database configuration files
 config/database.json
@@ -50,13 +53,10 @@ coverage/
 .nyc_output/
 *.lcov
 
-# Backend specific scripts with potential sensitive data
-test-*.js
-*-test.js
-backend/test-*.js
-backend/setup-db.js
-backend/load-seeds.js
+# Los secretos viven en .env (ya ignorado). Los scripts de setup NO son
+# secretos y son necesarios para replicar el proyecto: no se ignoran.
 !backend/server.js
+!backend/setup-db.js
 !backend/routes/
 
 # ==================== FRONTEND NEXT.JS ====================

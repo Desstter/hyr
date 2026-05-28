@@ -944,4 +944,100 @@ VALUES (
     '2025-01-01', 'SYSTEM_SETUP'
 );
 
+-- =====================================================
+-- ASIGNACIONES DE PERSONAL A PROYECTOS
+-- (usado por routes/assignments.js, projects.js, personnel.js, time-entries.js)
+-- IMPORTANTE: esta tabla es OBLIGATORIA. Su ausencia provoca error 500
+-- "relation project_assignments does not exist" en casi toda la API.
+-- =====================================================
+CREATE TABLE project_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    personnel_id UUID NOT NULL REFERENCES personnel(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    assigned_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    start_date DATE NOT NULL,
+    end_date DATE,                              -- NULL = asignación indefinida
+    role VARCHAR(100),
+    expected_hours_per_day DECIMAL(4,2) DEFAULT 8.0,
+    is_primary_project BOOLEAN DEFAULT false,
+    priority INTEGER DEFAULT 1,                 -- 1=alta, 5=baja
+    status VARCHAR(50) DEFAULT 'active',        -- active, paused, completed, cancelled
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    UNIQUE(personnel_id, project_id, start_date),
+    CHECK (end_date IS NULL OR end_date >= start_date),
+    CHECK (expected_hours_per_day > 0 AND expected_hours_per_day <= 12),
+    CHECK (priority >= 1 AND priority <= 5)
+);
+
+CREATE INDEX idx_project_assignments_personnel ON project_assignments(personnel_id);
+CREATE INDEX idx_project_assignments_project   ON project_assignments(project_id);
+CREATE INDEX idx_project_assignments_status    ON project_assignments(status);
+CREATE INDEX idx_project_assignments_dates     ON project_assignments(start_date, end_date);
+CREATE INDEX idx_project_assignments_active    ON project_assignments(personnel_id, project_id)
+    WHERE status = 'active';
+
+-- updated_at automático (reutiliza la función utilitaria de arriba)
+CREATE TRIGGER trigger_project_assignments_updated_at
+    BEFORE UPDATE ON project_assignments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Disponibilidad de empleados (la consume routes/assignments.js).
+-- NOTA: las columnas calculadas (CASE / SUM) se castean explícitamente al tipo
+-- declarado en RETURNS TABLE; sin el cast PostgreSQL lanza
+-- "structure of query does not match function result type".
+CREATE OR REPLACE FUNCTION get_personnel_availability()
+RETURNS TABLE(
+    personnel_id UUID,
+    personnel_name VARCHAR(255),
+    total_assigned_hours DECIMAL(4,2),
+    projects_count INTEGER,
+    availability_status VARCHAR(50),
+    can_take_more_work BOOLEAN
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.id AS personnel_id,
+        p.name AS personnel_name,
+        COALESCE(SUM(pa.expected_hours_per_day), 0)::DECIMAL(4,2) AS total_assigned_hours,
+        COUNT(pa.id)::INTEGER AS projects_count,
+        (CASE
+            WHEN COALESCE(SUM(pa.expected_hours_per_day), 0) = 0 THEN 'disponible'
+            WHEN COALESCE(SUM(pa.expected_hours_per_day), 0) <= 6 THEN 'parcialmente_ocupado'
+            WHEN COALESCE(SUM(pa.expected_hours_per_day), 0) <= 8 THEN 'ocupado'
+            ELSE 'sobrecargado'
+        END)::VARCHAR(50) AS availability_status,
+        (COALESCE(SUM(pa.expected_hours_per_day), 0) < 8) AS can_take_more_work
+    FROM personnel p
+    LEFT JOIN project_assignments pa ON p.id = pa.personnel_id
+        AND pa.status = 'active'
+        AND (pa.end_date IS NULL OR pa.end_date >= CURRENT_DATE)
+    WHERE p.status = 'active'
+    GROUP BY p.id, p.name
+    ORDER BY total_assigned_hours ASC, p.name;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Vista dashboard de asignaciones
+CREATE OR REPLACE VIEW v_assignments_dashboard AS
+SELECT
+    pr.id AS project_id,
+    pr.name AS project_name,
+    pr.status AS project_status,
+    c.name AS client_name,
+    COUNT(pa.id) AS total_assigned_personnel,
+    COUNT(CASE WHEN pa.is_primary_project THEN 1 END) AS primary_assignments,
+    SUM(pa.expected_hours_per_day) AS total_expected_hours_per_day,
+    MIN(pa.start_date) AS first_assignment_date,
+    MAX(pa.end_date) AS last_assignment_date
+FROM projects pr
+LEFT JOIN clients c ON pr.client_id = c.id
+LEFT JOIN project_assignments pa ON pr.id = pa.project_id AND pa.status = 'active'
+WHERE pr.status IN ('planned', 'in_progress')
+GROUP BY pr.id, pr.name, pr.status, c.name
+ORDER BY pr.name;
+
 SELECT 'ESQUEMA MAESTRO HYR CREADO' AS status, CURRENT_TIMESTAMP AS created_at;
