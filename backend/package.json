@@ -1,7 +1,7 @@
 {
   "name": "hyr-backend",
   "version": "1.0.0",
-  "description": "API Backend para HYR Constructora & Soldadura - Sistema de Nómina Colombiana 2024",
+  "description": "API Backend para HYR Constructora & Soldadura - Sistema de N\u00f3mina Colombiana 2024",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -24,12 +24,12 @@
     "express": "^4.18.2",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
-    "moment": "^2.30.1",
+    "moment": "2.31.0",
     "node-fetch": "^3.3.2",
     "pdfkit": "^0.17.2",
     "pg": "^8.11.3",
     "qrcode": "^1.5.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "eslint": "^9.35.0",
@@ -43,5 +43,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "overrides": {
+    "js-yaml@^3.0.0": "3.15.2",
+    "baseline-browser-mapping@^2.0.0": "2.11.27",
+    "body-parser@^1.0.0": "1.20.8",
+    "brace-expansion@^1.0.0": "1.1.21",
+    "browserslist@^4.0.0": "4.29.3",
+    "brace-expansion@^2.0.0": "2.1.7",
+    "ip-address@^10.0.0": "10.7.3",
+    "js-yaml@^4.0.0": "4.3.2",
+    "brace-expansion@^5.0.0": "5.0.12",
+    "qs@^6.0.0": "6.16.0"
+  }
 }

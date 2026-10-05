@@ -67,7 +67,22 @@ router.get('/download/:type/:filename', async (req, res) => {
     }
     
     const fileConfig = SUPPORTED_FILE_TYPES[type];
-    const filePath = path.join(EXPORTS_BASE_DIR, fileConfig.dir, filename);
+    // Express decodes path parameters: reject encoded separators and traversal.
+    if (!filename || filename === '.' || filename === '..' || /[\\/\0]/.test(filename)) {
+      return res.status(400).json({ error: 'Nombre de archivo no válido' });
+    }
+    const basePath = path.resolve(EXPORTS_BASE_DIR, fileConfig.dir);
+    const filePath = path.resolve(basePath, filename);
+    // Existing symlinks must also stay inside this export directory.
+    try {
+      const canonicalBase = await fs.realpath(basePath);
+      const canonicalFile = await fs.realpath(filePath);
+      if (!canonicalFile.startsWith(canonicalBase + path.sep)) {
+        return res.status(403).json({ error: 'Archivo fuera del directorio permitido' });
+      }
+    } catch {
+      return res.status(404).json({ error: 'Archivo no encontrado' });
+    }
     
     // Verificar que el archivo existe
     try {
@@ -199,7 +214,22 @@ router.delete('/:type/:filename', async (req, res) => {
     }
     
     const fileConfig = SUPPORTED_FILE_TYPES[type];
-    const filePath = path.join(EXPORTS_BASE_DIR, fileConfig.dir, filename);
+    // Express decodes path parameters: reject encoded separators and traversal.
+    if (!filename || filename === '.' || filename === '..' || /[\\/\0]/.test(filename)) {
+      return res.status(400).json({ error: 'Nombre de archivo no válido' });
+    }
+    const basePath = path.resolve(EXPORTS_BASE_DIR, fileConfig.dir);
+    const filePath = path.resolve(basePath, filename);
+    // Existing symlinks must also stay inside this export directory.
+    try {
+      const canonicalBase = await fs.realpath(basePath);
+      const canonicalFile = await fs.realpath(filePath);
+      if (!canonicalFile.startsWith(canonicalBase + path.sep)) {
+        return res.status(403).json({ error: 'Archivo fuera del directorio permitido' });
+      }
+    } catch {
+      return res.status(404).json({ error: 'Archivo no encontrado' });
+    }
     
     // Verificar que el archivo existe
     try {
