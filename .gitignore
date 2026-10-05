@@ -213,3 +213,6 @@ reports/
 # Mantiene seguridad y funcionalidad para deployment
 # =======================================================.claude/
 CLAUDE.md
+
+# Local Claude Code permissions and machine-specific settings
+.claude/settings.local.json
